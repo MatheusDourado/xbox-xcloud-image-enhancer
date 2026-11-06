@@ -1,0 +1,8 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Custo por etapa</title>
+<style>body{margin:16px;background:#10151c;color:#edf2f7;font:14px system-ui}table{border-collapse:collapse;margin-top:12px}td,th{border:1px solid #536175;padding:4px 8px;text-align:right}th:first-child,td:first-child{text-align:left}#log{white-space:pre-wrap;color:#bdc8d4}button,input{margin:6px;padding:7px}canvas{width:320px;background:black}</style>
+<h1>Custo de GPU por etapa (Spec 1)</h1>
+<p>Mede o mesmo motor do userscript com cada filtro isolado, numa fonte fixa 1080p. Cada lote desenha N quadros e espera a GPU terminar (leitura de 1 pixel): mede vazão, não latência. Só para bancada: o caminho do jogo nunca espera a GPU.</p>
+<p>Parâmetros na URL: <code>?ms=4000</code> (tempo por configuração), <code>&amp;out=1280</code> (altura da saída ampliada), <code>&amp;video=arquivo.mp4</code> (usa um quadro real do vídeo, mesma origem).</p>
+<button id="run">Medir</button><button id="save">Exportar JSON</button>
+<p id="log">Pronto.</p><table id="table"></table><canvas id="canvas"></canvas>
+<script src="../output/restoration.bundle.js"></script><script src="stage-cost.js"></script></html>
