@@ -89,7 +89,7 @@
   const pc=peer();
   // A new session starts from scratch: no deltas or QP level carried over from the previous game.
   if(pc!==telemetryPeer){telemetryPeer=pc;lastRtp=null;status.net=null;status.adaptive=null;bppSamples=[];}
-  if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring)){updateWarnings();return;}
+  if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring||activeEngine&&!activeEngine.ext)){updateWarnings();return;}
   telemetryBusy=true;
   try{let rtp=null,rtt=null;const stats=await pc.getStats();
    if(peer()!==pc)return;
@@ -255,7 +255,15 @@
   if(direct)status.capture={active:true,frames:player.bxDirect.rendered,reason:''};
   if(newFrame&&now-(player.bxCadenceMark||0)>2000){
    if(settings.mode!=='filtered')player.bxReferenceFps=status.fps;
-   else if(!player.bxEngine.ext)player.bxEngine.budget.cadence(player.bxReferenceFps,status.fps);
+   else if(!player.bxEngine.ext){
+    // Frames shown against frames decoded now. The <video> element also skips frames that arrive together
+    // (about 2% on the Poco F7) with no GPU overload, so only direct capture keeps the 5% margin. A page
+    // that was just hidden leaves a gap in the window. Without a live figure, the reference measured
+    // in CAS/original stays.
+    const live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
+    if(live===null)player.bxEngine.budget.cadence(player.bxReferenceFps,status.fps);
+    else if(span>0&&now-hiddenAt>4000)player.bxEngine.budget.cadence(live,(list.length-1)*1000/span,direct?.95:.9);
+   }
    player.bxCadenceMark=now;
   }
  }

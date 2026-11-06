@@ -58,10 +58,10 @@
     else return;
     // Do not let timings from a more expensive pipeline trigger the next reduction.
     this.values=[];this.over=0;this.cadenceOver=0;this.revision++;
-  },cadence(reference,current){
+  },cadence(reference,current,ratio=.95){
     if(this.limitMs===0)return;
     if(!Number.isFinite(reference)||reference<=0||!Number.isFinite(current))return;
-    this.cadenceOver=current<reference*.95?this.cadenceOver+1:0;
+    this.cadenceOver=current<reference*ratio?this.cadenceOver+1:0;
     if(this.cadenceOver>=3){this.degrade();this.cadenceOver=0;}
   },sample(ms,mode='filtered'){
     if(mode!=='filtered')return;
@@ -72,6 +72,10 @@
     this.over=this.limitMs>0&&this.p95>this.limitMs?this.over+1:0;
     if(this.over>=30){this.degrade();this.over=0;}
   }};}
+  // Reference for the cadence adaptation without GPU timers: the frames the decoder delivers right now,
+  // under Better xCloud's FPS limit. It follows the game (about 60 FPS in menus, 30 in a match) and falls
+  // with the network, so a stream problem never reads as GPU overload. Under 10 FPS it is a stall: no reference.
+  function liveCadence(received,limit){if(!Number.isFinite(received)||received<10)return null;return limit>0?Math.min(received,limit):received;}
   function createDiagnostics(){
     // One segment per distinct configuration: returning to an earlier one (e.g. the adaptive QP level)
     // continues its segment, with time counted only while it is current. Besides the GPU time, each
@@ -451,5 +455,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={liveCadence,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

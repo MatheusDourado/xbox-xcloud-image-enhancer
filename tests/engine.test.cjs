@@ -255,3 +255,18 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  assert.match(saved.name,/^bx-v9\.7\.1-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
+
+test('without GPU timers the live decoder rate is the reference, under the FPS limit',()=>{const a=api();
+ assert.equal(a.liveCadence(30,60),30);assert.equal(a.liveCadence(60,30),30);assert.equal(a.liveCadence(60,0),60);
+ assert.equal(a.liveCadence(null,60),null);assert.equal(a.liveCadence(undefined,60),null);assert.equal(a.liveCadence(4,60),null);
+});
+test('a sustained gap to the live rate reduces the treatment; a healthy or stalled stream does not',()=>{const a=api(),setup=()=>{const p=a.createBudget();p.limitMs=6;p.configure({deband:.3,cleanup:.5,output:'native'},1080);return p;};
+ const overloaded=setup();for(let i=0;i<3;i++)overloaded.cadence(a.liveCadence(30,60),26,.95);assert.equal(overloaded.revision,1);
+ const healthy=setup();for(let i=0;i<30;i++)healthy.cadence(a.liveCadence(30,60),29.4,.95);assert.equal(healthy.revision,0);
+ const stalled=setup();for(let i=0;i<30;i++)stalled.cadence(a.liveCadence(3,60),3,.95);assert.equal(stalled.revision,0);
+ const network=setup();for(let i=0;i<30;i++)network.cadence(a.liveCadence(18,60),18,.95);assert.equal(network.revision,0);
+});
+test('the video element keeps a wider margin for frames it skips without overload',()=>{const a=api(),p=a.createBudget();p.limitMs=6;p.configure({deband:.3,output:'native'},1080);
+ for(let i=0;i<30;i++)p.cadence(30,29.4*.97,.9);assert.equal(p.revision,0);
+ for(let i=0;i<3;i++)p.cadence(30,26,.9);assert.equal(p.revision,1);
+});

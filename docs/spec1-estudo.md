@@ -5,7 +5,7 @@ Registro da leitura de `src/`, `tools/` e `script.js` na branch `claude/specs-au
 ## Resumo
 
 - **Feito:** leitura do motor, da captura, do shader espacial e da rede neural; correção do `tools/build.py` para Windows; sonda de WebGPU e microbenchmark por passada no Poco.
-- **Principais achados:** a adaptação de desempenho não age no Poco com o filtro sempre ligado (achado 1); WebGPU funciona no WebView com `timestamp-query` e `shader-f16`; o caminho padrão a 1280p custa cerca de 5,5 ms, sem contar o upload do quadro.
+- **Principais achados:** a adaptação de desempenho não agia no Poco com o filtro sempre ligado (achado 1, corrigido na branch e ainda não validado no aparelho); WebGPU funciona no WebView com `timestamp-query` e `shader-f16`; o caminho padrão a 1280p custa cerca de 5,5 ms, sem contar o upload do quadro.
 - **Não feito:** coluna do Vostro, ganho visual, upload do quadro, MSAA, temporal, sessão longa. Specs 2, 3 e 4 não começaram.
 - **Próximo passo:** repetir a medição com o Poco carregado e com vídeo real, por mais tempo.
 
@@ -64,7 +64,7 @@ No WebGL2 da mesma página: `Adreno (TM) 825`, sem `EXT_disjoint_timer_query_web
 
 ## Achados
 
-### 1. Sem timer de GPU, a adaptação não dispara (confirmado)
+### 1. Sem timer de GPU, a adaptação não disparava (confirmado e corrigido)
 
 O WebView não tem `EXT_disjoint_timer_query_webgl2`, então `budget.sample` nunca recebe dados e o orçamento de 3, 6 ou 10 ms não tem efeito. O fence é só para exibição (`src/restoration-engine.js:349`). Sobra `budget.cadence`, que precisa de `bxReferenceFps`, e esse valor só é preenchido fora do modo `filtered` (`src/image-filter.js:257`).
 
@@ -75,7 +75,18 @@ Quem joga direto no modo filtrado fica com a referência nula e nenhuma reduçã
 | nula | 100 | 0 |
 | 30 | 3 | 1 |
 
-Consequência: a ordem de corte da seção 3 do documento de specs não protege o Poco hoje. Se houver referência, ela ainda pode enganar: é um FPS medido em outro momento, e o servidor alterna entre ~60 nos menus e 30 na partida.
+Era o comportamento documentado no README, não um erro de código, mas deixava o Poco sem proteção. Além disso, a referência antiga era um FPS medido em outro momento, e o servidor alterna entre ~60 nos menus e 30 na partida.
+
+**Correção:** sem cronômetro de GPU, a referência agora é o FPS que o decodificador entrega no momento (`liveCadence`), limitado pelo FPS do Better xCloud. A comparação usa os quadros realmente exibidos, e a redução pede três janelas seguidas de 2 s:
+
+| Caminho | Queda que reduz | Motivo |
+| --- | --- | --- |
+| Captura direta | mais de 5% | recebe todos os quadros decodificados |
+| Elemento `<video>` | mais de 10% | pula quadros sem sobrecarga (~2% registrados na v9.6.1) |
+
+Queda de rede não conta, porque a referência cai junto. Abaixo de 10 FPS é tratado como travamento e volta à referência antiga. A página recém-oculta é ignorada por 4 s.
+
+**Falta validar:** a correção ainda não rodou no Poco, porque o APK instalado é o antigo. A margem de 10% é uma escolha inicial, a calibrar com `videoSkipped` da próxima exportação. No teste de WebRTC em Chrome sem tela, o exibido ficou em 18–19 FPS contra 29–30 recebidos, sem saber se foi sobrecarga real ou falso positivo; a redução estava interceptada no teste. A redução é permanente até mudar um ajuste, então um falso positivo piora a imagem até lá.
 
 ### 2. MSAA ligado no canvas de produção (confirmado no código, custo não medido)
 
@@ -139,13 +150,15 @@ Em clones no Windows, usar `core.autocrlf=false`.
 
 | Suíte | Resultado |
 | --- | --- |
-| Node | 47 de 47 |
+| Node | 50 de 50 |
 | `regressions-v7` | passou, 43 verificações |
 | `motion-quality` | passou, 11 verificações |
+| `capture-harness` | passou, 26 verificações, mas oscila |
 | `filter-harness` | **falhou** em `Cut rejects old dark history` |
-| `capture-harness` | **falhou** em `Per-segment video skips are recorded (0,0)` |
 
-Cada harness para no primeiro erro, então as verificações restantes dessas duas suítes não rodaram. A única mudança na saída gerada é o hash, o que aponta para o ambiente, mas **a causa não foi provada**: falta repetir com o Chromium do CI (Playwright 1.60).
+`capture-harness` falhou na primeira execução em `Per-segment video skips are recorded (0,0)` e passou nas seguintes: a checagem exige que o `<video>` pule quadros, o que depende do momento.
+
+`filter-harness` falha desde antes da correção da adaptação, no mesmo ponto, e para no primeiro erro, então suas verificações restantes não rodaram. **A causa não foi provada**: falta repetir com o Chromium do CI (Playwright 1.60).
 
 ## Estado do aparelho
 
