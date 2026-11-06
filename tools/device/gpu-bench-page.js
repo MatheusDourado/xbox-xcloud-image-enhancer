@@ -34,6 +34,12 @@ const px=new Uint8Array(4),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function run(fn){let t;const s=performance.now();for(let i=0;i<N;i++)t=fn(i);gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return (performance.now()-s)/N;}
 const samples={};for(const k in cases){samples[k]=[];run(cases[k]);}
 for(let r=0;r<ROUNDS;r++)for(const k in cases){samples[k].push(run(cases[k]));await sleep(30);}
+// Whole frames through render(): the temporal cost is the gap between the two, upload included in both.
+let time=0;const frame=o=>()=>{const s={...BxRestoration.defaults,mode:'filtered',output:'native',gpuBudget:0,...o};let last;for(let i=0;i<N;i++){time+=1/30;last=e.render(src,W,H,s,time);}gl.bindFramebuffer(gl.FRAMEBUFFER,null);return last;};
+const whole={renderPadrao:frame({}),renderTemporal:frame({temporal:1})};
+function runWhole(fn){const s=performance.now();fn();gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);return (performance.now()-s)/N;}
+for(const k in whole){samples[k]=[];runWhole(whole[k]);}
+for(let r=0;r<ROUNDS;r++)for(const k in whole){samples[k].push(runWhole(whole[k]));await sleep(30);}
 const err=gl.getError();
 const out={};for(const [k,v] of Object.entries(samples)){const q=[...v].sort((a,b)=>a-b);out[k]={med:+q[q.length>>1].toFixed(3),min:+q[0].toFixed(3),max:+q[q.length-1].toFixed(3)};}
 e.destroy();gl.getExtension('WEBGL_lose_context')?.loseContext();

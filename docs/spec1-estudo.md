@@ -1,50 +1,70 @@
 # Spec 1 — Estudo do código (v9.7.1)
 
-Registro da leitura de `src/`, `tools/` e `script.js` na branch `claude/specs-autonomas`, em 2026-11-06, com a primeira medição por passada no Poco F7.
+Registro da Spec 1 na branch `claude/specs-autonomas`, em 2026-11-06: leitura de `src/`, `tools/` e `script.js`, medição por passada no Poco F7 e no Vostro 3400 e detecção de WebGPU nos dois.
 
 ## Resumo
 
-- **Feito:** leitura do motor, da captura, do shader espacial e da rede neural; correção do `tools/build.py` para Windows; sonda de WebGPU e microbenchmark por passada no Poco.
-- **Principais achados:** a adaptação de desempenho não agia no Poco com o filtro sempre ligado (achado 1, corrigido na branch e ainda não validado no aparelho); WebGPU funciona no WebView com `timestamp-query` e `shader-f16`; o caminho padrão a 1280p custa cerca de 5,5 ms, sem contar o upload do quadro.
-- **Não feito:** coluna do Vostro, ganho visual, upload do quadro, MSAA, temporal, sessão longa. Specs 2, 3 e 4 não começaram.
-- **Próximo passo:** repetir a medição com o Poco carregado e com vídeo real, por mais tempo.
+**Estado:** Spec 1 encerrada com lacunas. A coluna de custos está preenchida para os filtros; upload real, MSAA, sessão longa e ganho por filtro seguem abertos e são entrada para a Spec 2.
 
-## Medição no Poco F7 (preliminar)
+**Feito**
 
-Ferramentas em `tools/device/`. O benchmark roda no WebView do app, com os shaders do motor, em 1920×1080 e 2276×1280. São 40 repetições por amostra e 5 rodadas intercaladas, alternando duas texturas de destino, com `readPixels` de 1 px só no fim de cada amostra. Sem erro de GL. Durante o teste: bateria 8–9%, 37,1 °C, estado térmico 0, economia de energia desligada.
+- Leitura do motor, da captura, do shader espacial e da rede neural.
+- `tools/build.py` portável para Windows.
+- Correção da adaptação sem cronômetro de GPU, adiantada da Spec 3 a pedido do Matheus (achado 1). APK de teste instalado por cima no Poco, com o motor novo carregando; não validada em partida real.
+- Ferramentas em `tools/device/` e dados brutos em `docs/medicoes/spec1/`.
 
-| Filtro ou passada | Mediana (ms) | Faixa (ms) | Acréscimo ao `spatial` vazio (ms) |
-| --- | --- | --- | --- |
-| `spatial` vazio | 0,47 | 0,46–0,63 | — |
-| Compressão 50% | 0,90 | 0,80–1,04 | +0,43 |
-| Degradês 30% | 1,41 | 1,21–1,49 | +0,94 |
-| Cor nas bordas 75% | 0,73 | 0,61–0,81 | +0,26 |
-| Detalhe 20% | 1,23 | 1,15–1,27 | +0,76 |
-| Antialiasing 50% | 0,81 | 0,79–0,90 | +0,33 |
-| `spatial` padrão (os quatro primeiros) | 2,54 | 2,29–2,60 | — |
-| FSR 1 EASU para 1280p | 1,61 | 1,57–1,95 | passada própria |
-| Nitidez USM em 1080p | 0,75 | 0,64–0,86 | passada própria |
-| Nitidez USM em 1280p | 0,93 | 0,85–1,03 | passada própria |
-| `present` (Fluidez) em 1280p | 0,39 | 0,31–0,43 | passada própria |
-| Reconstrução neural | 2,21 | 2,10–2,31 | passadas próprias |
+**Números principais (imagem sintética, em rajada, sem upload nem MSAA)**
 
-Soma do caminho padrão, sem upload:
-
-| Saída | Soma (ms) | Proposta da seção 10.4 |
+| Caminho padrão | Poco F7 | Vostro 3400 |
 | --- | --- | --- |
-| Automática, 1280p, com Fluidez | 5,47 | acima dos 4 ms a 60 FPS, dentro dos 8 ms a 30 FPS |
-| Nativa, 1080p, com Fluidez | cerca de 3,7 | dentro dos 4 ms a 60 FPS |
+| Saída 1280p com Fluidez | 4,9–5,5 ms | não se aplica à TV 1080p |
+| Saída 1080p com Fluidez | 3,1–3,7 ms | 3,4–3,5 ms |
+| Saída 1080p sem Fluidez | 2,8–3,3 ms | 2,7–2,8 ms |
 
-O valor de 1080p usa `copy1080` (0,39 ms) como estimativa do `present`.
+**Achados que mais importam para a Spec 2**
 
-Cuidados ao ler estes números:
+- O upload do quadro é o maior desconhecido: o `render()` completo com origem em canvas 2D custou cerca de 9 ms a mais que as passadas no Poco, contra 0,6 ms no Vostro. Canvas 2D pode não representar um quadro de vídeo, então isso ainda não é o custo real.
+- Adreno e Iris Xe têm perfis diferentes: no Poco os filtros pesam; no Vostro quase tudo é o custo fixo da passada, o que sugere limite de memória (inferência, sem contador de banda).
+- Temporal: +11,9 ms no Poco e +3,6 ms no Vostro. O neural custa o dobro no Vostro em relação ao Poco.
+- WebGPU funciona nos dois aparelhos, com `timestamp-query` e `shader-f16`.
 
-- **Tendem a ser otimistas:** a GPU roda em rajada, sem decodificador nem composição disputando, e provavelmente em clock mais alto que numa partida. O clock não pôde ser lido (`gpuclk` sem permissão).
-- **Faltam custos:** upload do quadro, MSAA do canvas e temporal não entraram.
-- **Imagem sintética:** gradiente, ruído e linhas. Os desvios de Cor nas bordas e os pesos dos filtros dependem do conteúdo; falta repetir com vídeo real.
-- **Bateria em 8–9%:** repetir com o aparelho carregado.
+**Próximo passo:** Spec 2, em sessão nova, com o modelo mais forte e esforço alto. Primeira medição recomendada: upload de quadro de vídeo real.
 
-## WebGPU no aparelho
+## Tabela de custos (seção 8)
+
+Faixa das medianas de três rodadas, em 1080p salvo indicação. Filtros dentro do `spatial` são o acréscimo sobre a passada vazia.
+
+| Filtro | Custo Poco F7 (ms) | Custo Vostro (ms) | Ganho medido | Padrão |
+| --- | --- | --- | --- | --- |
+| Compressão | +0,37 a +0,46 | +0,20 a +0,23 | não isolado | ligado 50% |
+| Degradês | +0,84 a +0,94 | +0,33 a +0,35 | não isolado | ligado 30% |
+| Cor nas bordas | +0,03 a +0,26 | +0,02 a +0,09 | não isolado | ligado 75% |
+| Detalhe | +0,44 a +0,76 | −0,01 a +0,06 | não isolado | ligado 20% |
+| Antialiasing | +0,21 a +0,34 | +0,03 a +0,08 | não isolado | desligado |
+| Temporal | +11,9 (1 rodada) | +3,6 (1 rodada) | cintilação 4,49 → 4,37 (registro v9.1) | desligado |
+| FSR 1 EASU (para 1280p) | 1,48–1,61 | 1,96–2,01 | ver abaixo | automático |
+| Nitidez final | 0,67–0,75; 0,85–0,93 em 1280p | 0,81–0,86; 1,21–1,28 em 1280p | ver abaixo | USM 3 |
+| Reconstrução neural | 1,96–2,21 | 4,07–4,18 | SSIM 0,930 → 0,934 (registro v9.1) | desligado |
+
+Passadas de apoio: `spatial` vazio 0,47–0,58 (Poco) e 1,12–1,18 (Vostro); `spatial` padrão 2,12–2,54 e 1,84–1,93; `present` em 1280p 0,35–0,39 e 1,05–1,14.
+
+**Ganho:** nada foi medido nesta spec, porque a bancada `tools/eval` precisa de `ffmpeg`, que não existe nesta máquina e o documento não autoriza baixar. Os valores acima vêm dos registros da v9 e da v9.1. `docs/analysis-v9.md` compara configurações, não filtros isolados: v9 padrão SSIM 0,930 contra 0,942 do stream sem filtro, com detalhe 0,97 contra 0,71; no perfil Poco, FSR para 1280p com USM 3 tem detalhe 0,67 contra 0,53 do 1080p esticado.
+
+## Método e cuidados
+
+Ferramentas em `tools/device/`. O benchmark roda com os shaders do motor, em 1920×1080 e 2276×1280, com 40 repetições por amostra e 5 rodadas intercaladas, alternando duas texturas de destino, com `readPixels` de 1 px só no fim de cada amostra. Sem erro de GL nas seis rodadas.
+
+| Máquina | Ambiente | Condições |
+| --- | --- | --- |
+| Poco F7 | WebView 156 do app, em primeiro plano | bateria 8–25%, 35–37 °C, estado térmico 0 |
+| Vostro 3400 | Chrome 157 sem tela, D3D11 | na tomada, 94% |
+
+- **Tendem a ser otimistas:** a GPU roda em rajada, sem decodificador nem composição disputando, e provavelmente em clock mais alto que numa partida. O clock do Poco não pôde ser lido (`gpuclk` sem permissão).
+- **Imagem sintética:** gradiente, ruído e linhas. Cor nas bordas e Detalhe dependem do conteúdo, e por isso variam mais entre rodadas.
+- **Soma em 1080p:** usa `copy1080` como estimativa do `present`.
+- **App visível:** o WebView pausa timers em segundo plano, e o benchmark trava se o app não estiver na frente.
+
+## WebGPU
 
 Sonda em `https://www.xbox.com`, dentro do app, com WebView 156:
 
@@ -60,7 +80,9 @@ Sonda em `https://www.xbox.com`, dentro do app, com WebView 156:
 | Formato preferido do canvas | `rgba8unorm` |
 | `MediaStreamTrackProcessor`, `OffscreenCanvas` | presentes |
 
-No WebGL2 da mesma página: `Adreno (TM) 825`, sem `EXT_disjoint_timer_query_webgl2`; `highp` com 23 bits e `mediump` com 10, ou seja, meia precisão real.
+No Vostro, em Chrome 157: adaptador `intel` / `gen-12lp`, device criado com `timestamp-query` e `shader-f16`, `subgroups` no adaptador, 32 KB de workgroup e `importExternalTexture` presente. O WebGL2 ali tem cronômetro de GPU.
+
+No WebGL2 do Poco, na mesma página do app: `Adreno (TM) 825`, sem `EXT_disjoint_timer_query_webgl2`; `highp` com 23 bits e `mediump` com 10, ou seja, meia precisão real.
 
 ## Achados
 
@@ -86,7 +108,7 @@ Era o comportamento documentado no README, não um erro de código, mas deixava 
 
 Queda de rede não conta, porque a referência cai junto. Abaixo de 10 FPS é tratado como travamento e volta à referência antiga. A página recém-oculta é ignorada por 4 s.
 
-**Falta validar:** a correção ainda não rodou no Poco, porque o APK instalado é o antigo. A margem de 10% é uma escolha inicial, a calibrar com `videoSkipped` da próxima exportação. No teste de WebRTC em Chrome sem tela, o exibido ficou em 18–19 FPS contra 29–30 recebidos, sem saber se foi sobrecarga real ou falso positivo; a redução estava interceptada no teste. A redução é permanente até mudar um ajuste, então um falso positivo piora a imagem até lá.
+**Falta validar:** o APK de teste com a correção está instalado no Poco e o motor novo carrega (`sourceSha256` 03befa86…, `liveCadence` responde), mas ainda não rodou numa partida real. A margem de 10% é uma escolha inicial, a calibrar com `videoSkipped` da próxima exportação. No teste de WebRTC em Chrome sem tela, o exibido ficou em 18–19 FPS contra 29–30 recebidos, sem saber se foi sobrecarga real ou falso positivo; a redução estava interceptada no teste. A redução é permanente até mudar um ajuste, então um falso positivo piora a imagem até lá.
 
 ### 2. MSAA ligado no canvas de produção (confirmado no código, custo não medido)
 
@@ -121,7 +143,7 @@ Leituras de textura por pixel, contadas em `src/shaders/spatial.glsl` com os pad
 | Detalhe | 16 |
 | **Total** | **até 31** |
 
-A medição contrariou a contagem: Degradês faz 4 leituras e custa +0,94 ms, enquanto Detalhe faz 16 e custa +0,76 ms. A causa ainda não foi investigada; as amostras distantes de Degradês, que aproveitam menos o cache, são a hipótese a testar.
+A medição contrariou a contagem: no Poco, Degradês faz 4 leituras e custa +0,84 a +0,94 ms, enquanto Detalhe faz 16 e custa +0,44 a +0,76 ms. A causa ainda não foi investigada; as amostras distantes de Degradês, que aproveitam menos o cache, são a hipótese a testar.
 
 ### 5. Todos os shaders usam `highp`
 
@@ -133,7 +155,7 @@ Inclusive o CAS original do Better xCloud, que era `mediump` e o `tools/build.py
 - **Rede:** `conv3×3(1→8) → ReLU → conv1×1(8→8) → ReLU → conv3×3(8→1)`, só na luma, somada à imagem. Cerca de 210 multiplicações por pixel.
 - **Passadas:** duas, com duas texturas RGBA16F intermediárias, à frente do `spatial`.
 - **Treino:** JAX em CPU, pares de luma H.264 a 8–25 Mb/s contra render limpo (`tools/nn/`, `docs/analysis-v9.1.md`).
-- **Custo:** 2,21 ms na Adreno 825 em 1080p (medição preliminar acima), cerca de 40% sobre o caminho padrão. A estimativa anterior era +31%, em GPU emulada.
+- **Custo:** 1,96–2,21 ms na Adreno 825 e 4,07–4,18 ms na Iris Xe, em 1080p; cerca de 40% sobre o caminho padrão do Poco. A estimativa anterior era +31%, em GPU emulada.
 - **Ganho registrado:** SSIM 0,930 → 0,934 em 1080p e 0,917 → 0,917 no perfil Poco 1280p, com mais halo.
 
 ### 7. Custos pequenos de CPU por quadro
@@ -146,35 +168,36 @@ Inclusive o CAS original do Better xCloud, que era `mediump` e o `tools/build.py
 
 Em clones no Windows, usar `core.autocrlf=false`.
 
-## Testes (Windows, Chrome 157, sem o Chromium fixado no CI)
+## Testes
 
-| Suíte | Resultado |
-| --- | --- |
-| Node | 50 de 50 |
-| `regressions-v7` | passou, 43 verificações |
-| `motion-quality` | passou, 11 verificações |
-| `capture-harness` | passou, 26 verificações, mas oscila |
-| `filter-harness` | **falhou** em `Cut rejects old dark history` |
+Node: 50 de 50. Suítes de navegador nos dois ambientes disponíveis:
 
-`capture-harness` falhou na primeira execução em `Per-segment video skips are recorded (0,0)` e passou nas seguintes: a checagem exige que o `<video>` pule quadros, o que depende do momento.
+| Suíte | Chromium 148 (Playwright 1.60, como no CI, SwiftShader) | Chrome 157 (Iris Xe real) |
+| --- | --- | --- |
+| `regressions-v7` | passou, 43 | passou, 43 |
+| `motion-quality` | passou, 11 | passou, 11 |
+| `filter-harness` | passou, 117 | **falhou** em `Cut rejects old dark history` |
+| `capture-harness` | oscila, passou com 27 | oscila, passou com 26 |
 
-`filter-harness` falha desde antes da correção da adaptação, no mesmo ponto, e para no primeiro erro, então suas verificações restantes não rodaram. **A causa não foi provada**: falta repetir com o Chromium do CI (Playwright 1.60).
+**`filter-harness` no Chrome 157:** não é defeito do temporal. O Chrome local usa a GPU real e o CI usa SwiftShader. Na Iris Xe, 63 de 49.152 valores ficam em 253 num teste que exige 254; o corte funciona (207 contra 208 no `cut`). Com Degradês em zero, os 63 somem: é o dither, e o limite do teste foi calibrado para SwiftShader. Não alterei o teste. O Chromium 148 completo não abriu nesta máquina (`spawn UNKNOWN`), então os dois ambientes diferem em GPU e em versão; a checagem com Degradês zerado é o que isola a causa.
+
+**`capture-harness`:** seis rodadas no Chromium 148, três na branch e três na `main` original. Aprovações: 1 de 3 e 2 de 3. As falhas têm a mesma mensagem nas duas (`No display or wait interval spans the hidden page`, cerca de 1,5 s) e outras checagens de tempo também falharam em rodadas avulsas. Aponta para teste instável, não para regressão; a amostra é pequena.
+
+**Consequência:** as regressões de pixel do CI rodam em GPU emulada e não veem o comportamento da GPU real.
 
 ## Estado do aparelho
 
-Poco F7 (`25053PC47G`, SM8735), Android 16, app 9.7.1 instalado em 2026-10-18, depuração do WebView ligada no app.
+Poco F7 (`25053PC47G`, SM8735), Android 16, WebView 156.0.8078.47 (o documento de specs diz Chrome 155). App com APK de teste 9.7.1 instalado por cima em 2026-11-06, gerado a partir desta branch com o SDK local e com o mesmo certificado do APK versionado. `android/dist` não foi alterado. Ao fim da rodada: bateria 25%, 35,5 °C.
 
-| Leitura | Valor |
-| --- | --- |
-| WebView | 156.0.8078.47 (o documento de specs diz Chrome 155) |
-| Bateria | caiu de 9% para 8% mesmo no USB |
-| Temperatura da bateria | 33,5 °C em repouso, 37,1 °C com o app aberto |
+## Lacunas para as próximas specs
 
-## Lacunas novas
-
-- Tabela de custos da seção 8: coluna do Poco preliminar; faltam Vostro, ganho medido e temporal.
-- Upload do quadro não medido: é o custo que falta para a soma real do caminho padrão.
-- `importExternalTexture` com quadro de vídeo real não testado.
-- Efeito real do MSAA na Adreno não medido; exige canvas na tela, porque a resolução só ocorre na composição.
-- Causa das duas falhas de navegador não confirmada.
-- `src/shaders/easu.glsl`, `motion.glsl`, `temporal.glsl` e `rcas.glsl` tiveram só contagem de leituras, sem leitura completa.
+- **Upload do quadro de vídeo real:** não medido; é o custo que falta na soma do caminho padrão e pode ser o maior deles.
+- **MSAA do canvas:** custo não medido; exige canvas na tela, porque a resolução só ocorre na composição.
+- **Ganho visual por filtro:** não medido; depende de `ffmpeg`.
+- **Vídeo real e sessão longa:** faltam medição com conteúdo real e os 20 minutos da seção 10.4.
+- **Temporal:** uma rodada por máquina.
+- **`importExternalTexture`:** não testado com quadro de vídeo.
+- **Adaptação:** validar em partida real e calibrar a margem de 10% com `videoSkipped`.
+- **Testes:** `capture-harness` instável e limite de `filter-harness` calibrado só para SwiftShader.
+- **Leitura de shaders:** `easu.glsl`, `motion.glsl`, `temporal.glsl` e `rcas.glsl` tiveram só contagem de leituras.
+- **xCloud real:** medições em partida ficam pendentes para uma sessão com o Matheus jogando.
