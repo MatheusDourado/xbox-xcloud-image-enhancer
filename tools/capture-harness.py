@@ -49,7 +49,7 @@ probe=r'''
  let savedFile=null;window.BxAndroid={saveFile:(name,mime,text)=>{savedFile={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const report=await api.exportMeasurement();delete window.BxAndroid;
  const segs=report.segments,seg=segs.find(s=>s.config.settings.capture==='direct'&&s.display.count>40);
- check(savedFile&&/^bx-v9.8.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===2,'Measurement is saved through the Android bridge (schema 2)');
+ check(savedFile&&/^bx-v9\.8\.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===2,'Measurement is saved through the Android bridge (schema 2)');
  check(seg&&seg.arrival.count>40&&seg.server.count>40&&seg.wait.count>40,`Direct segment records display, arrival, server and wait intervals (${seg&&[seg.display.count,seg.arrival.count,seg.server.count,seg.wait.count]})`);
  const longest=Math.max(...segs.flatMap(s=>[s.server.maxMs||0,s.arrival.maxMs||0]));
  check(longest<500,`No interval spans the switch between clocks (longest ${longest.toFixed(1)} ms)`);
