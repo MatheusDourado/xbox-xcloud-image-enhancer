@@ -838,10 +838,11 @@
    h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Latência estimada'}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
    h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: 'Soma aproximada; não inclui controle, jogo nem tela.'}));
   els.stream = h('div', {'data-bxif-out': 'stream'}); els.decoder = h('div', {'data-bxif-out': 'decoder'}); els.quality = h('div', {'data-bxif-out': 'quality'}); els.drops = h('div', {'data-bxif-out': 'drops'});
-  // Spec 3 item 11: measured only on a desktop (Vostro, −1 ms and steadier pacing); on the Poco F7 the
-  // 60 FPS rate fell. Tearing was not evaluated. The attribute is fixed when the canvas is created.
+  // Spec 3 item 11 (docs/medicoes/spec3/*item11*): on the Vostro at 30 FPS, display p95 50 → 34 ms and
+  // about −0.5 ms of GPU per frame; at 60 FPS the frames shown fell from 58-59 to 44 FPS. On the Poco F7
+  // no gain. Tearing was not evaluated. The attribute is fixed when the canvas is created.
   els.desync = toggle({key: 'desynchronized', label: 'Baixa latência (desynchronized)', tag: 'EXP', get: () => valueOf('desynchronized'), set: (v, e) => commit('desynchronized', v, e),
-   hint: 'Só para PC: desenha sem esperar o compositor. Pode causar tearing (imagem rasgada) e no celular não ganhou (60 FPS caiu). Vale na próxima sessão.'});
+   hint: 'Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.'});
   els.desyncOut = out('desynchronized'); els.desync.row.append(els.desyncOut);
   s4.body.append(budget.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
   s4.update = updateDesempenho;
