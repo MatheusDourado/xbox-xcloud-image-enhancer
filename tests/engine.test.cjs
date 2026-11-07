@@ -299,3 +299,6 @@ test('engine pre-warms the default spatial variant and never compiles per frame'
 test('spatial variant cache keeps at most eight programs',()=>{const a=api(),gl=fakeGl(10),e=new a.Engine(gl,{spatial:'#version 300 es\nvoid main(){}'});
  for(let i=0;i<20;i++){const u={...spatialUniforms,cleanup:i&1,detail:i&2,antialias:i&4,chroma:i&8,quantize:!(i&16)};e.spatialVariant(u,true);}
  assert.ok(Object.keys(e.programs).filter(k=>k.startsWith('spatial@')).length<=8);});
+test('production WebGL2 contexts are created without MSAA (one full-screen triangle, Spec 3 item 9)',()=>{
+ for(const file of ['script.js','better-xcloud-image-filter.user.js','player/player.js']){const code=fs.readFileSync(file,'utf8'),calls=[...code.matchAll(/getContext\(["']webgl2["'],\s*\{([^}]*)\}/g)].map(m=>m[1]);
+  assert.ok(calls.length>0,file);for(const attrs of calls)assert.match(attrs,/antialias:\s*(!1|false)/,file);}});
