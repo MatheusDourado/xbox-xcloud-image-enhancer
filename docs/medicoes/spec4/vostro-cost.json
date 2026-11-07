@@ -1,0 +1,286 @@
+{
+ "name": "cost",
+ "device": "vostro",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:35:05.390Z"
+ },
+ "after": {
+  "at": "2026-11-07T09:35:17.445Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "timer": true,
+  "spatialPrecision": "highp",
+  "adapter": {
+   "vendor": "intel",
+   "architecture": "gen-12lp",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 0.7000000029802322,
+    "messages": []
+   },
+   "tex": {
+    "ms": 0.29999999701976776,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    64.39999999850988
+   ],
+   [
+    "texspec3",
+    1.2000000029802322
+   ],
+   [
+    "extv9",
+    2.600000001490116
+   ],
+   [
+    "texv9",
+    0.8999999985098839
+   ],
+   [
+    "extall",
+    3.2999999970197678
+   ],
+   [
+    "texall",
+    1.1000000014901161
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.0231
+ },
+ "result": {
+  "n": 40,
+  "rounds": 5,
+  "result": {
+   "v9.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 2.003,
+     "min": 1.945,
+     "max": 2.248
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.555,
+     "min": 1.52,
+     "max": 1.708
+    }
+   },
+   "all.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 2.393,
+     "min": 2.372,
+     "max": 2.547
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.338,
+     "min": 2.325,
+     "max": 2.469
+    }
+   },
+   "v9.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 1.668,
+     "min": 1.65,
+     "max": 1.715
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.639,
+     "min": 1.63,
+     "max": 1.685
+    }
+   },
+   "spec3.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 0.94,
+     "min": 0.938,
+     "max": 0.98
+    },
+    "timer": {
+     "n": 5,
+     "p50": 0.921,
+     "min": 0.916,
+     "max": 0.958
+    }
+   },
+   "all.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 5.418,
+     "min": 5.393,
+     "max": 5.555
+    },
+    "timer": {
+     "n": 5,
+     "p50": 5.367,
+     "min": 5.315,
+     "max": 5.49
+    }
+   },
+   "all.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 1.745,
+     "min": 1.738,
+     "max": 1.79
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.73,
+     "min": 1.72,
+     "max": 1.764
+    }
+   },
+   "all.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 2.65,
+     "min": 2.645,
+     "max": 2.663
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.602,
+     "min": 2.587,
+     "max": 2.612
+    }
+   },
+   "v9.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 2.472,
+     "min": 2.442,
+     "max": 2.503
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.413,
+     "min": 2.399,
+     "max": 2.441
+    }
+   },
+   "spec3.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 1.677,
+     "min": 1.655,
+     "max": 1.807
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.624,
+     "min": 1.619,
+     "max": 1.768
+    }
+   },
+   "spec3.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 1.345,
+     "min": 1.297,
+     "max": 1.393
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.276,
+     "min": 1.25,
+     "max": 1.329
+    }
+   },
+   "v9.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 5,
+     "min": 4.952,
+     "max": 5.053
+    },
+    "timer": {
+     "n": 5,
+     "p50": 4.943,
+     "min": 4.9,
+     "max": 5.009
+    }
+   },
+   "all.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 2.057,
+     "min": 2.035,
+     "max": 2.068
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.616,
+     "min": 1.606,
+     "max": 1.619
+    }
+   },
+   "spec3.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 1.3,
+     "min": 1.267,
+     "max": 1.355
+    },
+    "timer": {
+     "n": 5,
+     "p50": 0.861,
+     "min": 0.842,
+     "max": 0.877
+    }
+   },
+   "spec3.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 1.022,
+     "min": 1.007,
+     "max": 1.03
+    },
+    "timer": {
+     "n": 5,
+     "p50": 0.965,
+     "min": 0.962,
+     "max": 0.972
+    }
+   },
+   "v9.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 2.177,
+     "min": 2.145,
+     "max": 2.19
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.12,
+     "min": 2.11,
+     "max": 2.125
+    }
+   }
+  },
+  "errors": []
+ }
+}
