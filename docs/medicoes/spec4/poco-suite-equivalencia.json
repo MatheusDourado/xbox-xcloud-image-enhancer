@@ -1,0 +1,395 @@
+{
+ "page": "webgpu-equivalence.html",
+ "before": {
+  "at": "2026-11-07T10:26:26.159Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.281,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 42.8,
+  "gpuMaxC": 40.9,
+  "skinC": 37.303,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T10:26:28.099Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": 0.843,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 52.8,
+  "gpuMaxC": 44.9,
+  "skinC": 37.418,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36"
+ },
+ "result": {
+  "passed": [
+   {
+    "name": "WebGPU matches WebGL2: Spec 3 defaults, native",
+    "details": {
+     "max": 4,
+     "mean": 0.01259,
+     "over1Pct": 0.0217
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: v9 defaults, native",
+    "details": {
+     "max": 4,
+     "mean": 0.01085,
+     "over1Pct": 0.019
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: all spatial filters + fused AA",
+    "details": {
+     "max": 3,
+     "mean": 0.0179,
+     "over1Pct": 0.0353
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: legacy spatial mode",
+    "details": {
+     "max": 1,
+     "mean": 0.00925,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: EASU + casFiltered",
+    "details": {
+     "max": 6,
+     "mean": 0.00983,
+     "over1Pct": 0.0627
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: SGSR",
+    "details": {
+     "max": 17,
+     "mean": 0.0201,
+     "over1Pct": 0.0205
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: SGSR from the upload",
+    "details": {
+     "max": 8,
+     "mean": 0.0099,
+     "over1Pct": 0.0072
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: CAS method",
+    "details": {
+     "max": 1,
+     "mean": 0.01253,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: Quality mode (16F targets)",
+    "details": {
+     "max": 6,
+     "mean": 0.01055,
+     "over1Pct": 0.0723
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: RCAS",
+    "details": {
+     "max": 1,
+     "mean": 0.00315,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: CAS-only reference",
+    "details": {
+     "max": 1,
+     "mean": 0.02487,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: original",
+    "details": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: diagnostic tint",
+    "details": {
+     "max": 1,
+     "mean": 0.00129,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: nothing to do",
+    "details": {
+     "max": 1,
+     "mean": 0.00439,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: sharpness 0",
+    "details": {
+     "max": 1,
+     "mean": 0.00551,
+     "over1Pct": 0
+    }
+   },
+   {
+    "name": "WebGPU matches WebGL2: luma off, USM 6",
+    "details": {
+     "max": 9,
+     "mean": 0.00502,
+     "over1Pct": 0.0732
+    }
+   },
+   {
+    "name": "Deferred last pass in present() matches WebGL2 across pacer slots",
+    "details": []
+   },
+   {
+    "name": "Pacer slots survive reuse",
+    "details": [
+     "input",
+     "spatial",
+     "paced0",
+     "paced1",
+     "paced2",
+     "scaled"
+    ]
+   },
+   {
+    "name": "VideoFrame through importExternalTexture (compute tile and copy) matches the canvas upload",
+    "details": []
+   },
+   {
+    "name": "WebGPU hands back temporal",
+    "details": {
+     "temporal": 0.5
+    }
+   },
+   {
+    "name": "WebGPU hands back neural",
+    "details": {
+     "neural": 1
+    }
+   },
+   {
+    "name": "WebGPU draws the default frame"
+   },
+   {
+    "name": "Generic spatial pipeline and its variant both match WebGL2",
+    "details": {
+     "generic": {
+      "max": 1,
+      "mean": 0.0093,
+      "over1Pct": 0
+     },
+     "variant": {
+      "max": 1,
+      "mean": 0.0093,
+      "over1Pct": 0
+     }
+    }
+   },
+   {
+    "name": "timestamp-query samples reach the budget",
+    "details": [
+     0.065536,
+     0.065536,
+     0.065536,
+     0.065536
+    ]
+   },
+   {
+    "name": "No WebGPU errors",
+    "details": []
+   },
+   {
+    "name": "A failed WebGPU renderer reports once and stops drawing",
+    "details": [
+     "test"
+    ]
+   }
+  ],
+  "failures": [],
+  "report": {
+   "createMs": 340,
+   "adapter": {
+    "vendor": "qualcomm",
+    "architecture": "adreno-8xx",
+    "description": ""
+   },
+   "gl": "Adreno (TM) 825",
+   "format": "rgba8unorm",
+   "timestamps": true,
+   "sameDevice": true,
+   "cases": {
+    "Spec 3 defaults, native": {
+     "max": 4,
+     "mean": 0.01259,
+     "over1Pct": 0.0217
+    },
+    "v9 defaults, native": {
+     "max": 4,
+     "mean": 0.01085,
+     "over1Pct": 0.019
+    },
+    "all spatial filters + fused AA": {
+     "max": 3,
+     "mean": 0.0179,
+     "over1Pct": 0.0353
+    },
+    "legacy spatial mode": {
+     "max": 1,
+     "mean": 0.00925,
+     "over1Pct": 0
+    },
+    "EASU + casFiltered": {
+     "max": 6,
+     "mean": 0.00983,
+     "over1Pct": 0.0627
+    },
+    "SGSR": {
+     "max": 17,
+     "mean": 0.0201,
+     "over1Pct": 0.0205
+    },
+    "SGSR from the upload": {
+     "max": 8,
+     "mean": 0.0099,
+     "over1Pct": 0.0072
+    },
+    "CAS method": {
+     "max": 1,
+     "mean": 0.01253,
+     "over1Pct": 0
+    },
+    "Quality mode (16F targets)": {
+     "max": 6,
+     "mean": 0.01055,
+     "over1Pct": 0.0723
+    },
+    "RCAS": {
+     "max": 1,
+     "mean": 0.00315,
+     "over1Pct": 0
+    },
+    "CAS-only reference": {
+     "max": 1,
+     "mean": 0.02487,
+     "over1Pct": 0
+    },
+    "original": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0
+    },
+    "diagnostic tint": {
+     "max": 1,
+     "mean": 0.00129,
+     "over1Pct": 0
+    },
+    "nothing to do": {
+     "max": 1,
+     "mean": 0.00439,
+     "over1Pct": 0
+    },
+    "sharpness 0": {
+     "max": 1,
+     "mean": 0.00551,
+     "over1Pct": 0
+    },
+    "luma off, USM 6": {
+     "max": 9,
+     "mean": 0.00502,
+     "over1Pct": 0.0732
+    }
+   },
+   "videoFrame": {
+    "Spec 3 defaults compute": {
+     "max": 5,
+     "mean": 0.0124,
+     "over1Pct": 0.0271
+    },
+    "Spec 3 defaults copy": {
+     "max": 4,
+     "mean": 0.01318,
+     "over1Pct": 0.0244
+    },
+    "v9 defaults compute": {
+     "max": 5,
+     "mean": 0.01128,
+     "over1Pct": 0.0244
+    },
+    "v9 defaults copy": {
+     "max": 4,
+     "mean": 0.01169,
+     "over1Pct": 0.0217
+    },
+    "all filters + AA compute": {
+     "max": 5,
+     "mean": 0.01817,
+     "over1Pct": 0.0515
+    },
+    "all filters + AA copy": {
+     "max": 3,
+     "mean": 0.01888,
+     "over1Pct": 0.0597
+    },
+    "EASU compute": {
+     "max": 20,
+     "mean": 0.01467,
+     "over1Pct": 0.1302
+    },
+    "EASU copy": {
+     "max": 20,
+     "mean": 0.01651,
+     "over1Pct": 0.1567
+    },
+    "Quality compute": {
+     "max": 20,
+     "mean": 0.01155,
+     "over1Pct": 0.0904
+    },
+    "Quality copy": {
+     "max": 20,
+     "mean": 0.01155,
+     "over1Pct": 0.0904
+    },
+    "no spatial compute": {
+     "max": 20,
+     "mean": 0.01243,
+     "over1Pct": 0.135
+    },
+    "no spatial copy": {
+     "max": 20,
+     "mean": 0.01243,
+     "over1Pct": 0.135
+    }
+   }
+  }
+ }
+}

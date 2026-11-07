@@ -1,0 +1,215 @@
+{
+ "name": "entrada",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T10:37:42.075Z",
+  "level": 35,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": -0.281,
+  "tempC": 37.3,
+  "thermal": 0,
+  "cpu0": 46,
+  "gpuMaxC": 43.7,
+  "skinC": 39.876,
+  "socdPct": 65,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T10:37:47.582Z",
+  "level": 35,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": -0.281,
+  "tempC": 37.3,
+  "thermal": 0,
+  "cpu0": 53.2,
+  "gpuMaxC": 47.8,
+  "skinC": 39.789,
+  "socdPct": 65,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": ""
+  },
+  "format": "rgba8unorm",
+  "timestamps": true,
+  "createMs": 192.80000000447035,
+  "warmMs": 160.89999999850988,
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false
+ },
+ "result": {
+  "a": {
+   "t": 2.0167,
+   "glVsRef": {
+    "max": 93,
+    "mean": 0.42725,
+    "over1Pct": 5.4914,
+    "hist": [
+     4899327,
+     979864,
+     146170,
+     66223,
+     35985,
+     21993,
+     14398,
+     56840
+    ]
+   },
+   "gpuVsRef": {
+    "max": 2,
+    "mean": 0.04848,
+    "over1Pct": 0.0031,
+    "hist": [
+     5919418,
+     301191,
+     191,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "glVsGpu": {
+    "max": 93,
+    "mean": 0.42283,
+    "over1Pct": 5.5024,
+    "hist": [
+     4925424,
+     953081,
+     146573,
+     66393,
+     36108,
+     22045,
+     14344,
+     56832
+    ]
+   },
+   "edges": {
+    "gl": {
+     "mean": 4.017,
+     "max": 93,
+     "pixels": 31395
+    },
+    "gpu": {
+     "mean": 0.1165,
+     "max": 2,
+     "pixels": 31395
+    }
+   },
+   "flat": {
+    "gl": {
+     "mean": 0.3721,
+     "max": 70,
+     "pixels": 2042205
+    },
+    "gpu": {
+     "mean": 0.0474,
+     "max": 2,
+     "pixels": 2042205
+    }
+   }
+  },
+  "b": {
+   "t": 5.0167,
+   "glVsRef": {
+    "max": 74,
+    "mean": 0.4875,
+    "over1Pct": 6.5085,
+    "hist": [
+     4706526,
+     1109391,
+     170430,
+     80251,
+     44749,
+     27024,
+     17262,
+     65167
+    ]
+   },
+   "gpuVsRef": {
+    "max": 2,
+    "mean": 0.05159,
+    "over1Pct": 0.0035,
+    "hist": [
+     5900096,
+     320486,
+     218,
+     0,
+     0,
+     0,
+     0,
+     0
+    ]
+   },
+   "glVsGpu": {
+    "max": 74,
+    "mean": 0.48425,
+    "over1Pct": 6.5296,
+    "hist": [
+     4725437,
+     1089168,
+     171807,
+     80255,
+     44712,
+     27143,
+     17209,
+     65069
+    ]
+   },
+   "edges": {
+    "gl": {
+     "mean": 3.0272,
+     "max": 74,
+     "pixels": 58437
+    },
+    "gpu": {
+     "mean": 0.0984,
+     "max": 2,
+     "pixels": 58437
+    }
+   },
+   "flat": {
+    "gl": {
+     "mean": 0.4139,
+     "max": 73,
+     "pixels": 2015163
+    },
+    "gpu": {
+     "mean": 0.0502,
+     "max": 2,
+     "pixels": 2015163
+    }
+   }
+  }
+ }
+}

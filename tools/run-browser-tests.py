@@ -23,8 +23,13 @@ SUITES = [
 ]
 # Spec 4: WebGPU against WebGL2. Its own browser: headless Chromium exposes WebGPU only with these flags,
 # first the real GPU, then the SwiftShader adapter. Without any adapter the page reports itself skipped.
+# SwiftShader WebGPU imports a video (importExternalTexture) only when ANGLE and Vulkan run on SwiftShader too
+# (otherwise the import fails, or the device is destroyed right after it), so the first set moves on to the
+# second when it gets the SwiftShader adapter instead of a GPU (CI runners).
 WEBGPU = [('webgpu-harness.py', 'webgpu-equivalence.html'), ('renderer-harness.py', 'renderer-harness.html')]
-WEBGPU_FLAGS = [['--enable-gpu', '--enable-unsafe-webgpu'], ['--enable-gpu', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader']]
+WEBGPU_FLAGS = [['--enable-gpu', '--enable-unsafe-webgpu'],
+                ['--enable-gpu', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader', '--use-angle=swiftshader',
+                 '--enable-features=Vulkan', '--use-vulkan=swiftshader']]
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -76,13 +81,15 @@ def main():
             for flags in WEBGPU_FLAGS:
                 browser = p.chromium.launch(channel=args.channel, executable_path=args.executable, args=flags)
                 rows = [run_page(browser, server.server_port, WEBGPU[0][1])]
-                skipped = (rows[0].get('result') or {}).get('skipped')
+                first = rows[0].get('result') or {}
+                software = ((first.get('report') or {}).get('adapter') or {}).get('architecture') == 'swiftshader'
+                skipped = first.get('skipped') or (software and flags is not WEBGPU_FLAGS[-1])
                 if not skipped:
                     rows += [run_page(browser, server.server_port, page) for _, page in WEBGPU[1:]]
                 browser.close()
                 if not skipped:
                     break
-                print(f"  WebGPU flags {' '.join(flags)}: {(rows[0].get('result') or {}).get('reason')}")
+                print(f"  WebGPU flags {' '.join(flags)}: {first.get('reason') or 'SwiftShader adapter, trying the next flags'}")
             results.extend(rows)
             report = (rows[0].get('result') or {}).get('report') or {}
             print(f"  WebGPU flags {' '.join(flags)}: adapter {report.get('adapter')}, WebGL2 {report.get('gl')}, same device {report.get('sameDevice')}")

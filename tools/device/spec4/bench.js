@@ -23,13 +23,14 @@ function wgsl(code,kind){const ext=kind==='ext';
       :'\nfn loadSource(c:vec2i)->vec4f{return textureLoad(source,c,0);}\nfn sampleSource(uv:vec2f)->vec4f{return textureSampleLevel(source,linearSampler,uv,0.0);}\n');}
 // Override constants from the profile shared with the WebGL2 variants (BxRestoration.spatialProfile).
 function constants(c){const p=BxRestoration.spatialProfile(glU(c),'highp'),b=v=>v?1:0;
- return {CLEANUP:b(p.cleanup),DEBAND:b(p.deband),CHROMA:b(p.chroma),DETAIL:b(p.detail),ANTIALIAS:b(p.antialias),TAPS:p.taps,QUANTIZE:b(p.quantize),SELECTIVE:b(p.selective)};}
+ return {FIXED:1,CLEANUP:b(p.cleanup),DEBAND:b(p.deband),CHROMA:b(p.chroma),DETAIL:b(p.detail),ANTIALIAS:b(p.antialias),TAPS:p.taps,QUANTIZE:b(p.quantize),SELECTIVE:b(p.selective)};}
 async function initGpu(){
  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw new Error('no adapter');
  const features=['timestamp-query'].filter(f=>adapter.features.has(f));
  const device=await adapter.requestDevice({requiredFeatures:features});
  const errors=[];device.addEventListener('uncapturederror',ev=>errors.push(String(ev.error.message).slice(0,400)));
- const code=await (await fetch('/src/webgpu/spatial.wgsl',{cache:'no-store'})).text();
+ // The spatial filters with their fragment entry, after the shared prelude (as src/webgpu-engine.js composes them).
+ const code=[BxWgsl.common,BxWgsl.spatial,BxWgsl['spatial-fs']].join('\n');
  const layouts={};for(const kind of ['ext','tex'])layouts[kind]=device.createBindGroupLayout({entries:[
   {binding:0,visibility:GPUShaderStage.FRAGMENT,buffer:{type:'uniform'}},
   kind==='ext'?{binding:1,visibility:GPUShaderStage.FRAGMENT,externalTexture:{}}:{binding:1,visibility:GPUShaderStage.FRAGMENT,texture:{sampleType:'float'}},
