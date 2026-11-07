@@ -41,7 +41,8 @@ Build observado: `hotfix-1.0.2611.0612`, gerado em 2026-11-06T23:46Z.
   - **Detecção**: procura um `<video>` com `srcObject` que tenha trilha de vídeo `live`. Procura primeiro em `[data-testid=media-container]` e, se não achar, em qualquer `<video>`. Trailers e vídeos de destaque usam `src` e ficam de fora.
   - **Canvas**: cria um `WebGL2Player` com o canvas logo depois do vídeo, posicionado sobre ele com `pointer-events: none`. O vídeo fica com `opacity: 0`, não `display: none`, para que foco, teclado e ponteiro continuem indo para o elemento do site.
   - **Fim e reconexão**: acompanha o fim do stream e a troca de `<video>` (verificação a cada 1 s e em mutações do DOM) e remove o canvas.
-  - **Painel**: um botão "IF" no canto superior esquerdo durante o stream, que some após 4 s sem ponteiro, ou **Alt+Shift+F**. As teclas digitadas no painel não chegam ao jogo, e Esc fecha o painel.
+  - **Painel**: o botão "IF" (borda verde) fica sempre visível em `play.xbox.com`, no canto inferior direito. Assim dá para ver que o script está rodando, já que o site novo não tem os ícones do Better xCloud. Durante o jogo, o botão vai para o canto superior esquerdo e some após 4 s sem ponteiro. **Alt+Shift+F** também abre o painel. As teclas digitadas no painel não chegam ao jogo, e Esc fecha o painel.
+  - **Diagnóstico**: o topo do painel diz o que o script vê: "Nenhum jogo em andamento" (com a contagem de vídeos), "Stream encontrado" ou "Tratamento ligado ao vídeo do jogo", com a resolução. Se a hidratação do React remover o botão, ele é recolocado em até 1 s.
 - **`www.xbox.com/*/play` não muda**: `better-xcloud-image-filter.user.js` só muda no fingerprint `sourceSha256` do `BxBuild`, porque `src/play/` entra no hash.
 
 ### App Android
@@ -66,7 +67,7 @@ Build observado: `hotfix-1.0.2611.0612`, gerado em 2026-11-06T23:46Z.
 
 ## 4. Testes feitos (sem login)
 
-- **`tools/play-harness.py`**: 20 verificações num Chrome real. A página imita a estrutura do site novo (`media-container` > `<video>`), com `srcObject` vindo de um loopback WebRTC como faz o `WebRtcStreamV1`. Cobre:
+- **`tools/play-harness.py`**: 24 verificações num Chrome real. A página imita a estrutura do site novo (`media-container` > `<video>`), com `srcObject` vindo de um loopback WebRTC como faz o `WebRtcStreamV1`. Cobre:
   - nada é tratado sem stream;
   - a conexão rastreada continua sendo um `RTCPeerConnection` real;
   - canvas no lugar certo e cobrindo a área;
@@ -81,6 +82,7 @@ Build observado: `hotfix-1.0.2611.0612`, gerado em 2026-11-06T23:46Z.
 
 Nada abaixo dá para verificar sem conta:
 
+0. **Script rodando**: na home logada, o botão "IF" aparece no canto inferior direito e o painel diz "Script ativo em play.xbox.com".
 1. **Detecção**: confirmar que o stream de `/stream/<produto>` cria o `<video>` dentro de `[data-testid=media-container]` e que o botão "IF" aparece. No console: `BxImageFilter.playHost.player()` deve ser diferente de `null`, e `BxImageFilter.status.mode` deve estar em `filtered`.
 2. **Imagem**: o canvas cobre o vídeo sem tarja nem deslocamento, em tela cheia e fora dela. A interface do site (menu do stream, toque) continua por cima.
 3. **Entrada**: controle, teclado e toque chegam ao jogo com o canvas por cima.
@@ -96,16 +98,18 @@ Nada abaixo dá para verificar sem conta:
 
 ### Roteiro de teste para o Matheus (Windows/Chrome + Tampermonkey)
 
-1. No Tampermonkey, crie um script novo e cole todo o conteúdo de `xcloud-image-filter-play.user.js`. Salve. O script do site antigo pode continuar instalado: ele não roda em `play.xbox.com`.
-2. Abra `https://play.xbox.com`, entre num jogo na nuvem e espere a imagem aparecer.
-3. No console (F12), confira:
+1. Os ícones do Better xCloud não aparecem no site novo, e isso é esperado: o Better xCloud não roda nele. O que indica que o script novo está ativo é o botão **IF** no canto inferior direito.
+2. No Tampermonkey, crie um script novo e cole todo o conteúdo de `xcloud-image-filter-play.user.js`. Salve. O script do site antigo pode continuar instalado: ele não roda em `play.xbox.com`.
+3. Abra `https://play.xbox.com`. O botão **IF** deve aparecer já na home; abra-o e confira se o topo diz "Script ativo em play.xbox.com".
+4. Entre num jogo na nuvem e espere a imagem aparecer. O botão vai para o canto superior esquerdo.
+5. No console (F12), confira:
    - `BxImageFilter.playHost.player()` não é `null`;
    - `BxImageFilter.status.mode` é `filtered`;
    - `BxImageFilter.status.resolution` mostra a entrada e a saída, por exemplo `1920×1080 → …`.
-4. Clique no botão **IF**, no canto superior esquerdo, ou use **Alt+Shift+F**. Compare **Vídeo original** com **Novo tratamento** na mesma cena. O painel deve mostrar codec, FPS recebido e bitrate.
-5. Confira se o controle e o teclado continuam funcionando, inclusive em tela cheia.
-6. Saia do jogo e entre em outro: o botão some e volta, com uma única imagem.
-7. Se algo falhar, envie o resultado de `BxImageFilter.status` e um print da tela.
+6. Abra o painel (**IF** ou **Alt+Shift+F**). O topo deve dizer "Tratamento ligado ao vídeo do jogo". Compare **Vídeo original** com **Novo tratamento** na mesma cena. O painel deve mostrar codec, FPS recebido e bitrate.
+7. Confira se o controle e o teclado continuam funcionando, inclusive em tela cheia.
+8. Saia do jogo e entre em outro: o botão volta ao canto inferior direito, sobe de novo no outro jogo e a imagem tratada aparece uma vez só.
+9. Se algo falhar, envie um print do painel aberto (o texto do topo) e o resultado de `BxImageFilter.status`.
 
 ## 6. Limites conhecidos no site novo
 

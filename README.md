@@ -64,7 +64,7 @@ Há um APK de teste em `android/dist/xcloud-imagefilter-9.8.0.apk`: um app WebVi
 
 ### play.xbox.com (experimental)
 
-O Better xCloud 6.7.x não roda no site novo `play.xbox.com`. Lá, instale também `xcloud-image-filter-play.user.js`: ele liga o mesmo tratamento direto ao vídeo do stream, sem os recursos do Better xCloud. O painel abre pelo botão **IF**, no canto superior esquerdo, ou por **Alt+Shift+F**. O app Android injeta esse script sozinho. Ainda não foi validado com login; veja [docs/play-xbox-com.md](docs/play-xbox-com.md).
+O Better xCloud 6.7.x não roda no site novo `play.xbox.com`. Lá, instale também `xcloud-image-filter-play.user.js`: ele liga o mesmo tratamento direto ao vídeo do stream, sem os recursos do Better xCloud. Os ícones do Better xCloud não aparecem no site novo. O que mostra que o script está ativo é o botão **IF**, no canto inferior direito (durante o jogo, no superior esquerdo); ele e **Alt+Shift+F** abrem o painel. O app Android injeta esse script sozinho. Ainda não foi validado com login; veja [docs/play-xbox-com.md](docs/play-xbox-com.md).
 
 Desde a v8.6, a intensidade vem do slider **Nitidez** do painel (0–10, passo 0,5); o slider nativo do Better xCloud não é usado no tratamento. O método vem de **Nitidez final** no painel; a opção **Seguir menu nativo** usa CAS/USM do Better xCloud. O modo Performance/Qualidade continua vindo do menu nativo. Há uma única etapa de nitidez após o tratamento e o upscale. **Referência: só nitidez** usa a mesma intensidade, sem os demais tratamentos; **Vídeo original** não aplica nitidez.
 

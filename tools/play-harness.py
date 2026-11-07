@@ -12,6 +12,14 @@ probe=r'''
  // A video without a WebRTC stream (trailer, hero) is never treated.
  const decoy=document.createElement('video');decoy.muted=true;document.body.append(decoy);
  await wait(1200);check(!host.player()&&!document.querySelector('canvas.bxif-play-canvas'),'Nothing is attached without a stream');
+ // The button shows on every page, so the user can see the script runs; the panel says no game is running.
+ let launch=document.querySelector('.bxif-play-launch');
+ check(launch&&launch.isConnected&&!launch.hasAttribute('data-stream')&&getComputedStyle(launch).opacity>0.5,'Panel button is visible without a game');
+ launch.click();await until(()=>api.panelOpen,2000,'panel visible without a game');
+ check(/Nenhum jogo em andamento/.test(document.querySelector('.bxif-play-diag').textContent)&&document.querySelector('.bxif-play-dialog .bxif-panel'),'Panel opens without a game and says none is running');
+ launch.click();await until(()=>!api.panelOpen,2000,'panel closed');
+ // React hydration may drop nodes it did not render: the button comes back.
+ launch.remove();await wait(1200);launch=document.querySelector('.bxif-play-launch');check(launch&&launch.isConnected,'Removed button is put back');
  const src=document.createElement('canvas');src.width=320;src.height=180;const ctx=src.getContext('2d');
  const stream=src.captureStream(30),track=stream.getVideoTracks()[0];
  let produced=0,running=true;(async()=>{while(running){ctx.fillStyle=`rgb(${(produced*37)%256},${(produced*91)%256},90)`;ctx.fillRect(0,0,320,180);ctx.fillStyle='#fff';ctx.fillRect((produced*7)%300,60,20,60);produced++;await wait(33);}})();
@@ -38,11 +46,12 @@ probe=r'''
  const r=canvas.getBoundingClientRect();check(Math.abs(r.width-640)<2&&Math.abs(r.height-360)<2,`Canvas covers the stream area (${r.width}×${r.height})`);
  const f0=api.status.frames;await wait(1000);check(api.status.frames-f0>=15,`Frames keep coming (${api.status.frames-f0} in 1 s)`);
  // Panel: launcher button and Alt+Shift+F, keys inside it do not reach the page.
- const launch=document.querySelector('.bxif-play-launch');check(launch&&!launch.hidden,'Panel button appears with the stream');
+ check(launch.hasAttribute('data-stream')&&launch.getBoundingClientRect().top<20,'Panel button moves to the top left during the game');
  document.dispatchEvent(new KeyboardEvent('keydown',{key:'F',code:'KeyF',altKey:true,shiftKey:true,bubbles:true}));
  const dialog=document.querySelector('.bxif-play-dialog');
  await until(()=>api.panelOpen,2000,'panel visible');
  check(dialog&&!dialog.hidden&&dialog.querySelector('.bxif-panel'),'Alt+Shift+F opens the panel with the treatment controls');
+ check(/Tratamento ligado ao vídeo do jogo/.test(document.querySelector('.bxif-play-diag').textContent),'Panel says the treatment is bound to the game video');
  let leaked=0;const spy=()=>leaked++;window.addEventListener('keydown',spy);
  dialog.querySelector('.bxif-panel button')?.dispatchEvent(new KeyboardEvent('keydown',{key:'a',bubbles:true}));
  window.removeEventListener('keydown',spy);check(leaked===0,'Keys typed in the panel do not reach the game');
@@ -54,7 +63,7 @@ probe=r'''
  // Teardown as WebRtcStreamV1 does it: srcObject cleared and the video removed.
  video.srcObject=null;video.remove();
  await until(()=>!host.player(),3000,'detach after teardown');
- check(!document.querySelector('canvas.bxif-play-canvas')&&launch.hidden&&api.status.mode==='waiting','Teardown removes the canvas and the panel button');
+ check(!document.querySelector('canvas.bxif-play-canvas')&&!launch.hasAttribute('data-stream')&&launch.isConnected&&api.status.mode==='waiting','Teardown removes the canvas; the button returns to the corner');
  // Reconnect: a new video element and a new track.
  video=makeVideo();b.ontrack=null;video.srcObject=new MediaStream([b.getReceivers().find(x=>x.track.kind==='video').track]);video.play().catch(()=>{});
  await until(()=>host.player()&&host.player().$video===video&&api.status.frames>5,6000,'re-attach on reconnect');
