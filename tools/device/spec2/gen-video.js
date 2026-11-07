@@ -5,7 +5,7 @@ const SCENES=[{name:'caverna',src:'/wall/Screen/img100.jpg',pan:[1.3,.4],span:.6
 const log=t=>{document.getElementById('log').textContent+='\n'+t;};
 const save=(path,body)=>fetch('/save/'+path,{method:'POST',body}).then(r=>{if(!r.ok)throw new Error('save '+path);});
 async function load(s){const b=await (await fetch(s.src)).blob();s.image=await createImageBitmap(b);return s;}
-function draw(x,W,H,s,i,fps){
+var draw=function(x,W,H,s,i,fps){
  // i: frame inside the scene. Motion is in seconds, so 30 and 60 FPS clips show the same camera.
  const t=i/fps,m=s.image,z=1+.05*Math.sin(t*.7),sw=m.width*s.span/z,sh=sw*9/16;
  const sx=Math.min(m.width-sw,Math.max(0,(m.width-sw)*.25+t*s.pan[0]*30)),sy=Math.min(m.height-sh,Math.max(0,(m.height-sh)*.3+t*s.pan[1]*30));
@@ -18,7 +18,7 @@ function draw(x,W,H,s,i,fps){
  x.font=`bold ${22*k}px sans-serif`;x.fillStyle='#78c8ff';x.fillText('Munição 24 | 120',68*k,1016*k);
  x.fillStyle='#b41e1e';x.fillRect(1426*k,60*k,434*k,18*k);x.fillStyle='#28c850';x.fillRect(1426*k,60*k,300*k,18*k);
  x.strokeStyle='#fff';x.lineWidth=1.5*k;for(let n=0;n<12;n++){x.beginPath();x.moveTo((1500+n*30)*k,120*k);x.lineTo((1522+n*30)*k,195*k);x.stroke();}
-}
+};
 function box(type,...parts){const n=parts.reduce((a,p)=>a+p.length,8),o=new Uint8Array(n),d=new DataView(o.buffer);d.setUint32(0,n);for(let i=0;i<4;i++)o[4+i]=type.charCodeAt(i);let at=8;for(const p of parts){o.set(p,at);at+=p.length;}return o;}
 const u32=(...v)=>{const o=new Uint8Array(v.length*4),d=new DataView(o.buffer);v.forEach((x,i)=>d.setUint32(i*4,x));return o;};
 const u16=(...v)=>{const o=new Uint8Array(v.length*2),d=new DataView(o.buffer);v.forEach((x,i)=>d.setUint16(i*2,x));return o;};
@@ -74,3 +74,10 @@ window.run=async()=>{await Promise.all(SCENES.map(load));log('loaded');
  out.push(await encode({name:'game30',fps:30,mbps:9,seconds:8,keep:{mbps:9,frames:[60,120,180],seq}}));
  out.push(await encode({name:'game60',fps:60,mbps:15,seconds:8}));
  return JSON.stringify(out);};
+// Banding and block test: a smooth dark sky above a fast detailed ground, so the encoder spends its bits below and
+// quantizes the gradient. Same layout as the game clip; 9 Mb/s is the rate seen in a match, 5 Mb/s a bad moment.
+const groundDraw=draw;
+window.runSky=async()=>{const rock=SCENES[1];await load(rock);const sky={name:'ceu',image:rock.image,pan:[6,1.5],span:.6,sky:true};SCENES.length=0;SCENES.push(sky);
+ const base=draw;draw=(x,W,H,s,i,fps)=>{base(x,W,H,s,i,fps);const h=Math.round(H*.55),t=i/fps,g=x.createLinearGradient(0,0,W*.15,h);g.addColorStop(0,'#0b1320');g.addColorStop(.6,'#1c2a3a');g.addColorStop(1,'#33475a');x.fillStyle=g;x.fillRect(0,0,W,h);
+  const b=x.createRadialGradient(W*(.3+.02*t),h*.5,0,W*(.3+.02*t),h*.5,W*.35);b.addColorStop(0,'rgba(120,140,160,.10)');b.addColorStop(1,'rgba(120,140,160,0)');x.fillStyle=b;x.fillRect(0,0,W,h);};
+ const out=[];for(const mbps of [9,5])out.push(await encode({name:'ceu'+mbps,fps:30,mbps,seconds:8,keep:{mbps,frames:[60,120,180],seq:[]}}));return JSON.stringify(out);};

@@ -26,6 +26,8 @@ const cases={
  degradesR2:spatial('spatial',uSp({deband:.001})),degradesR8:spatial('spatial',uSp({deband:.999})),
  easu1280:easu,nitidez1080:sharp('casFiltered',big2.texture,W,H,t1080),nitidez1280:sharp('casFiltered',big.texture,OW,OH,t1280),nitidezMp1280:sharp('casMp',big.texture,OW,OH,t1280),
  sgsr8:sg('sgsr',8/255),sgsr20:sg('sgsr',20/255),sgsrHp8:sg('sgsrHp',8/255),
+ rcas1280:i=>{const t=t1280(i);e.draw('rcas',t,OW,OH,{data:big.texture},{...sharpU([OW,OH]),rcasStrength:.5});return t;},rcas1080:i=>{const t=t1080(i);e.draw('rcas',t,W,H,{data:big2.texture},{...sharpU([W,H]),rcasStrength:.5});return t;},
+ semDetalhe:spatial('spatial',uSp({cleanup:.5,deband:.3,chroma:.75})),semCompressao:spatial('spatial',uSp({deband:.3,chroma:.75,detail:.2})),semDegrades:spatial('spatial',uSp({cleanup:.5,chroma:.75,detail:.2})),corDetalhe:spatial('spatial',uSp({chroma:.75,detail:.2})),soCor:spatial('spatial',uSp({chroma:.75})),degradesCor:spatial('spatial',uSp({deband:.3,chroma:.75})),
  present1280:copy(big.texture,OW,OH,t1280),
  present1280inv:inv(copy(big.texture,OW,OH,t1280),'inv'),present1280clear:inv(copy(big.texture,OW,OH,t1280),'clear'),easu1280inv:inv(easu,'inv'),nitidez1280inv:inv(sharp('casFiltered',big.texture,OW,OH,t1280),'inv'),
  neural:i=>{e.draw('nnFeatures',P,W,H,{source:e.input});const t=t1080(i);e.draw('nnApply',t,W,H,{source:e.input,featA:P.texture,featB:P.second},{strength:.5});return t;},
