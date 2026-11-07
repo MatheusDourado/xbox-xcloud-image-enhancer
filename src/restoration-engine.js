@@ -2,7 +2,7 @@
 (() => {
   // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
-  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0});
+  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false});
   function normalize(value={}) {
     if(!value || typeof value!=='object')value={};
     const result={...defaults};
@@ -22,6 +22,8 @@
     if(typeof value.upscale==='boolean')result.upscale=value.upscale;
     if(typeof value.lumaSharpen==='boolean')result.lumaSharpen=value.lumaSharpen;
     if(typeof value.adaptive==='boolean')result.adaptive=value.adaptive;
+    // Low-latency canvas (Spec 3 item 11): only an explicit true; it applies when the next canvas is created.
+    if(value.desynchronized===true)result.desynchronized=true;
     for(const [key,min,max] of [['neural',0,1],['antialias',0,1],['sharpness',0,10],['cleanup',0,1],['deband',0,1],['chroma',0,1],['detail',0,1],['temporal',0,1],['contrast',.8,1.2],['noiseFloor',0,8],['saturation',0,1.3],['shadows',0,1]])
       if(typeof value[key]==='number'&&Number.isFinite(value[key]))result[key]=Math.min(max,Math.max(min,value[key]));
     return result;

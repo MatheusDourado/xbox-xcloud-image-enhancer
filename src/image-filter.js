@@ -17,7 +17,9 @@
   // GPU time estimate {p50, p95, count} from fences when the browser has no GPU timer (see Engine.startFence).
   gpuEstimate:null,
   // Fence trend above 1.5 frame intervals for 3 windows (Engine budget.fenceTrend): a warning only.
-  gpuTrend:false};
+  gpuTrend:false,
+  // desynchronized attribute of the current canvas context (null before the first player).
+  desynchronized:null};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -28,7 +30,7 @@
   return Math.round((screen?.height||0)*dpr);
  }
  // Settings that do not change the processed image keep the GPU adaptation.
- const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition']);
+ const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized']);
  // Bumped by every capture/Fluidez change: a failed direct capture is retried after the user changes either.
  let captureEpoch=0;
  const api=window.BxImageFilter={settings,status,diagnostic:false,panelOpen:false,presets:BxRestoration.presets,
@@ -210,6 +212,9 @@
  function fallback(player){const gl=player.gl;if(gl&&!gl.isContextLost()){gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,player.bxOriginalTexture);gl.useProgram(player.program);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,player.$canvas.width,player.$canvas.height);player.updateCanvas();frame.call(player);}}
  proto.setupShaders=async function(){
   await setup.call(this);if(this.isStopped||!this.gl)return;
+  // Context attributes are fixed when the canvas gets its context (one canvas per player): the panel
+  // compares this with the setting to say when a change waits for the next session.
+  try{status.desynchronized=!!this.gl.getContextAttributes()?.desynchronized;}catch{status.desynchronized=null;}
   this.bxEngine?.destroy();this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
   try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
   catch(error){status.mode='error';status.error=String(error.message||error);console.warn('[Bx Restoration]',error);}

@@ -44,3 +44,15 @@ test('the scaler choice is saved and validated on load',()=>{
  a.update({scaler:'sgsr'});assert.equal(JSON.parse(store['BxImageFilter.v9']).scaler,'sgsr','saved');
  a.reset();assert.equal(a.settings.scaler,'easu','Restaurar returns to EASU');assert.equal(JSON.parse(store['BxImageFilter.v9']).scaler,'easu');
 });
+test('low-latency canvas (desynchronized) is off by default, only an explicit true turns it on, Restaurar turns it off',()=>{
+ assert.equal(load(null).context.window.BxImageFilter.settings.desynchronized,false);
+ assert.equal(load('{"desynchronized":true}').context.window.BxImageFilter.settings.desynchronized,true);
+ for(const bad of ['"yes"','1','null'])assert.equal(load(`{"desynchronized":${bad}}`).context.window.BxImageFilter.settings.desynchronized,false,bad);
+ const store={};const context={WebGL2Player:class{},window:{setInterval(){return 1;},clearInterval(){},setTimeout(f){f();return 0;},clearTimeout(){},addEventListener(){}},document:{readyState:'loading',addEventListener(){}},localStorage:{getItem:k=>store[k]??null,setItem(k,v){store[k]=v;}},console};
+ vm.runInNewContext(fs.readFileSync('src/restoration-engine.js','utf8'),context);vm.runInNewContext(fs.readFileSync('src/image-filter.js','utf8'),context);
+ const a=context.window.BxImageFilter;a.update({desynchronized:true});assert.equal(JSON.parse(store['BxImageFilter.v9']).desynchronized,true,'saved');
+ a.reset();assert.equal(a.settings.desynchronized,false);assert.equal(JSON.parse(store['BxImageFilter.v9']).desynchronized,false);
+ // The production context asks for it only from the setting (the attribute is fixed at canvas creation).
+ for(const file of ['script.js','better-xcloud-image-filter.user.js']){const attrs=[...fs.readFileSync(file,'utf8').matchAll(/getContext\(["']webgl2["'],\s*\{([^}]*)\}/g)].map(m=>m[1]);
+  assert.ok(attrs.length>0,file);for(const x of attrs)assert.match(x,/desynchronized:\s*globalThis\.BxImageFilter\?\.settings\?\.desynchronized\s*===\s*!0/,file);}
+});
