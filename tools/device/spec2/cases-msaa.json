@@ -1,0 +1,12 @@
+[{"name":"aa0-1280-direto-a","query":"aa=0","cfg":{"output":1280}},
+{"name":"aa0-1280-fluidez-a","query":"aa=0","cfg":{"output":1280,"fluid":true}},
+{"name":"aa0-1280-x8-a","query":"aa=0","cfg":{"output":1280,"repeat":8}},
+{"name":"aa1-1280-direto-a","query":"aa=1","cfg":{"output":1280}},
+{"name":"aa1-1280-fluidez-a","query":"aa=1","cfg":{"output":1280,"fluid":true}},
+{"name":"aa1-1280-x8-a","query":"aa=1","cfg":{"output":1280,"repeat":8}},
+{"name":"aa0-1280-direto-b","query":"aa=0","cfg":{"output":1280}},
+{"name":"aa0-1280-fluidez-b","query":"aa=0","cfg":{"output":1280,"fluid":true}},
+{"name":"aa0-1280-x8-b","query":"aa=0","cfg":{"output":1280,"repeat":8}},
+{"name":"aa1-1280-direto-b","query":"aa=1","cfg":{"output":1280}},
+{"name":"aa1-1280-fluidez-b","query":"aa=1","cfg":{"output":1280,"fluid":true}},
+{"name":"aa1-1280-x8-b","query":"aa=1","cfg":{"output":1280,"repeat":8}}]

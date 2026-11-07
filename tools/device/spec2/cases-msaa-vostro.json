@@ -1,0 +1,12 @@
+[{"name":"aa0-1080-direto-a","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080}},
+{"name":"aa0-1080-fluidez-a","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080,"fluid":true}},
+{"name":"aa0-1080-x8-a","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080,"repeat":8}},
+{"name":"aa1-1080-direto-a","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080}},
+{"name":"aa1-1080-fluidez-a","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080,"fluid":true}},
+{"name":"aa1-1080-x8-a","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080,"repeat":8}},
+{"name":"aa0-1080-direto-b","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080}},
+{"name":"aa0-1080-fluidez-b","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080,"fluid":true}},
+{"name":"aa0-1080-x8-b","query":"aa=0&ow=1920&oh=1080","cfg":{"output":1080,"repeat":8}},
+{"name":"aa1-1080-direto-b","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080}},
+{"name":"aa1-1080-fluidez-b","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080,"fluid":true}},
+{"name":"aa1-1080-x8-b","query":"aa=1&ow=1920&oh=1080","cfg":{"output":1080,"repeat":8}}]

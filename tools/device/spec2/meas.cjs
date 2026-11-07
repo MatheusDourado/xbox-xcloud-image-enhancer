@@ -1,12 +1,10 @@
 // Runs one measurement on a device and stores it with its conditions.
 // Usage: node meas.cjs <poco|vostro> <name> <query> <expression> [timeoutSeconds]
 // Output: docs/medicoes/spec2/<device>-<name>.json. Poco runs record battery and temperature before and after.
-const fs=require('fs'),path=require('path'),{execSync}=require('child_process'),{connect,evaluate,navigate,serveRepo}=require('./drive.cjs');
+const fs=require('fs'),path=require('path'),{execSync}=require('child_process'),{connect,evaluate,navigate,serveRepo,pocoState}=require('./drive.cjs');
 const [device,name,query,expr,timeout]=process.argv.slice(2);
 const poco=device==='poco',port=poco?9222:9333,url=`${poco?'https://bench.invalid':'http://127.0.0.1:8765'}/tools/device/spec2/bench.html?${query}`;
-function state(){if(!poco)return {at:new Date().toISOString()};
- const o=execSync('adb shell "dumpsys battery; dumpsys thermalservice; dumpsys window | grep mCurrentFocus"',{encoding:'utf8'}),m=r=>(o.match(r)||[])[1];
- return {at:new Date().toISOString(),level:Number(m(/level: (\d+)/)),tempC:Number(m(/temperature: (\d+)/))/10,thermal:Number(m(/Thermal Status: (\d+)/)),cpu0:Number(m(/mValue=([\d.]+), mType=0, mName=CPU0/)),gpu:Number(m(/mValue=([\d.]+), mType=\d+, mName=GPU[^,]*,/)),focus:(m(/mCurrentFocus=Window\{\S+ \S+ ([^}]+)\}/)||'').split('/')[0]};}
+function state(){return poco?pocoState():{at:new Date().toISOString()};}
 (async()=>{
  const before=state();if(poco&&!before.focus.includes('imagefilter'))throw new Error('app not in front: '+before.focus);
  const c=await connect(port);if(poco)await serveRepo(c);await navigate(c,url);

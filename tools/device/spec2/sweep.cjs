@@ -1,13 +1,11 @@
 // Sweep of production-like sessions with the GPU time the device itself reports.
 // Poco: ftrace power/gpu_work_period through Perfetto (active ns per UID, about 1 s periods).
 // Vostro: Windows counter GPU Engine 3D utilization. Usage: node sweep.cjs <poco|vostro> <name> <cases.json>
-const fs=require('fs'),path=require('path'),{execSync,spawn}=require('child_process'),{connect,evaluate,navigate,serveRepo}=require('./drive.cjs');
+const fs=require('fs'),path=require('path'),{execSync,spawn}=require('child_process'),{connect,evaluate,navigate,serveRepo,pocoState}=require('./drive.cjs');
 const [device,name,casesFile]=process.argv.slice(2),poco=device==='poco',port=poco?9222:9333,base=poco?'https://bench.invalid':'http://127.0.0.1:8765';
 const cases=JSON.parse(fs.readFileSync(casesFile,'utf8')),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const tmp=process.env.TEMP||'.',adbEnv={...process.env,MSYS_NO_PATHCONV:'1'};
-function state(){if(!poco)return {at:new Date().toISOString()};
- const o=execSync('adb shell "dumpsys battery; dumpsys thermalservice; dumpsys window | grep mCurrentFocus"',{encoding:'utf8'}),m=r=>(o.match(r)||[])[1];
- return {at:new Date().toISOString(),level:Number(m(/level: (\d+)/)),tempC:Number(m(/temperature: (\d+)/))/10,thermal:Number(m(/Thermal Status: (\d+)/)),gpuC:Number(m(/mValue=([\d.]+), mType=\d+, mName=GPU[^,]*,/)),focus:(m(/mCurrentFocus=Window\{\S+ \S+ ([^}]+)\}/)||'').split('/')[0]};}
+function state(){return poco?pocoState():{at:new Date().toISOString()};}
 function trace(seconds){
  if(poco){const cfg=`buffers { size_kb: 16384 fill_policy: RING_BUFFER }\nduration_ms: ${seconds*1000}\ndata_sources { config { name: "linux.ftrace" ftrace_config { ftrace_events: "power/gpu_work_period" } } }\n`;
   const f=path.join(tmp,'wp.pbtx');fs.writeFileSync(f,cfg);execSync(`adb push "${f}" /data/local/tmp/wp.pbtx`,{stdio:'ignore',env:adbEnv});

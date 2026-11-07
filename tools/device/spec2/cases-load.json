@@ -1,0 +1,8 @@
+[{"name":"video-e-canvas-parado","cfg":{"mode":"none"}},
+{"name":"so-video","cfg":{"mode":"none","hideCanvas":true}},
+{"name":"so-upload","cfg":{"uploadOnly":true}},
+{"name":"p1280-direto","cfg":{"output":1280}},
+{"name":"p1280-fluidez","cfg":{"output":1280,"fluid":true}},
+{"name":"p1280-x2","cfg":{"output":1280,"repeat":2}},
+{"name":"p1280-x4","cfg":{"output":1280,"repeat":4}},
+{"name":"p1280-x8","cfg":{"output":1280,"repeat":8}}]

@@ -23,6 +23,11 @@ async function serveRepo(c,host='https://bench.invalid'){const root=path.resolve
  c.handlers.push(d=>{if(d.method!=='Fetch.requestPaused')return;const {requestId,request}=d.params,rel=decodeURIComponent(new URL(request.url).pathname),file=path.join(root,rel);
   if(!file.startsWith(root)||!fs.existsSync(file)){c.send('Fetch.fulfillRequest',{requestId,responseCode:404});return;}
   c.send('Fetch.fulfillRequest',{requestId,responseCode:200,responseHeaders:[{name:'Content-Type',value:TYPES[path.extname(file)]||'application/octet-stream'},{name:'Cache-Control',value:'no-store'}],body:fs.readFileSync(file).toString('base64')});});}
-module.exports={connect,evaluate,navigate,serveRepo};
+// Poco conditions. Temperatures come from the HAL section: thermalservice's cached list only refreshes on threshold events.
+function pocoState(){const o=require('child_process').execSync('adb shell "dumpsys battery; dumpsys thermalservice; dumpsys window | grep mCurrentFocus"',{encoding:'utf8'}),m=r=>(o.match(r)||[])[1];
+ const hal=o.slice(o.indexOf('Current temperatures from HAL')),temp=n=>{const r=hal.match(new RegExp('mValue=(-?[0-9.]+), mType=[0-9]+, mName='+n+','));return r?Number(r[1]):null;};
+ const all=[...hal.matchAll(/mValue=([0-9.]+), mType=1, mName=GPU[0-9]/g)].map(x=>Number(x[1])),cool=n=>{const r=hal.match(new RegExp('CoolingDevice\{mValue=([0-9]+), mType=[0-9]+, mName='+n+'\}'));return r?Number(r[1]):null;};
+ return {at:new Date().toISOString(),level:Number(m(/level: (\d+)/)),status:Number(m(/status: (\d+)/)),voltageV:temp('vbat'),currentA:temp('ibat'),tempC:Number(m(/temperature: (\d+)/))/10,thermal:Number(m(/Thermal Status: (\d+)/)),cpu0:temp('CPU0'),gpuMaxC:all.length?Math.max(...all):null,skinC:temp('skin'),socdPct:temp('socd'),coolGpu:cool('gpu'),coolBattery:cool('battery'),focus:(m(/mCurrentFocus=Window\{\S+ \S+ ([^}]+)\}/)||'').split('/')[0]};}
+module.exports={connect,evaluate,navigate,serveRepo,pocoState};
 if(require.main===module)(async()=>{const [port,url,expr,timeout]=process.argv.slice(2);const c=await connect(port);if(url!=='-')await navigate(c,url);
  const code=fs.existsSync(expr)?fs.readFileSync(expr,'utf8'):expr;console.log(await evaluate(c,code,(Number(timeout)||600)*1000));c.close();})().catch(e=>{console.error('ERR',e.message);process.exit(1);});
