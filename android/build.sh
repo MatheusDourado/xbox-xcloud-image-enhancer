@@ -15,6 +15,7 @@ if [ ! -f "$ANDROID_JAR" ]; then
 fi
 (cd .. && python3 tools/build.py)
 cp ../better-xcloud-image-filter.user.js "$OUT/assets/userscript.js"
+cp ../xcloud-image-filter-play.user.js "$OUT/assets/play.js"
 aapt package -f -m -J "$OUT/gen" -M AndroidManifest.xml -S res -I "$ANDROID_JAR"
 javac -nowarn -Xlint:-options -source 8 -target 8 -encoding UTF-8 -bootclasspath "$ANDROID_JAR" -d "$OUT/classes" $(find src "$OUT/gen" -name '*.java')
 dalvik-exchange --dex --min-sdk-version=26 --output="$OUT/classes.dex" "$OUT/classes"

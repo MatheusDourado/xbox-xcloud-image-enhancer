@@ -41,7 +41,10 @@ public class MainActivity extends Activity {
     private static final String START_URL = "https://www.xbox.com/play";
     private WebView webView;
     private String userscript;
+    // play.xbox.com (new site, no Better xCloud): the treatment bound straight to the stream video.
+    private String playScript;
     private boolean documentStart;
+    private boolean playDocumentStart;
     private SharedPreferences prefs;
     private String refreshRates = "[]";
     // Page the bridge serves; file and clipboard calls are refused for any other site.
@@ -81,6 +84,8 @@ public class MainActivity extends Activity {
 
         userscript = wrap(readAsset("userscript.js"));
         documentStart = DocumentStart.add(webView, userscript, new String[]{"https://www.xbox.com"});
+        playScript = wrapPlay(readAsset("play.js"));
+        playDocumentStart = DocumentStart.add(webView, playScript, new String[]{"https://play.xbox.com"});
         if (!documentStart) {
             Toast.makeText(this, "WebView sem document-start: injeção tardia (atualize o Android System WebView)", Toast.LENGTH_LONG).show();
         }
@@ -104,6 +109,9 @@ public class MainActivity extends Activity {
                 // Fallback for old WebView builds; the wrapper ignores a second run.
                 if (!documentStart && url != null && url.startsWith("https://www.xbox.com/")) {
                     view.evaluateJavascript(userscript, null);
+                }
+                if (!playDocumentStart && url != null && url.startsWith("https://play.xbox.com/")) {
+                    view.evaluateJavascript(playScript, null);
                 }
             }
         });
@@ -167,7 +175,7 @@ public class MainActivity extends Activity {
         private boolean fromXbox() {
             Uri uri = Uri.parse(currentUrl);
             String host = uri.getHost();
-            return "https".equals(uri.getScheme()) && host != null && (host.equals("www.xbox.com") || host.equals("xbox.com"));
+            return "https".equals(uri.getScheme()) && host != null && (host.equals("www.xbox.com") || host.equals("xbox.com") || host.equals("play.xbox.com"));
         }
     }
 
@@ -219,6 +227,15 @@ public class MainActivity extends Activity {
                 // user already chose a target resolution, start at Better xCloud's 1080p (HQ).
                 + "try{var k='BetterXcloud',g=JSON.parse(localStorage.getItem(k)||'{}');"
                 + "if(!('stream.video.resolution' in g)){g['stream.video.resolution']='1080p-hq';localStorage.setItem(k,JSON.stringify(g));}}catch(e){}\n"
+                + script
+                + "\n})();";
+    }
+
+    /** play.xbox.com: top frame, once per document. The page's own CSP does not apply to injected scripts. */
+    private static String wrapPlay(String script) {
+        return "(function(){"
+                + "if(window.top!==window||location.hostname!=='play.xbox.com'||window.__bxImageFilterPlay)return;"
+                + "window.__bxImageFilterPlay=true;\n"
                 + script
                 + "\n})();";
     }

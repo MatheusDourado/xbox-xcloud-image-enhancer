@@ -20,6 +20,7 @@ SUITES = [
     ('regression-harness.py', 'regressions-v7.html'),
     ('quality-harness.py', 'motion-quality.html'),
     ('capture-harness.py', 'capture-harness.html'),
+    ('play-harness.py', 'play-harness.html'),
 ]
 
 

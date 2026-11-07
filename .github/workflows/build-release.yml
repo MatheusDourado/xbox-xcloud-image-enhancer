@@ -44,9 +44,10 @@ jobs:
       - name: Userscript e testes
         run: |
           python3 tools/build.py
-          git diff --exit-code -- better-xcloud-image-filter.user.js output/restoration.bundle.js || { echo "::error::Arquivos gerados desatualizados: rode python3 tools/build.py e faça commit"; exit 1; }
+          git diff --exit-code -- better-xcloud-image-filter.user.js xcloud-image-filter-play.user.js output/restoration.bundle.js || { echo "::error::Arquivos gerados desatualizados: rode python3 tools/build.py e faça commit"; exit 1; }
           node --test tests/*.cjs
           node --check better-xcloud-image-filter.user.js
+          node --check xcloud-image-filter-play.user.js
           node --check player/player.js
       - name: Regressões WebGL e DOM
         run: |
@@ -83,6 +84,7 @@ jobs:
           name: xcloud-imagefilter
           path: |
             better-xcloud-image-filter.user.js
+            xcloud-image-filter-play.user.js
             android/dist/*.apk
       - name: Publicar release
         if: (github.event_name == 'workflow_dispatch' && inputs.tag != '') || startsWith(github.ref, 'refs/tags/v')
@@ -98,7 +100,7 @@ jobs:
           test -f "$NOTES" || { echo "::error::Notas não encontradas: $NOTES"; exit 1; }
           TITLE=$(head -1 "$NOTES" | sed 's/^# *//')
           tail -n +2 "$NOTES" > /tmp/notes.md
-          FILES=(better-xcloud-image-filter.user.js)
+          FILES=(better-xcloud-image-filter.user.js xcloud-image-filter-play.user.js)
           if [ "$APK" = "true" ]; then FILES+=(android/dist/*.apk); fi
           PRE=(); case "$TAG" in *-*) PRE=(--prerelease);; esac
           if gh release view "$TAG" >/dev/null 2>&1; then

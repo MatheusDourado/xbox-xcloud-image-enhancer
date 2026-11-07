@@ -62,6 +62,10 @@ Há um APK de teste em `android/dist/xcloud-imagefilter-9.8.0.apk`: um app WebVi
 4. Abra **Tratamento de imagem** no menu do Better xCloud, na seção **Vídeo**, logo após **Renderizador**.
 5. Compare **Referência: só nitidez** e **Novo tratamento** na mesma cena, com a mesma Nitidez. **Vídeo original** desliga o tratamento e a nitidez.
 
+### play.xbox.com (experimental)
+
+O Better xCloud 6.7.x não roda no site novo `play.xbox.com`. Lá, instale também `xcloud-image-filter-play.user.js`: ele liga o mesmo tratamento direto ao vídeo do stream, sem os recursos do Better xCloud. O painel abre pelo botão **IF**, no canto superior esquerdo, ou por **Alt+Shift+F**. O app Android injeta esse script sozinho. Ainda não foi validado com login; veja [docs/play-xbox-com.md](docs/play-xbox-com.md).
+
 Desde a v8.6, a intensidade vem do slider **Nitidez** do painel (0–10, passo 0,5); o slider nativo do Better xCloud não é usado no tratamento. O método vem de **Nitidez final** no painel; a opção **Seguir menu nativo** usa CAS/USM do Better xCloud. O modo Performance/Qualidade continua vindo do menu nativo. Há uma única etapa de nitidez após o tratamento e o upscale. **Referência: só nitidez** usa a mesma intensidade, sem os demais tratamentos; **Vídeo original** não aplica nitidez.
 
 Compressão, degradês, temporal, upscale e diagnóstico ficam no mesmo menu. Os controles experimentais de saturação, contraste e sombras foram removidos; valores antigos dessas correções são neutralizados. O tratamento, incluindo a Nitidez do painel, é salvo para todos os jogos. A v6 também reinicia o tipo do renderizador ao encerrar a sessão para recriar o canvas no jogo seguinte e impede que uma inicialização assíncrona reative um motor já encerrado.

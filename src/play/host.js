@@ -1,0 +1,143 @@
+// play.xbox.com host, part 2: binds the treatment straight to the stream's <video>.
+// The new site (React Router, WebRtcStreamV1) creates one <video> inside div[data-testid=media-container]
+// and sets srcObject to the WebRTC MediaStream on ontrack (docs/play-xbox-com.md). Nothing in the
+// site's code is changed: a WebGL2 canvas is placed over that video and the video is made transparent,
+// so focus, pointer and keyboard input still reach the site's own element.
+(() => {
+ if (window.top !== window) return;
+ const api = window.BxImageFilter;
+ const CSS = `
+video.bxif-play-source{opacity:0 !important}
+canvas.bxif-play-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;background:#000;z-index:0}
+.bxif-play-launch{position:fixed;top:12px;left:12px;z-index:2147483646;width:40px;height:40px;border:0;border-radius:20px;
+ background:rgba(0,0,0,.55);color:#fff;font:600 13px/40px Bahnschrift,Arial,Roboto,sans-serif;text-align:center;cursor:pointer;
+ transition:opacity .25s;opacity:.85;padding:0}
+.bxif-play-launch[data-idle]{opacity:0;pointer-events:none}
+.bxif-play-launch:focus-visible{outline:2px solid #04b358;outline-offset:2px}
+.bxif-play-dialog{position:fixed;top:0;right:0;bottom:0;z-index:2147483647;width:min(440px,100vw);box-sizing:border-box;
+ overflow:auto;padding:12px 16px;background:rgba(18,20,24,.96);color:#fff;box-shadow:-4px 0 24px rgba(0,0,0,.5)}
+.bxif-play-dialog[hidden]{display:none}
+.bxif-play-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font:600 15px Bahnschrift,Arial,Roboto,sans-serif}
+.bxif-play-head button{border:0;border-radius:6px;background:#2a2e36;color:#fff;font:600 13px Bahnschrift,Arial,Roboto,sans-serif;padding:8px 12px;cursor:pointer}`;
+ // Only a live WebRTC video track: trailers and hero videos on the new site use src, not srcObject.
+ function isStream(video) {
+  const stream = video.srcObject;
+  if (!(typeof MediaStream === 'function' && stream instanceof MediaStream)) return false;
+  return stream.getVideoTracks().some(t => t.readyState === 'live') && video.isConnected;
+ }
+ function findStream() {
+  const inContainer = document.querySelectorAll('[data-testid="media-container"] video');
+  for (const v of inContainer) if (isStream(v)) return v;
+  // Fallback if the container's test id changes: any video playing a WebRTC track.
+  for (const v of document.getElementsByTagName('video')) if (isStream(v)) return v;
+  return null;
+ }
+ let player = null, starting = null, style = null;
+ function ensureStyle() {
+  if (style?.isConnected) return;
+  style = document.createElement('style');style.id = 'bxif-play-style';style.textContent = CSS;
+  (document.head || document.documentElement).append(style);
+ }
+ async function attach(video) {
+  ensureStyle();
+  const parent = video.parentElement;
+  if (parent && getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
+  const p = new WebGL2Player(video);
+  p.$canvas.classList.add('bxif-play-canvas');
+  p.$canvas.setAttribute('aria-hidden', 'true');
+  starting = p;
+  try { await p.init(); } catch (error) { console.warn('[BxImageFilter] play.xbox.com', error); }
+  if (starting !== p) return;
+  starting = null;
+  // Without a context the original video stays visible.
+  if (!p.gl) { p.destroy(); return; }
+  player = p;
+  video.classList.add('bxif-play-source');
+  showLauncher(true);
+ }
+ function detach() {
+  const p = player || starting;
+  player = starting = null;
+  if (!p) return;
+  p.$video?.classList.remove('bxif-play-source');
+  try { p.destroy(); } catch (error) { console.warn('[BxImageFilter] play.xbox.com', error); }
+  showLauncher(false);
+ }
+ // srcObject changes fire no DOM mutation: a light check once a second (and on DOM changes) follows the
+ // video from creation to teardown, including a reconnect that replaces it.
+ function scan() {
+  const current = player || starting;
+  if (current) {
+   const v = current.$video;
+   if (!isStream(v) || findStream() !== v) detach(); else return;
+  }
+  const video = findStream();
+  if (video && video.videoWidth > 0) attach(video);
+  else if (video && !video.bxifWaiting) {
+   video.bxifWaiting = true;
+   video.addEventListener('loadeddata', () => { video.bxifWaiting = false; scan(); }, {once: true});
+  }
+ }
+ let scanQueued = false;
+ // While a player runs, the site's UI mutates often: the 1 s check alone notices the teardown.
+ function queueScan() { if (scanQueued || player) return; scanQueued = true; requestAnimationFrame(() => { scanQueued = false; scan(); }); }
+ // Panel: a small button over the stream (hidden after a few seconds without the pointer) and Alt+Shift+F.
+ let launcher = null, dialog = null, body = null, idleTimer = 0;
+ function build() {
+  if (launcher) return;
+  ensureStyle();
+  launcher = document.createElement('button');
+  launcher.type = 'button';launcher.className = 'bxif-play-launch';launcher.textContent = 'IF';
+  launcher.title = 'Tratamento de imagem (Alt+Shift+F)';launcher.setAttribute('aria-label', 'Tratamento de imagem');
+  launcher.addEventListener('click', e => { e.stopPropagation(); toggle(); });
+  dialog = document.createElement('div');
+  dialog.className = 'bxif-play-dialog';dialog.hidden = true;
+  dialog.setAttribute('role', 'dialog');dialog.setAttribute('aria-label', 'Tratamento de imagem');
+  const head = document.createElement('div'), title = document.createElement('span'), close = document.createElement('button');
+  head.className = 'bxif-play-head';title.textContent = 'Tratamento de imagem';
+  close.type = 'button';close.textContent = 'Fechar';close.addEventListener('click', () => toggle(false));
+  head.append(title, close);
+  body = document.createElement('div');
+  dialog.append(head, body);
+  // Keys typed in the panel are not game input.
+  for (const name of ['keydown', 'keyup', 'keypress']) dialog.addEventListener(name, e => { if (e.key === 'Escape' && name === 'keydown') toggle(false); e.stopPropagation(); });
+  document.body.append(launcher, dialog);
+ }
+ function toggle(open = dialog?.hidden ?? true) {
+  build();
+  // The panel sets api.panelOpen itself while it is on screen (IntersectionObserver).
+  dialog.hidden = !open;
+  if (open) { api.mountControls(body); dialog.querySelector('button')?.focus(); }
+  else (player?.$video || launcher).focus?.({preventScroll: true});
+ }
+ function showLauncher(on) {
+  if (!document.body) return;
+  build();
+  launcher.hidden = !on;
+  if (!on) toggle(false); else wake();
+ }
+ function wake() {
+  if (!launcher || launcher.hidden) return;
+  launcher.removeAttribute('data-idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => { if (dialog.hidden) launcher.setAttribute('data-idle', ''); }, 4000);
+ }
+ window.addEventListener('pointermove', wake, {passive: true, capture: true});
+ window.addEventListener('pointerdown', wake, {passive: true, capture: true});
+ window.addEventListener('keydown', e => {
+  if (e.altKey && e.shiftKey && (e.code === 'KeyF' || e.key === 'F' || e.key === 'f') && (player || dialog && !dialog.hidden)) { e.preventDefault(); e.stopPropagation(); toggle(); }
+ }, true);
+ let observer = null, timer = 0;
+ function start() {
+  if (!document.documentElement) return;
+  observer ??= new MutationObserver(queueScan);
+  observer.observe(document.documentElement, {childList: true, subtree: true});
+  clearInterval(timer);timer = setInterval(scan, 1000);
+  scan();
+ }
+ window.addEventListener('pagehide', () => { clearInterval(timer);timer = 0;observer?.disconnect();detach(); });
+ window.addEventListener('pageshow', e => { if (e.persisted) start(); });
+ if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, {once: true}); else start();
+ // Test hook: the current player (null when none).
+ api.playHost = {player: () => player, scan};
+})();
