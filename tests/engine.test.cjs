@@ -270,3 +270,32 @@ test('the video element keeps a wider margin for frames it skips without overloa
  for(let i=0;i<30;i++)p.cadence(30,29.4*.97,.9);assert.equal(p.revision,0);
  for(let i=0;i<3;i++)p.cadence(30,26,.9);assert.equal(p.revision,1);
 });
+// Spec 3: compiled spatial variants, mediump only where mediump is real half precision.
+function fakeGl(precision){const calls={programs:0};return new Proxy({},{get(_,k){
+ if(k==='calls')return calls;if(k==='getShaderPrecisionFormat')return ()=>precision===null?null:({precision,rangeMin:15,rangeMax:15});
+ if(k==='getExtension')return ()=>null;if(k==='createProgram')return ()=>{calls.programs++;return {};};
+ if(typeof k==='string'&&/^[A-Z][A-Z0-9_]+$/.test(k))return k;return ()=>true;}});}
+const spatialUniforms={cleanup:0,deband:.6,chroma:.75,detail:0,antialias:0,debandTaps:4,quantize:true,selective:true};
+test('spatial precision is mediump only for half-precision mediump GPUs, unless forced',()=>{const a=api();
+ assert.equal(a.spatialPrecision(fakeGl(10)),'mediump');assert.equal(a.spatialPrecision(fakeGl(23)),'highp');assert.equal(a.spatialPrecision(fakeGl(null)),'highp');
+ assert.equal(a.spatialPrecision({getShaderPrecisionFormat(){throw new Error('lost');}}),'highp');
+ assert.equal(a.spatialPrecision(fakeGl(10),'highp'),'highp');assert.equal(a.spatialPrecision(fakeGl(23),'mediump'),'mediump');});
+test('spatial profile keys on enabled filters and flags, not on strengths',()=>{const a=api(),key=u=>a.spatialKey(a.spatialProfile(u,'mediump'));
+ assert.equal(key(spatialUniforms),'mediump.0.1.4.1.0.0.1.1');
+ assert.equal(key({...spatialUniforms,deband:.78,chroma:.4}),key(spatialUniforms),'compression adaptation must not recompile');
+ assert.notEqual(key({...spatialUniforms,debandTaps:2}),key(spatialUniforms),'adaptation step to 2 taps is a new variant');
+ assert.equal(a.spatialProfile({...spatialUniforms,deband:0}).taps,0);assert.equal(a.spatialProfile({...spatialUniforms,debandTaps:2.5}).taps,3);
+ assert.notEqual(key({...spatialUniforms,quantize:false}),key(spatialUniforms));assert.equal(a.spatialProfile(spatialUniforms).precision,'highp');});
+test('spatial variant source defines the profile right after #version',()=>{const a=api(),code=a.spatialSource('#version 300 es\nvoid main(){}',a.spatialProfile(spatialUniforms,'mediump'));
+ const lines=code.split('\n');assert.equal(lines[0],'#version 300 es');for(const d of ['SPATIAL_FIXED 1','SPATIAL_PRECISION mediump','SPATIAL_TAPS 4.0','SPATIAL_QUANTIZE true','SPATIAL_SELECTIVE true','SPATIAL_CLEANUP 0','SPATIAL_DEBAND 1','SPATIAL_CHROMA 1','SPATIAL_DETAIL 0','SPATIAL_ANTIALIAS 0'])assert.ok(lines.includes('#define '+d),d);});
+test('engine pre-warms the default spatial variant and never compiles per frame',()=>{const a=api(),gl=fakeGl(10),shaders={spatial:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'};
+ const e=new a.Engine(gl,shaders);assert.equal(gl.calls.programs,3,'two shaders and the default variant');assert.equal(e.spatialPrecision,'mediump');
+ const name=e.spatialVariant(spatialUniforms);assert.match(name,/^spatial@mediump\./);
+ for(let i=0;i<50;i++){e.frames++;assert.equal(e.spatialVariant({...spatialUniforms,deband:.5+i/100}),name);}assert.equal(gl.calls.programs,3);
+ const other={...spatialUniforms,debandTaps:2};assert.equal(e.spatialVariant(other),'spatial','generic shader while the new variant compiles');assert.equal(e.spatialVariant(other),'spatial');assert.equal(gl.calls.programs,4);
+ e.frames++;assert.match(e.spatialVariant(other),/^spatial@mediump\.0\.1\.2\./);assert.equal(gl.calls.programs,4);
+ assert.equal(new a.Engine(fakeGl(23),shaders).spatialVariant(spatialUniforms).split('.')[0],'spatial@highp');
+ assert.equal(new a.Engine(fakeGl(10),shaders,{spatialVariants:false}).spatialVariant(spatialUniforms),'spatial');});
+test('spatial variant cache keeps at most eight programs',()=>{const a=api(),gl=fakeGl(10),e=new a.Engine(gl,{spatial:'#version 300 es\nvoid main(){}'});
+ for(let i=0;i<20;i++){const u={...spatialUniforms,cleanup:i&1,detail:i&2,antialias:i&4,chroma:i&8,quantize:!(i&16)};e.spatialVariant(u,true);}
+ assert.ok(Object.keys(e.programs).filter(k=>k.startsWith('spatial@')).length<=8);});

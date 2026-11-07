@@ -115,6 +115,25 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  engine.render(input,128,96,{...rcasOnly,mode:'original'},3);const plain=pixels();
  engine.render(input,128,96,{...rcasOnly,mode:'original',sharpening:'cas'},3);const plainCas=pixels();
  check(plain.every((v,i)=>v===plainCas[i]),'Original stays unsharpened with RCAS selected');
+ // Compiled spatial variants (Spec 3): the highp profile must give the generic shader's bytes exactly,
+ // on a frame with smooth ramps, colored edges, thin lines and noise, for several filter sets.
+ {const img=ctx.createImageData(128,96);let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
+  for(let y=0;y<96;y++)for(let x=0;x<128;x++){const i=(y*128+x)*4,ramp=40+x*.6+y*.2;let r=ramp,g=ramp+10,b=ramp*1.2;
+   if(x>=64&&x<96){r=x%9<4?200:40;g=y%7<3?60:180;b=90;}if(x>=96){const n=rnd()*24-12;r=120+n;g=110+(y%4)*3+n;b=100+(x%3)*5;}if(x%17===0){r+=6;g-=4;}
+   img.data[i]=r;img.data[i+1]=g;img.data[i+2]=b;img.data[i+3]=255;}
+  ctx.putImageData(img,0,0);
+  const v=new BxRestoration.Engine(gl,BxShaders,{spatialPrecision:'highp'}),ta=v.target('pacedA',128,96),tb=v.target('pacedB',128,96);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,v.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  const read=t=>{gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);const p=new Uint8Array(128*96*4);gl.readPixels(0,0,128,96,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+  const base={cleanup:0,deband:0,chroma:0,detail:0,antialias:0,debandTaps:4,quantize:true,selective:true},sets=[
+   {...base,deband:.6,chroma:.75},{...base,cleanup:.5,deband:.3,chroma:.75,detail:.2},{cleanup:1,deband:1,chroma:1,detail:1,antialias:1,debandTaps:2,quantize:false,selective:false},
+   {...base,deband:.3,debandTaps:2},{...base,cleanup:.35,selective:false},{...base,antialias:.5},{...base,detail:.35,chroma:.5,quantize:false},{...base}];
+  const bad=[];let changed=0;
+  for(const u of sets){const name=v.spatialVariant(u,true);v.draw('spatial',ta,128,96,{source:v.input},u);v.draw(name,tb,128,96,{source:v.input},u);const a=read(ta),b=read(tb);
+   let diff=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff++;if(name==='spatial'||diff)bad.push({u,name,diff});if(name!=='spatial')changed++;}
+  check(!bad.length&&changed===sets.length,'Highp spatial variants match the generic shader byte for byte',{bad,variants:changed});
+  const fresh=v.spatialVariant({...base,deband:.3,detail:.1});check(fresh==='spatial','A new spatial profile draws with the generic shader until its variant is built',fresh);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);v.destroy();}
  check(gl.getError()===gl.NO_ERROR,'No GL errors');
  engine.destroy();fallback.destroy();
  document.getElementById('result').textContent=JSON.stringify({passed:checks,failures});

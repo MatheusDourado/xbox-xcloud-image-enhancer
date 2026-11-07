@@ -1,15 +1,43 @@
 #version 300 es
-precision highp float;
+// Compiled variants (restoration-engine.js, spatialSource) define SPATIAL_FIXED, the SPATIAL_* switches
+// below and SPATIAL_PRECISION after the #version line: disabled filters are compiled out and the loop
+// and flags become constants. Without them this is the generic shader driven by uniforms only.
+#ifndef SPATIAL_PRECISION
+#define SPATIAL_PRECISION highp
+#endif
+#ifndef SPATIAL_CLEANUP
+#define SPATIAL_CLEANUP 1
+#endif
+#ifndef SPATIAL_DEBAND
+#define SPATIAL_DEBAND 1
+#endif
+#ifndef SPATIAL_CHROMA
+#define SPATIAL_CHROMA 1
+#endif
+#ifndef SPATIAL_DETAIL
+#define SPATIAL_DETAIL 1
+#endif
+#ifndef SPATIAL_ANTIALIAS
+#define SPATIAL_ANTIALIAS 1
+#endif
+// Color math may run in mediump (half floats on Adreno/Mali); pixel coordinates stay highp.
+precision SPATIAL_PRECISION float;
 precision highp sampler2D;
 uniform sampler2D source;
-uniform float cleanup, deband, debandTaps, chroma, detail, antialias;
+uniform float cleanup, deband, chroma, detail, antialias;
+#ifdef SPATIAL_FIXED
+const float debandTaps=SPATIAL_TAPS;
+const bool quantize=SPATIAL_QUANTIZE,selective=SPATIAL_SELECTIVE;
+#else
+uniform float debandTaps;
 uniform bool quantize,selective;
+#endif
 out vec4 fragColor;
 float peak(vec3 c){return max(max(abs(c.r),abs(c.g)),abs(c.b));}
 float lum(vec3 c){return dot(c,vec3(.2126,.7152,.0722));}
-vec3 at(vec2 p){return texelFetch(source,clamp(ivec2(p),ivec2(0),textureSize(source,0)-1),0).rgb;}
+vec3 at(highp vec2 p){return texelFetch(source,clamp(ivec2(p),ivec2(0),textureSize(source,0)-1),0).rgb;}
 void main(){
- vec2 p=gl_FragCoord.xy-.5;vec3 c=at(p), result=c;
+ highp vec2 p=gl_FragCoord.xy-.5;vec3 c=at(p), result=c;
  vec3 west=at(p-vec2(1,0)),east=at(p+vec2(1,0));
  vec3 south=at(p-vec2(0,1)),north=at(p+vec2(0,1));
  // Gradient sign reversals identify fine texture/extrema, even at low contrast.
@@ -22,6 +50,7 @@ void main(){
   textureMask=max(textureMask,smoothstep(.003,.015,sqrt(max(0.,max(max(rx.r,rx.g),rx.b)))));
  }
  // Detect a small step between smooth regions; do not assume a codec block grid.
+ #if SPATIAL_CLEANUP
  if(cleanup>0.)for(int axis=0;axis<2;axis++){
   vec2 d=axis==0?vec2(1,0):vec2(0,1);
   vec3 l=axis==0?west:south,ll=at(p-2.*d),r=axis==0?east:north,rr=at(p+2.*d);
@@ -35,6 +64,8 @@ void main(){
   vec3 across=left>right?l:r;
   result=mix(result,(c+across)*.5,cleanup*confidence*smoothSides*smallStep*.8*(1.-textureMask));
  }
+ #endif
+ #if SPATIAL_DEBAND
  if(deband>0.){
   vec3 avg=vec3(0);float diff=0.,weightSum=0.;
   float radius=mix(2.,8.,deband);
@@ -51,6 +82,8 @@ void main(){
   float flatRegion=1.-smoothstep(.006,.012+deband*.04,diff);
   result=mix(result,avg,deband*flatRegion*.8*(1.-textureMask));
  }
+ #endif
+ #if SPATIAL_CHROMA
  if(chroma>0.){
   // Chroma from luma. 4:2:0 color is upsampled with a ~2 px blur while luma
   // stays sharp. Across a luma edge, samples 2 px away on each side carry
@@ -58,7 +91,7 @@ void main(){
   vec2 g=vec2(lum(east)-lum(west),lum(north)-lum(south));
   float gl=length(g);
   if(gl>4./255.){
-   vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size,d=g/gl*2./size;
+   highp vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size,d=g/gl*2./size;
    vec3 A=texture(source,uv-d).rgb,B=texture(source,uv+d).rgb;
    float yA=lum(A),yB=lum(B),Y=lum(result),span=yB-yA;
    float s=clamp((Y-yA)/(abs(span)>1e-4?span:1e-4),0.,1.);
@@ -72,6 +105,8 @@ void main(){
    result=vec3(Rc,(Y-.2126*Rc-.0722*Bc)/.7152,Bc);
   }
  }
+ #endif
+ #if SPATIAL_DETAIL
  if(detail>0.){
   // Reuse center/cross samples; fetch only diagonals and distance-2 cross.
   vec3 w[8]=vec3[8](at(p+vec2(-1,-1)),at(p+vec2(1,-1)),at(p+vec2(-1,1)),at(p+vec2(1,1)),at(p+vec2(2,0)),at(p-vec2(2,0)),at(p+vec2(0,2)),at(p-vec2(0,2)));
@@ -85,7 +120,7 @@ void main(){
   float L=lum(result),range=hi-lo,wLo=lo,wHi=hi;
   for(int i=4;i<8;i++){float l=lum(w[i]);wLo=min(wLo,l);wHi=max(wHi,l);}
   float fine=lum(c)-.25*(lum(west)+lum(east)+lum(south)+lum(north));
-  vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size;float ring=0.;
+  highp vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size;float ring=0.;
   for(int i=0;i<8;i++){
    vec2 d=i==0?vec2(3.5,.5):i==1?vec2(-3.5,-.5):i==2?vec2(.5,-3.5):i==3?vec2(-.5,3.5):i==4?vec2(2.5):i==5?vec2(-2.5):i==6?vec2(2.5,-2.5):vec2(-2.5,2.5);
    float l=lum(texture(source,uv+d/size).rgb);ring+=l;wLo=min(wLo,l);wHi=max(wHi,l);
@@ -98,6 +133,8 @@ void main(){
   // Bound new overshoot only; never pull an existing value back.
   result+=clamp(L+dL,min(L,lo-margin),max(L,hi+margin))-L;
  }
+ #endif
+ #if SPATIAL_ANTIALIAS
  if(antialias>0.){
   // Same directional AA as antialias.glsl, fused here when temporal is off:
   // saves a full-frame pass and render target (memory bandwidth on iGPUs).
@@ -108,13 +145,16 @@ void main(){
   float major=max(abs(dir.x),abs(dir.y));
   float weight=antialias*smoothstep(.04,.15,hi-lo)*smoothstep(.05,.35,min(abs(dir.x),abs(dir.y))/max(major,1e-5));
   if(weight>0.){
-   vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size,d=dir/max(major,1e-5)/size*.5;
+   highp vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size,d=dir/max(major,1e-5)/size*.5;
    vec3 smoothColor=(texture(source,uv-d).rgb+texture(source,uv+d).rgb)*.5;
    float sl=lum(smoothColor);
    if(sl>=lo&&sl<=hi)result+=(smoothColor-c)*weight;
   }
  }
+ #endif
  // On devices without float color targets, dither before this first quantization.
+ #if SPATIAL_DEBAND
  if(quantize&&deband>0.)result+=(fract(52.9829189*fract(dot(gl_FragCoord.xy,vec2(.06711056,.00583715))))-.5)/255.;
+ #endif
  fragColor=vec4(clamp(result,0.,1.),1.);
 }

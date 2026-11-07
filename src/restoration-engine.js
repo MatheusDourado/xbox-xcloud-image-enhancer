@@ -296,24 +296,77 @@
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   const vertex='#version 300 es\nlayout(location=0) in vec2 position;void main(){gl_Position=vec4(position,0,1);}';
+  // Spatial pass variants (Spec 3, docs/spec2-estudo.md 10.2). The precision profile comes from the GPU:
+  // mediump color math where mediump really is half precision (Adreno/Mali report 10 bits, Poco F7
+  // spatial 2.9 -> 2.3 ms), highp elsewhere (Iris Xe and SwiftShader gain nothing and keep the
+  // generic shader's exact output). Strengths stay uniforms: the compression adaptation moves them.
+  function spatialPrecision(gl,requested='auto'){
+    if(requested==='highp'||requested==='mediump')return requested;
+    try{const f=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.MEDIUM_FLOAT);return f&&f.precision>0&&f.precision<=10?'mediump':'highp';}catch{return 'highp';}
+  }
+  // What a variant compiles in: which filters run (strength > 0), the deband taps and the two flags.
+  // These change only with the settings or an adaptation step, never per frame.
+  function spatialProfile(u,precision='highp'){
+    // Taps as the generic loop counts them: tap i runs while i < debandTaps.
+    const deband=u.deband>0,taps=deband&&u.debandTaps>0?Math.min(4,Math.ceil(u.debandTaps)):0;
+    return {precision,cleanup:u.cleanup>0,deband,taps,chroma:u.chroma>0,detail:u.detail>0,antialias:u.antialias>0,quantize:!!u.quantize,selective:!!u.selective};
+  }
+  function spatialKey(p){return [p.precision,p.cleanup,p.deband,p.taps,p.chroma,p.detail,p.antialias,p.quantize,p.selective].map(v=>v===true?1:v===false?0:v).join('.');}
+  function spatialSource(code,p){
+    const lines=['#define SPATIAL_FIXED 1','#define SPATIAL_PRECISION '+p.precision,'#define SPATIAL_TAPS '+p.taps.toFixed(1),'#define SPATIAL_QUANTIZE '+p.quantize,'#define SPATIAL_SELECTIVE '+p.selective];
+    for(const k of ['cleanup','deband','chroma','detail','antialias'])lines.push('#define SPATIAL_'+k.toUpperCase()+' '+(p[k]?1:0));
+    const at=code.indexOf('\n');return code.slice(0,at+1)+lines.join('\n')+'\n'+code.slice(at+1);
+  }
   class Engine {
-    constructor(gl,shaders){
+    // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
+    // false keeps the generic uniform-driven spatial shader (benches, comparisons).
+    constructor(gl,shaders,options={}){
       this.gl=gl;this.programs={};this.targets={};this.queries=[];this.budget=createBudget();this.previous=null;this.frames=0;this.diagnostics=createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
       this.fenceTiming=!this.ext&&typeof gl.fenceSync==='function';this.fence=null;this.fenceAt=-Infinity;this.fenceValues=[];this.fenceGeneration=0;this.gpuEstimate=null;
       this.floatTargets=!!gl.getExtension('EXT_color_buffer_float');
+      this.spatialPrecision=spatialPrecision(gl,options.spatialPrecision);this.spatialCode=options.spatialVariants===false?null:shaders.spatial||null;
+      this.spatialJobs=new Map();this.spatialUsed=new Map();this.spatialFailed=new Set();this.parallelCompile=gl.getExtension('KHR_parallel_shader_compile');
       try {
         this.vao=gl.createVertexArray();gl.bindVertexArray(this.vao);this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
         for(const [name,code]of Object.entries(shaders))this.programs[name]=this.compile(code);
+        // Pre-warmed with the rest: the spatial variant of the default settings on an RGBA8 target.
+        if(this.spatialCode){const d=defaults;this.spatialVariant({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},true);}
         this.input=gl.createTexture();this.configure(this.input);
       }catch(e){this.destroy();throw e;}finally{gl.bindVertexArray(null);}
     }
-    compile(fragment){const gl=this.gl,p=gl.createProgram(),objects=[];try{
-      for(const [kind,code]of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){const s=gl.createShader(kind);objects.push(s);gl.shaderSource(s,code);gl.compileShader(s);
-        if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));gl.attachShader(p,s);}
-      gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
-      return {program:p,locations:{}};
-    }catch(e){gl.deleteProgram(p);throw e;}finally{for(const s of objects)gl.deleteShader(s);}}
+    // Compilation in two halves: start() issues the work without waiting, finish() reads the status
+    // (which waits for the compiler) and deletes the shader objects.
+    startProgram(fragment){const gl=this.gl,program=gl.createProgram(),objects=[];
+      for(const [kind,code]of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){const s=gl.createShader(kind);objects.push(s);gl.shaderSource(s,code);gl.compileShader(s);gl.attachShader(program,s);}
+      gl.linkProgram(program);return {program,objects};}
+    finishProgram({program,objects}){const gl=this.gl;try{
+      if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+        for(const s of objects)if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));
+        throw new Error(gl.getProgramInfoLog(program));}
+      return {program,locations:{}};
+    }catch(e){gl.deleteProgram(program);throw e;}finally{for(const s of objects)gl.deleteShader(s);}}
+    compile(fragment){return this.finishProgram(this.startProgram(fragment));}
+    // Program name for the spatial pass with these uniforms. A new profile is compiled once and kept
+    // (up to 8, least recently used out); until it is ready the generic shader draws, so a settings or
+    // adaptation change never waits for the compiler inside a frame. Its status is read from the next
+    // frame on (the browser's GPU process compiles in the meantime), or when KHR_parallel_shader_compile
+    // reports it done. A variant that fails to build leaves the generic shader for that profile.
+    spatialVariant(u,wait=false){
+      if(!this.spatialCode)return 'spatial';
+      const gl=this.gl,name='spatial@'+spatialKey(spatialProfile(u,this.spatialPrecision));
+      if(!this.programs[name]){
+        if(this.spatialFailed.has(name))return 'spatial';
+        let job=this.spatialJobs.get(name);
+        if(!job){job=this.startProgram(spatialSource(this.spatialCode,spatialProfile(u,this.spatialPrecision)));job.frame=this.frames;this.spatialJobs.set(name,job);}
+        if(!wait&&(job.frame===this.frames||this.parallelCompile&&!gl.getProgramParameter(job.program,this.parallelCompile.COMPLETION_STATUS_KHR)))return 'spatial';
+        this.spatialJobs.delete(name);
+        try{this.programs[name]=this.finishProgram(job);}catch(e){this.spatialFailed.add(name);console.warn('[BxRestoration] spatial variant failed, using the generic shader',name,e);return 'spatial';}
+      }
+      this.spatialUsed.delete(name);this.spatialUsed.set(name,this.frames);
+      if(this.spatialUsed.size>8){const [old]=this.spatialUsed.keys();this.spatialUsed.delete(old);gl.deleteProgram(this.programs[old].program);delete this.programs[old];}
+      return name;
+    }
     configure(texture){const gl=this.gl;gl.bindTexture(gl.TEXTURE_2D,texture);
       for(const p of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_2D,p,gl.LINEAR);
       for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,p,gl.CLAMP_TO_EDGE);}
@@ -406,7 +459,8 @@
           const antialias=s.antialias>0&&this.budget.antialiasAllowed?s.antialias:0,fusedAntialias=temporalEnabled?0:antialias;
           if(cleanup>0||deband>0||chroma>0||detail>0||fusedAntialias>0){
             const spatial=this.target('spatial',w,h,s.processingMode==='quality');
-            this.draw('spatial',spatial,w,h,{source},{cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:this.budget.debandTaps,quantize:!spatial.fp,selective:s.spatialMode==='selective'});source=spatial.texture;
+            const u={cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:this.budget.debandTaps,quantize:!spatial.fp,selective:s.spatialMode==='selective'};
+            this.draw(this.spatialVariant(u),spatial,w,h,{source},u);source=spatial.texture;
           }
           if(temporalEnabled){
             const qw=Math.max(1,Math.ceil(w/4)),qh=Math.max(1,Math.ceil(h/4));
@@ -453,8 +507,9 @@
       for(const p of Object.values(this.programs))gl.deleteProgram(p.program);
       for(const item of this.queries)gl.deleteQuery(item.q);
       if(this.fence){gl.deleteSync(this.fence.sync);this.fence=null;}
+      for(const job of this.spatialJobs?.values()||[]){gl.deleteProgram(job.program);for(const s of job.objects)gl.deleteShader(s);}this.spatialJobs?.clear();this.spatialUsed?.clear();
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={liveCadence,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();
