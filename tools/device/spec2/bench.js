@@ -6,7 +6,8 @@ const W=1920,H=1080,OW=Number(Q.get('ow')||2276),OH=Number(Q.get('oh')||1280),AA
 canvas.width=OW;canvas.height=OH;
 const gl=canvas.getContext('webgl2',{antialias:AA,alpha:false,depth:false,stencil:false,preserveDrawingBuffer:false,desynchronized:Q.get('desync')==='1'});
 const raw=(gl.texImage2D).bind(gl);
-let e=new BxRestoration.Engine(gl,BxShaders);
+// Spec 3: sv=0 keeps the generic spatial shader (before item 2); sp=highp|mediump forces the variant precision.
+let e=new BxRestoration.Engine(gl,BxShaders,{spatialVariants:Q.get('sv')!=='0',spatialPrecision:Q.get('sp')||'auto'});
 const px=new Uint8Array(4),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const stat=v=>{const q=[...v].sort((a,b)=>a-b),at=p=>q[Math.min(q.length-1,Math.floor(q.length*p))];return v.length?{n:v.length,p50:+at(.5).toFixed(3),p95:+at(.95).toFixed(3),p99:+at(.99).toFixed(3),max:+q[q.length-1].toFixed(3),mean:+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(3)}:null;};
 // render() deletes targets it did not use unless the name starts with 'paced'.
@@ -29,7 +30,7 @@ function up(kind,src){
 async function ready(){
  const blob=await (await fetch(`/output/videos/${CLIP}.mp4`)).blob();video.src=URL.createObjectURL(blob);await video.play();
  await new Promise(r=>video.requestVideoFrameCallback(r));up('tex',video);
- return {ua:navigator.userAgent,renderer:gl.getParameter(gl.RENDERER),unmasked:gl.getParameter((gl.getExtension('WEBGL_debug_renderer_info')||{}).UNMASKED_RENDERER_WEBGL||gl.RENDERER),attrs:gl.getContextAttributes(),samples:gl.getParameter(gl.SAMPLES),size:[video.videoWidth,video.videoHeight],css:[canvas.clientWidth,canvas.clientHeight],dpr:devicePixelRatio,hidden:document.hidden,timer:!!e.ext};
+ return {ua:navigator.userAgent,renderer:gl.getParameter(gl.RENDERER),unmasked:gl.getParameter((gl.getExtension('WEBGL_debug_renderer_info')||{}).UNMASKED_RENDERER_WEBGL||gl.RENDERER),attrs:gl.getContextAttributes(),samples:gl.getParameter(gl.SAMPLES),size:[video.videoWidth,video.videoHeight],css:[canvas.clientWidth,canvas.clientHeight],dpr:devicePixelRatio,hidden:document.hidden,timer:!!e.ext,spatialPrecision:e.spatialPrecision,spatialVariants:!!e.spatialCode,mediumFloat:(f=>f&&{precision:f.precision,rangeMin:f.rangeMin,rangeMax:f.rangeMax})(gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.MEDIUM_FLOAT))};
 }
 // One callback per new decoded frame, at the stream cadence: GPU clocks and the decoder as in a session.
 function live(seconds,step){return new Promise(res=>{const end=performance.now()+seconds*1000,rows=[];let last=null,id=0,gaps=[];

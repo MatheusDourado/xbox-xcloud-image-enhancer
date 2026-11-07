@@ -33,6 +33,6 @@ const mid=v=>{const c=v.slice(2,-2),s=[...c].sort((a,b)=>a-b);return c.length?s[
   const share=poco?mid(g.periods.map(p=>p.share)):mid(g.utilPct)/100,fps=r.fps,row={name:k.name,query,cfg:k.cfg,gpuBusyPct:+(share*100).toFixed(1),gpuMsPerFrame:fps>0?+(share*1000/fps).toFixed(2):null,fps,cpu:r.cpu,gaps:r.gaps,raf:r.raf,dropped:r.dropped,decoded:r.decoded,fence:r.fence,trace:g,timeline,before,after,attrs:env.attrs,samples:env.samples};
   rows.push(row);console.log(`${k.name.padEnd(26)} busy ${row.gpuBusyPct}% gpu/frame ${row.gpuMsPerFrame} ms fps ${fps} cpu p50 ${r.cpu?.p50} gap p95 ${r.gaps?.p95} dropped ${r.dropped} T ${after.tempC??''}`);await sleep(k.rest||1500);
  }
- c.close();rows.forEach(r=>r.video=undefined);const file=path.resolve(__dirname,'../../../docs/medicoes/spec2',`${device}-${name}.json`);fs.mkdirSync(path.dirname(file),{recursive:true});
+ c.close();rows.forEach(r=>r.video=undefined);const file=path.resolve(__dirname,'../../../docs/medicoes',process.env.BX_MEAS_DIR||'spec2',`${device}-${name}.json`);fs.mkdirSync(path.dirname(file),{recursive:true});
  fs.writeFileSync(file,JSON.stringify({name,device,env,rows},null,1)+'\n');
 })().catch(e=>{console.error('ERR',e.message);process.exit(1);});

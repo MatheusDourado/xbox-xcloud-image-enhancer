@@ -1,7 +1,8 @@
 // Shader variants of sections 10.1 and 10.2 and the SGSR prototype, shared by the cost bench and the gain bench.
 // Prototypes live here only: nothing in src/ changes in Spec 2.
 globalThis.BxVariants=S=>{
-const rep=(s,pairs)=>{for(const [a,b] of pairs){if(!s.includes(a)&&!(a instanceof RegExp&&a.test(s)))throw new Error('variant anchor missing: '+a);s=s.split(a).join(b);}return s;};
+// Spec 3 changed spatial.glsl: a prototype whose anchor is gone fails to compile (listed in B.failed) instead of breaking the page.
+const rep=(s,pairs)=>{for(const [a,b] of pairs){if(!s.includes(a)&&!(a instanceof RegExp&&a.test(s)))return '#version 300 es\n#error variant anchor missing';s=s.split(a).join(b);}return s;};
 const hp=[['precision highp float;','precision mediump float;']],sp=[['precision highp sampler2D;','precision mediump sampler2D;']];
 const spatialCoords=[['vec3 at(vec2 p)','vec3 at(highp vec2 p)'],['vec2 p=gl_FragCoord.xy-.5;','highp vec2 p=gl_FragCoord.xy-.5;'],['vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size','highp vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size']];
 const def={cleanup:.5,deband:.3,debandTaps:4,chroma:.75,detail:.2,antialias:0};
