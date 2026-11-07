@@ -1,0 +1,634 @@
+{
+ "name": "sessao-r2",
+ "device": "vostro",
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true,
+  "spatialPrecision": "highp",
+  "spatialVariants": false,
+  "mediumFloat": {
+   "precision": 23,
+   "rangeMin": 127,
+   "rangeMax": 127
+  }
+ },
+ "rows": [
+  {
+   "name": "antes-1080-a",
+   "query": "sv=0&aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 15.5,
+   "gpuMsPerFrame": 5.16,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.8,
+    "max": 1.4,
+    "mean": 0.345
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.4,
+    "max": 51.5,
+    "mean": 33.337
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 559,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     15.9310451026149,
+     15.3086633692822,
+     14.5551834664126,
+     16.097859446795,
+     14.6262611597598,
+     14.3939152471807,
+     16.1314861763879,
+     16.0074063147272,
+     17.746940711374,
+     15.3794110978432,
+     13.2975612620606,
+     15.9299461023925,
+     16.7697872346287,
+     15.4933418365537,
+     15.6090824919501,
+     13.1715622060997,
+     15.1851979440479,
+     14.7739737810691,
+     3.26919426602429,
+     0.0882334893630013
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:14:47.277Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:15:08.668Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "item2-1080-a",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 16.1,
+   "gpuMsPerFrame": 5.36,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.9,
+    "max": 1.7,
+    "mean": 0.346
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.2,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 50.6,
+    "mean": 33.337
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 557,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     15.3780822682225,
+     15.4896101991855,
+     15.2339922189683,
+     13.1096737269372,
+     15.317439291165,
+     15.6381522853683,
+     16.2075019620567,
+     17.7961533281933,
+     15.7183233880355,
+     16.0724560568801,
+     16.1667899646933,
+     16.1738546122052,
+     16.7240009078684,
+     16.5097005753576,
+     16.1986849312696,
+     15.1441512383979,
+     13.2251801196849,
+     15.6004156916166,
+     2.74629630139286,
+     0.0483524737688329
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:15:11.918Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:15:33.330Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "item9-1080-a",
+   "query": "sv=0&aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 13.2,
+   "gpuMsPerFrame": 4.42,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 1.5,
+    "mean": 0.327
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 51,
+    "mean": 33.367
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 557,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     14.0502850800641,
+     12.5200234374631,
+     11.2321815120341,
+     12.5824605987514,
+     13.0127122333822,
+     13.5331081340294,
+     13.2465007181589,
+     13.8703567580711,
+     12.7016839501741,
+     13.0858334171899,
+     13.945575782951,
+     13.4642731325775,
+     11.1994022969296,
+     13.1047865790942,
+     13.0329772299199,
+     13.2818828845039,
+     13.7077271237669,
+     13.3463962384817,
+     2.75795036784623,
+     0.0443105317183985
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:15:36.593Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:15:57.978Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "depois-1080-a",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 13.4,
+   "gpuMsPerFrame": 4.45,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 1.6,
+    "mean": 0.343
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 50.6,
+    "mean": 33.338
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 559,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     13.3209894121486,
+     13.4996951367541,
+     12.9053908966914,
+     11.8187427873288,
+     13.530967032913,
+     12.511966738674,
+     11.4457102022951,
+     13.6004477609105,
+     14.0047927988312,
+     14.0259223253928,
+     13.87121944414,
+     12.7565866830406,
+     13.5452482224162,
+     13.3519287614209,
+     13.8791600120151,
+     12.5884164166338,
+     13.2210883848268,
+     13.3573117767127,
+     2.09134036899071,
+     0.180094044450766
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:16:01.246Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:16:22.639Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "depois-1080-b",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 13.1,
+   "gpuMsPerFrame": 4.38,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 0.8,
+    "mean": 0.308
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.4,
+    "max": 51.6,
+    "mean": 33.367
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 558,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     13.7171421491218,
+     13.9561777398457,
+     13.1580391996483,
+     13.2983075380397,
+     13.1359292431362,
+     11.6650990684749,
+     12.2842644189102,
+     13.5484804804325,
+     12.7137293499582,
+     13.2199292763288,
+     12.149150477218,
+     13.045740471101,
+     13.0874897942045,
+     13.5300834538331,
+     12.613900113761,
+     13.5042144936561,
+     12.8757265247839,
+     13.606732502774,
+     1.52769287661778,
+     0.0924115665200422
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:16:24.149Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:16:45.605Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "item9-1080-b",
+   "query": "sv=0&aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 13.4,
+   "gpuMsPerFrame": 4.47,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 1.4,
+    "mean": 0.341
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 50.4,
+    "mean": 33.338
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 558,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     14.1699769640395,
+     13.3483411816115,
+     12.8760368762689,
+     11.8802145007006,
+     12.9480975424613,
+     13.9517506767336,
+     14.5925086015796,
+     14.0408474305156,
+     13.0136842961488,
+     11.7761702482574,
+     13.1553640906966,
+     13.8393416370836,
+     13.6611934828294,
+     13.2764948417262,
+     13.7418235781063,
+     13.4246810946829,
+     13.7772325124587,
+     13.176549985387,
+     2.8208419996327,
+     0.180657533469106
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:16:48.858Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:17:10.238Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "item2-1080-b",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 15.1,
+   "gpuMsPerFrame": 5.03,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 1,
+    "max": 2.1,
+    "mean": 0.342
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.2,
+    "p95": 50.2,
+    "p99": 50.4,
+    "max": 55.3,
+    "mean": 33.366
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 557,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     15.5437630703156,
+     15.3586907645468,
+     14.0324960569521,
+     13.211692905174,
+     15.5246210647308,
+     15.909481139722,
+     14.8985768767388,
+     13.2949502706318,
+     15.0384713947338,
+     14.8503415303239,
+     15.8716162622303,
+     14.7605104787571,
+     15.6801881454759,
+     14.5093699713136,
+     15.3317946660693,
+     15.8402086017228,
+     15.6203780061684,
+     15.0754992912532,
+     1.68194294003435,
+     0.188370389415083
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:17:13.507Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:17:34.982Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "antes-1080-b",
+   "query": "sv=0&aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 16.1,
+   "gpuMsPerFrame": 5.35,
+   "fps": 30,
+   "cpu": {
+    "n": 555,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.8,
+    "max": 1.5,
+    "mean": 0.335
+   },
+   "gaps": {
+    "n": 554,
+    "p50": 33.2,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 50.5,
+    "mean": 33.338
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 557,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     16.4003946656736,
+     15.7718227335103,
+     13.7340324994054,
+     14.1880524875499,
+     15.3789057249325,
+     16.1834841863921,
+     15.5200601082484,
+     16.5180289549384,
+     16.4652786656307,
+     16.1020757893007,
+     16.153420601397,
+     16.0567723707822,
+     15.910700823704,
+     16.0106453767119,
+     16.0355393307494,
+     16.2195956860231,
+     15.2553237011815,
+     17.0937466017033,
+     2.24637728190675,
+     0.129839427616789
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T04:17:38.230Z"
+   },
+   "after": {
+    "at": "2026-11-07T04:17:59.652Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  }
+ ]
+}

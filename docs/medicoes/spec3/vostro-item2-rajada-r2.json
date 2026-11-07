@@ -1,0 +1,283 @@
+{
+ "name": "item2-rajada-r2",
+ "device": "vostro",
+ "query": "aa=1&ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T03:59:45.423Z"
+ },
+ "after": {
+  "at": "2026-11-07T04:00:26.933Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true,
+  "spatialPrecision": "highp",
+  "spatialVariants": true,
+  "mediumFloat": {
+   "precision": 23,
+   "rangeMin": 127,
+   "rangeMax": 127
+  }
+ },
+ "result": {
+  "median": {
+   "genDef": 1.663,
+   "defHp": 1.01,
+   "defMp": 1.015,
+   "defMpChromaHp": 1.007,
+   "defMpConst": 0.917,
+   "genV9": 1.908,
+   "v9Hp": 1.747,
+   "v9Mp": 1.79,
+   "renderGen": 2.525,
+   "renderHp": 1.835,
+   "renderMp": 1.845
+  },
+  "scenes": {
+   "caverna": {
+    "genDef": 1.59,
+    "defHp": 0.953,
+    "defMp": 0.967,
+    "defMpChromaHp": 0.975,
+    "defMpConst": 0.875,
+    "genV9": 1.842,
+    "v9Hp": 1.697,
+    "v9Mp": 1.695,
+    "renderGen": 2.467,
+    "renderHp": 1.762,
+    "renderMp": 1.768
+   },
+   "rocha": {
+    "genDef": 1.768,
+    "defHp": 1.04,
+    "defMp": 1.058,
+    "defMpChromaHp": 1.038,
+    "defMpConst": 0.942,
+    "genV9": 1.95,
+    "v9Hp": 1.788,
+    "v9Mp": 1.795,
+    "renderGen": 2.525,
+    "renderHp": 1.865,
+    "renderMp": 1.88
+   },
+   "noite": {
+    "genDef": 1.663,
+    "defHp": 1.01,
+    "defMp": 1.015,
+    "defMpChromaHp": 1.007,
+    "defMpConst": 0.917,
+    "genV9": 1.908,
+    "v9Hp": 1.747,
+    "v9Mp": 1.79,
+    "renderGen": 2.533,
+    "renderHp": 1.835,
+    "renderMp": 1.845
+   }
+  },
+  "diffs": {
+   "caverna": {
+    "defHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMpChromaHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMpConst": {
+     "max": 1,
+     "mean": 0,
+     "changedPct": 0.0001,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Hp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Mp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "debMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMpHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    }
+   },
+   "noite": {
+    "defHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMpChromaHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMpConst": {
+     "max": 1,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Hp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Mp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "debMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMpHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    }
+   },
+   "render-hp": {
+    "max": 0,
+    "over1Pct": 0
+   },
+   "render-mp": {
+    "max": 0,
+    "over1Pct": 0
+   }
+  },
+  "failed": {},
+  "programs": {
+   "gen": [],
+   "hp": [
+    "spatial@highp.0.1.4.1.0.0.1.1"
+   ],
+   "mp": [
+    "spatial@mediump.0.1.4.1.0.0.1.1"
+   ]
+  },
+  "auto": "highp",
+  "benchEngine": "highp",
+  "mediumFloat": {
+   "precision": 23,
+   "rangeMin": 127,
+   "rangeMax": 127
+  },
+  "glError": 0,
+  "output": [
+   1920,
+   1080
+  ]
+ }
+}
