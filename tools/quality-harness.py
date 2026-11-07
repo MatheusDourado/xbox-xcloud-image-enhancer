@@ -15,7 +15,7 @@ html=r'''<!doctype html><meta charset="utf-8"><pre id="result">Running motion-qu
  }
  function pixels(host){const data=new Uint8Array(width*height*4);host.gl.readPixels(0,0,width,height,host.gl.RGBA,host.gl.UNSIGNED_BYTE,data);return data;}
  function mse(a,b){let total=0,count=0;for(let y=8;y<height-8;y++)for(let x=16;x<width-16;x++){const i=(y*width+x)*4;total+=(a[i]-b[i])**2;count++;}return total/count;}
- const options=BxRestoration.normalize({cleanup:0,deband:0,temporal:0,upscale:false});const results=[];
+ const options=BxRestoration.normalize({cleanup:0,deband:0,temporal:0,upscale:false,sharpness:3,detail:.2});const results=[];
  for(const speed of [0,1,2,3,4,5,6,7,8,16,32]){movement=speed;for(const host of [truth,spatial,temporal])host.engine.resetBudget();let before=0,after=0,count=0;
  for(let frame=0;frame<30;frame++){
   image(frame,false);truth.engine.render(source,width,height,options,frame/60);const target=pixels(truth);

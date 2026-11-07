@@ -3,6 +3,11 @@
 (() => {
  // v9 has measured defaults; a new key keeps v8.x saved values from overriding them.
  const key='BxImageFilter.v9';let saved;try{saved=JSON.parse(localStorage.getItem(key));}catch{}
+ // Spec 3 changed the defaults (sharpness 2, no Compression/Detail, Debanding 60%). A user still on the
+ // untouched v9 defaults moves to the new ones once; anything customised stays. 'Padrão v9' brings them back.
+ try{if(saved&&typeof saved==='object'&&!localStorage.getItem('BxImageFilter.spec3')){const v9=BxRestoration.presets.v9.values;
+  if(Object.entries(v9).every(([k,v])=>saved[k]===undefined||saved[k]===v))for(const k of ['sharpness','cleanup','deband','detail'])delete saved[k];}
+  localStorage.setItem('BxImageFilter.spec3','1');}catch{}
  const settings=BxRestoration.normalize(saved);
  // Native image controls own sharpening; removed experimental color overrides stay neutral.
  settings.contrast=1;settings.saturation=1;settings.shadows=0;

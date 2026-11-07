@@ -52,7 +52,7 @@ test('explicit output below source resolution is retained before adaptation',()=
 });
 
 test('v9 sharpening defaults to luma-only USM and keeps every method selectable',()=>{
- const a=api();assert.equal(a.defaults.sharpening,'usm');assert.equal(a.defaults.lumaSharpen,true);assert.equal(a.defaults.sharpness,3);assert.equal(a.defaults.spatialMode,'selective');
+ const a=api();assert.equal(a.defaults.sharpening,'usm');assert.equal(a.defaults.lumaSharpen,true);assert.equal(a.defaults.sharpness,2);assert.equal(a.defaults.cleanup,0);assert.equal(a.defaults.detail,0);assert.equal(a.defaults.deband,.6);assert.equal(a.presets.v9.values.sharpness,3);assert.equal(a.defaults.spatialMode,'selective');
  for(const m of ['usm','cas','rcas','native'])assert.equal(a.normalize({sharpening:m}).sharpening,m);
  assert.equal(a.normalize({sharpening:'bad',spatialMode:'bad'}).sharpening,'usm');
  assert.equal(a.normalize({sharpening:'rcas',spatialMode:'legacy'}).spatialMode,'legacy');
@@ -100,7 +100,7 @@ test('display-matched output degrades to native under overload',()=>{
 });
 test('v8.5 chroma and detail are bounded and degrade last under overload',()=>{
  const a=api(),s=a.normalize({chroma:7,detail:-1});assert.equal(s.chroma,1);assert.equal(s.detail,0);
- assert.ok(a.defaults.chroma>0&&a.defaults.detail>0);
+ assert.ok(a.defaults.chroma>0&&a.presets.v9.values.detail>0);
  const p=a.createBudget();p.configure({cleanup:.35,deband:0,chroma:.5,detail:.35},1080);
  for(let i=0;i<90;i++)p.sample(9);
  assert.equal(p.cleanupAllowed,false);assert.equal(p.enhanceAllowed,true);
