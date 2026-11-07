@@ -1,7 +1,7 @@
 """Run the existing WebGL/DOM and pixel harnesses; any failure exits nonzero.
 
 Install: python3 -m pip install playwright && python3 -m playwright install chromium
-Run: python3 tools/run-browser-tests.py [--channel chrome]
+Run: python3 tools/run-browser-tests.py [--channel chrome | --executable PATH]
 """
 import argparse
 from functools import partial
@@ -31,6 +31,7 @@ class Handler(SimpleHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--channel', help='Use an installed browser, e.g. chrome')
+    parser.add_argument('--executable', help="Browser binary, e.g. the CI's Chromium from another Playwright version")
     args = parser.parse_args()
     for script, _ in SUITES:
         subprocess.run([sys.executable, str(ROOT / 'tools' / script)], cwd=ROOT, check=True)
@@ -40,7 +41,7 @@ def main():
     results = []
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(channel=args.channel)
+            browser = p.chromium.launch(channel=args.channel, executable_path=args.executable)
             for _, page_name in SUITES:
                 page = browser.new_page()
                 errors = []
