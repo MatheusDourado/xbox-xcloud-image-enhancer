@@ -1,0 +1,152 @@
+{
+ "name": "item5-1080-r1",
+ "device": "vostro",
+ "query": "aa=0&ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T04:42:23.834Z"
+ },
+ "after": {
+  "at": "2026-11-07T04:43:06.612Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true,
+  "spatialPrecision": "highp",
+  "spatialVariants": true,
+  "mediumFloat": {
+   "precision": 23,
+   "rangeMin": 127,
+   "rangeMax": 127
+  }
+ },
+ "result": {
+  "median": {
+   "easuPass": 1.442,
+   "nitidezPass": 0.908,
+   "sgsrPass": 0.825,
+   "sgsrHpPass": 0.84,
+   "copyPass": 0.805,
+   "directEasu": 1.86,
+   "directSgsr": 1.86,
+   "fluCopyEasu": 2.797,
+   "fluDeferEasu": 1.933,
+   "fluCopySgsr": 2.772,
+   "fluDeferSgsr": 1.928
+  },
+  "scenes": {
+   "caverna": {
+    "easuPass": 1.495,
+    "nitidezPass": 0.87,
+    "sgsrPass": 0.825,
+    "sgsrHpPass": 0.787,
+    "copyPass": 0.86,
+    "directEasu": 1.802,
+    "directSgsr": 1.783,
+    "fluCopyEasu": 2.935,
+    "fluDeferEasu": 1.962,
+    "fluCopySgsr": 2.67,
+    "fluDeferSgsr": 2.133
+   },
+   "rocha": {
+    "easuPass": 1.44,
+    "nitidezPass": 0.908,
+    "sgsrPass": 0.905,
+    "sgsrHpPass": 1.025,
+    "copyPass": 0.795,
+    "directEasu": 1.865,
+    "directSgsr": 1.867,
+    "fluCopyEasu": 2.797,
+    "fluDeferEasu": 1.927,
+    "fluCopySgsr": 2.772,
+    "fluDeferSgsr": 1.928
+   },
+   "noite": {
+    "easuPass": 1.442,
+    "nitidezPass": 0.925,
+    "sgsrPass": 0.81,
+    "sgsrHpPass": 0.84,
+    "copyPass": 0.805,
+    "directEasu": 1.86,
+    "directSgsr": 1.86,
+    "fluCopyEasu": 2.755,
+    "fluDeferEasu": 1.933,
+    "fluCopySgsr": 2.79,
+    "fluDeferSgsr": 1.9
+   }
+  },
+  "diffs": {
+   "caverna": {
+    "sgsrAutoVsHighp": {
+     "max": 1,
+     "mean": 0.0126,
+     "changedPct": 1.2576,
+     "over1Pct": 0
+    },
+    "deferVsCopy_easu": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    },
+    "deferVsCopy_sgsr": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    }
+   },
+   "noite": {
+    "sgsrAutoVsHighp": {
+     "max": 1,
+     "mean": 0.0272,
+     "changedPct": 2.7233,
+     "over1Pct": 0
+    },
+    "deferVsCopy_easu": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    },
+    "deferVsCopy_sgsr": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    }
+   }
+  },
+  "precision": "highp",
+  "upscale": false,
+  "output": [
+   1920,
+   1080
+  ],
+  "glError": 0
+ }
+}

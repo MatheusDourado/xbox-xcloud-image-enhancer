@@ -1,0 +1,82 @@
+{
+ "v9-usm2": {
+  "ssim": 0.9233,
+  "psnr": 35.4851,
+  "chroma": 39.8281,
+  "detail": 0.6685,
+  "energy": 1.0405,
+  "halo": 0.2669,
+  "band": 0.0,
+  "index": 98.2787
+ },
+ "v9-sgsr-nitidez2": {
+  "ssim": 0.9191,
+  "psnr": 35.3126,
+  "chroma": 39.8296,
+  "detail": 0.6342,
+  "energy": 1.0879,
+  "halo": 0.1305,
+  "band": 0.0,
+  "index": 97.5515
+ },
+ "v9-usm3": {
+  "ssim": 0.9198,
+  "psnr": 34.9905,
+  "chroma": 39.8304,
+  "detail": 0.723,
+  "energy": 1.2573,
+  "halo": 0.4304,
+  "band": 0.0,
+  "index": 97.06269999999999
+ },
+ "spec3-usm2": {
+  "ssim": 0.9243,
+  "psnr": 35.7515,
+  "chroma": 39.8729,
+  "detail": 0.644,
+  "energy": 0.9552,
+  "halo": 0.2243,
+  "band": 0.0,
+  "index": 98.1974
+ },
+ "spec3-sgsr-nitidez2": {
+  "ssim": 0.9188,
+  "psnr": 35.4904,
+  "chroma": 39.8717,
+  "detail": 0.6118,
+  "energy": 1.0008,
+  "halo": 0.098,
+  "band": 0.0,
+  "index": 97.79799999999999
+ },
+ "spec3-sgsr-nitidez0": {
+  "ssim": 0.921,
+  "psnr": 36.0016,
+  "chroma": 39.8668,
+  "detail": 0.4233,
+  "energy": 0.3839,
+  "halo": 0.005,
+  "band": 0.0,
+  "index": 93.2425
+ },
+ "spec3-sgsr-nitidez3": {
+  "ssim": 0.9161,
+  "psnr": 35.0857,
+  "chroma": 39.8721,
+  "detail": 0.633,
+  "energy": 1.1802,
+  "halo": 0.1182,
+  "band": 0.0,
+  "index": 96.8026
+ },
+ "spec3-sgsr-nitidez4.5": {
+  "ssim": 0.9134,
+  "psnr": 34.7451,
+  "chroma": 39.8725,
+  "detail": 0.6421,
+  "energy": 1.3321,
+  "halo": 0.1303,
+  "band": 0.0,
+  "index": 95.83990000000001
+ }
+}
