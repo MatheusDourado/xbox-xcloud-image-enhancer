@@ -43,7 +43,7 @@
   // Sharpness 0 skips the edge step (threshold above any vote): plain bilinear scaling, no sharpening.
   function sgsrParams(sharpness){return sharpness>0?{sharp:.2+.4*sharpness,threshold:20/255}:{sharp:1,threshold:4};}
   function outputSize(w,h,output){const height=/^\d+$/.test(output)?Number(output):h;return {width:Math.round(w*height/h),height};}
-  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',
+  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',
   configure(settings,height){this.settings=normalize(settings);this.sourceHeight=height;},
   outputFor(settings){
     if(settings.mode!=='filtered'||settings.gpuBudget===0||settings.output==='native'||this.outputCap===Infinity)return settings.output;
@@ -70,6 +70,13 @@
     if(!Number.isFinite(reference)||reference<=0||!Number.isFinite(current))return;
     this.cadenceOver=current<reference*ratio?this.cadenceOver+1:0;
     if(this.cadenceOver>=3){this.degrade();this.cadenceOver=0;}
+  },fenceTrend(p50,reference){
+    // Early warning only (docs/spec2-estudo.md 10.4, an inference): the fence p50 above 1.5 frame
+    // intervals for 3 windows in a row. It never reduces the treatment: the fence includes queued work,
+    // so it is an upper bound, and the GPU occupancy, not milliseconds, is what the study validated.
+    if(!Number.isFinite(p50)||!Number.isFinite(reference)||reference<=0){this.fenceOver=0;return false;}
+    this.fenceOver=p50>1.5*1000/reference?this.fenceOver+1:0;
+    return this.fenceOver>=3;
   },sample(ms,mode='filtered'){
     if(mode!=='filtered')return;
     if(!Number.isFinite(ms)||ms<0)return;
@@ -83,6 +90,14 @@
   // under Better xCloud's FPS limit. It follows the game (about 60 FPS in menus, 30 in a match) and falls
   // with the network, so a stream problem never reads as GPU overload. Under 10 FPS it is a stall: no reference.
   function liveCadence(received,limit){if(!Number.isFinite(received)||received<10)return null;return limit>0?Math.min(received,limit):received;}
+  // Fraction of the live rate the frames shown must stay above, per path and target rate (Spec 3 item 6).
+  // Direct capture shows every decoded frame: 5%. The <video> element skips frames that arrive together
+  // without any GPU overload: 0.1% at 30 FPS on the Poco F7 (10% kept), but 5-17% of 60 FPS shown at
+  // 60, with the GPU at 3.7% (bare video, 49.7 FPS) as well as at 88% (docs/medicoes/spec2 poco-base,
+  // poco-fps, poco-candidatos, poco-longa60; a file clip, not WebRTC). There 20%: above the worst loss
+  // without overload, while a sustained 30% fall still reduces.
+  // 45 FPS splits the two targets (the live rate is about 30 or 60, lower only on a weak network).
+  function cadenceMargin(direct,reference){return direct?.95:reference>45?.8:.9;}
   function createDiagnostics(){
     // One segment per distinct configuration: returning to an earlier one (e.g. the adaptive QP level)
     // continues its segment, with time counted only while it is current. Besides the GPU time, each
@@ -548,5 +563,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

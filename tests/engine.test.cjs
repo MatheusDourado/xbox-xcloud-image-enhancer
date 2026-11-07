@@ -270,6 +270,29 @@ test('the video element keeps a wider margin for frames it skips without overloa
  for(let i=0;i<30;i++)p.cadence(30,29.4*.97,.9);assert.equal(p.revision,0);
  for(let i=0;i<3;i++)p.cadence(30,26,.9);assert.equal(p.revision,1);
 });
+// Spec 3 item 6: margin per path and target rate.
+test('cadence margin: 20% on the video path at 60 FPS, 10% at 30 FPS, 5% with direct capture',()=>{const a=api();
+ assert.equal(a.cadenceMargin(false,60),.8);assert.equal(a.cadenceMargin(false,30),.9);assert.equal(a.cadenceMargin(true,60),.95);assert.equal(a.cadenceMargin(true,30),.95);
+ const setup=()=>{const p=a.createBudget();p.limitMs=6;p.configure({deband:.3,cleanup:.5,output:'native'},1080);return p;};
+ const run=(direct,live,shown,windows)=>{const p=setup(),ref=a.liveCadence(live,60);for(let i=0;i<windows;i++)p.cadence(ref,shown,a.cadenceMargin(direct,ref));return p.revision;};
+ // The <video> element at 60 FPS loses 5-17% with an idle GPU: 12% must not reduce, even for a minute.
+ assert.equal(run(false,60,60*.88,30),0);
+ // A sustained 30% fall does, at 60 and at 30 FPS.
+ assert.equal(run(false,60,60*.7,3),1);assert.equal(run(false,30,30*.7,3),1);
+ // 30 FPS keeps 10%: 12% reduces, 8% does not.
+ assert.equal(run(false,30,30*.88,3),1);assert.equal(run(false,30,30*.92,30),0);
+ // Direct capture keeps 5%: 8% reduces at either rate.
+ assert.equal(run(true,60,60*.92,3),1);assert.equal(run(true,30,30*.92,3),1);
+ // Two windows over the margin are not sustained.
+ assert.equal(run(false,60,60*.7,2),0);
+});
+test('fence trend is only a warning: 3 windows above 1.5 intervals, never a reduction',()=>{const a=api(),p=a.createBudget();p.limitMs=6;p.configure({deband:.3,output:'native'},1080);
+ assert.equal(p.fenceTrend(41.7,60),false);assert.equal(p.fenceTrend(41.7,60),false);assert.equal(p.fenceTrend(41.7,60),true);assert.equal(p.revision,0);
+ assert.equal(p.fenceTrend(15,60),false);assert.equal(p.fenceTrend(null,60),false);
+ // 30 FPS: 1.5 x 33.3 ms = 50 ms; the Spec 3 default measured 0.4-0.7 interval.
+ for(let i=0;i<5;i++)assert.equal(p.fenceTrend(21.5,30),false);
+ for(let i=0;i<3;i++)p.fenceTrend(51,30);assert.equal(p.fenceOver,3);assert.equal(p.revision,0);
+});
 // Spec 3: compiled spatial variants, mediump only where mediump is real half precision.
 function fakeGl(precision){const calls={programs:0};return new Proxy({},{get(_,k){
  if(k==='calls')return calls;if(k==='getShaderPrecisionFormat')return ()=>precision===null?null:({precision,rangeMin:15,rangeMax:15});

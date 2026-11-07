@@ -15,7 +15,9 @@
   // Display intervals (ms) of the last ~8 s at 30 FPS, oldest first: the HUD's pacing graph.
   intervals:[],intervalsTotal:0,net:null,warnings:[],adaptive:null,capture:{active:false,frames:0,reason:''},
   // GPU time estimate {p50, p95, count} from fences when the browser has no GPU timer (see Engine.startFence).
-  gpuEstimate:null};
+  gpuEstimate:null,
+  // Fence trend above 1.5 frame intervals for 3 windows (Engine budget.fenceTrend): a warning only.
+  gpuTrend:false};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -143,6 +145,7 @@
   if(net?.lossPct>1)w.push({level:net.lossPct>2?'error':'warn',key:'loss',text:`Perda de pacotes de ${dec(net.lossPct)}%.`});
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
+  if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   status.warnings=w;
  }
@@ -262,12 +265,14 @@
    if(settings.mode!=='filtered')player.bxReferenceFps=status.fps;
    else if(!player.bxEngine.ext){
     // Frames shown against frames decoded now. The <video> element also skips frames that arrive together
-    // (about 2% on the Poco F7) with no GPU overload, so only direct capture keeps the 5% margin. A page
-    // that was just hidden leaves a gap in the window. Without a live figure, the reference measured
-    // in CAS/original stays.
-    const live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
-    if(live===null)player.bxEngine.budget.cadence(player.bxReferenceFps,status.fps);
-    else if(span>0&&now-hiddenAt>4000)player.bxEngine.budget.cadence(live,(list.length-1)*1000/span,direct?.95:.9);
+    // with no GPU overload, more at 60 FPS: the margin depends on the path and the rate (cadenceMargin).
+    // A page that was just hidden leaves a gap in the window. Without a live figure, the reference
+    // measured in CAS/original (same path) stays.
+    const budget=player.bxEngine.budget,live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
+    if(live===null)budget.cadence(player.bxReferenceFps,status.fps);
+    else if(span>0&&now-hiddenAt>4000)budget.cadence(live,(list.length-1)*1000/span,BxRestoration.cadenceMargin(direct,live));
+    // Early warning from the fence trend: shown, never acted on.
+    status.gpuTrend=budget.fenceTrend(player.bxEngine.gpuEstimate?.p50,live??player.bxReferenceFps??status.fps);
    }
    player.bxCadenceMark=now;
   }
