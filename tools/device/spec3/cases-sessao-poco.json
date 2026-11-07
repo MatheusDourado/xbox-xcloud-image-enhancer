@@ -1,0 +1,8 @@
+[{"name":"antes-1280-a","query":"sv=0&aa=1","seconds":20,"cfg":{"output":1280}},
+{"name":"item2-1280-a","query":"aa=1","seconds":20,"cfg":{"output":1280}},
+{"name":"item9-1280-a","query":"sv=0&aa=0","seconds":20,"cfg":{"output":1280}},
+{"name":"depois-1280-a","query":"aa=0","seconds":20,"cfg":{"output":1280}},
+{"name":"depois-1280-b","query":"aa=0","seconds":20,"cfg":{"output":1280}},
+{"name":"item9-1280-b","query":"sv=0&aa=0","seconds":20,"cfg":{"output":1280}},
+{"name":"item2-1280-b","query":"aa=1","seconds":20,"cfg":{"output":1280}},
+{"name":"antes-1280-b","query":"sv=0&aa=1","seconds":20,"cfg":{"output":1280}}]

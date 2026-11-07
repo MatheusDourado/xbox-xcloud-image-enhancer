@@ -1,0 +1,170 @@
+{
+ "name": "webgpu-video",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T01:08:30.280Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 36.3,
+  "thermal": 0,
+  "cpu0": 46.8,
+  "gpuMaxC": 42.9,
+  "skinC": 39.082,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T01:09:11.775Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 36.3,
+  "thermal": 0,
+  "cpu0": 46.8,
+  "gpuMaxC": 43.3,
+  "skinC": 39.107,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "adapter": "adreno-8xx",
+  "liveExterno": {
+   "gpu": {
+    "n": 177,
+    "p50": 0.328,
+    "p95": 0.393,
+    "p99": 0.393,
+    "max": 0.393,
+    "mean": 0.329
+   },
+   "cpu": {
+    "n": 177,
+    "p50": 1.9,
+    "p95": 2.6,
+    "p99": 3,
+    "max": 3.8,
+    "mean": 1.985
+   }
+  },
+  "liveTextura": {
+   "gpu": {
+    "n": 181,
+    "p50": 0.262,
+    "p95": 0.328,
+    "p99": 0.328,
+    "max": 0.328,
+    "mean": 0.291
+   },
+   "cpu": {
+    "n": 181,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.8,
+    "max": 1,
+    "mean": 0.33
+   }
+  },
+  "liveCopiaExterna": {
+   "gpu": {
+    "n": 179,
+    "p50": 0.328,
+    "p95": 0.393,
+    "p99": 0.59,
+    "max": 0.983,
+    "mean": 0.34
+   },
+   "cpu": {
+    "n": 179,
+    "p50": 1.7,
+    "p95": 2.4,
+    "p99": 2.9,
+    "max": 3.2,
+    "mean": 1.666
+   }
+  },
+  "burstExterno": {
+   "n": 30,
+   "p50": 0.328,
+   "p95": 0.328,
+   "p99": 0.328,
+   "max": 0.328,
+   "mean": 0.312
+  },
+  "burstTextura": {
+   "n": 30,
+   "p50": 0.328,
+   "p95": 0.328,
+   "p99": 0.328,
+   "max": 0.328,
+   "mean": 0.312
+  },
+  "pesadoEspacado33": {
+   "n": 150,
+   "p50": 3.867,
+   "p95": 3.867,
+   "p99": 3.932,
+   "max": 3.932,
+   "mean": 3.836
+  },
+  "pesadoEspacado8": {
+   "n": 300,
+   "p50": 3.867,
+   "p95": 3.998,
+   "p99": 4.129,
+   "max": 4.194,
+   "mean": 3.846
+  },
+  "pesadoSaturado": {
+   "n": 40,
+   "p50": 2.818,
+   "p95": 2.818,
+   "p99": 3.146,
+   "max": 3.146,
+   "mean": 2.821
+  },
+  "pesadoEspacadoDepois": {
+   "n": 150,
+   "p50": 3.867,
+   "p95": 3.932,
+   "p99": 4.26,
+   "max": 4.26,
+   "mean": 3.824
+  }
+ }
+}

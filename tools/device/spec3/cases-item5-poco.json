@@ -1,0 +1,13 @@
+[
+{"name": "easu-direto-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280}},
+{"name": "sgsr-direto-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "overrides": {"scaler": "sgsr"}}},
+{"name": "easu-fluidez-copia-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true}},
+{"name": "easu-fluidez-present-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "defer": true}},
+{"name": "sgsr-fluidez-copia-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "overrides": {"scaler": "sgsr"}}},
+{"name": "sgsr-fluidez-present-1280-a", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "defer": true, "overrides": {"scaler": "sgsr"}}},
+{"name": "sgsr-fluidez-present-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "defer": true, "overrides": {"scaler": "sgsr"}}},
+{"name": "sgsr-fluidez-copia-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "overrides": {"scaler": "sgsr"}}},
+{"name": "easu-fluidez-present-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true, "defer": true}},
+{"name": "easu-fluidez-copia-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "fluid": true}},
+{"name": "sgsr-direto-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280, "overrides": {"scaler": "sgsr"}}},
+{"name": "easu-direto-1280-b", "query": "aa=0", "seconds": 20, "cfg": {"output": 1280}}]

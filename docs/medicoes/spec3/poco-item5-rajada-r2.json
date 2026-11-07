@@ -1,0 +1,177 @@
+{
+ "name": "item5-rajada-r2",
+ "device": "poco",
+ "query": "aa=0",
+ "before": {
+  "at": "2026-11-07T04:52:48.303Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 35.5,
+  "thermal": 0,
+  "cpu0": 46.4,
+  "gpuMaxC": 43.7,
+  "skinC": 38.356,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T04:53:40.999Z",
+  "level": 21,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 36,
+  "thermal": 0,
+  "cpu0": 59.6,
+  "gpuMaxC": 56.2,
+  "skinC": 41.325,
+  "socdPct": 79,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "spatialVariants": true,
+  "mediumFloat": {
+   "precision": 10,
+   "rangeMin": 15,
+   "rangeMax": 15
+  }
+ },
+ "result": {
+  "median": {
+   "easuPass": 2.587,
+   "nitidezPass": 1.242,
+   "sgsrPass": 0.775,
+   "sgsrHpPass": 1.13,
+   "copyPass": 0.505,
+   "directEasu": 3.875,
+   "directSgsr": 1.675,
+   "fluCopyEasu": 4.85,
+   "fluDeferEasu": 3.885,
+   "fluCopySgsr": 2.783,
+   "fluDeferSgsr": 2.02
+  },
+  "scenes": {
+   "caverna": {
+    "easuPass": 2.587,
+    "nitidezPass": 1.458,
+    "sgsrPass": 0.775,
+    "sgsrHpPass": 0.84,
+    "copyPass": 0.467,
+    "directEasu": 4.455,
+    "directSgsr": 1.675,
+    "fluCopyEasu": 4.85,
+    "fluDeferEasu": 3.885,
+    "fluCopySgsr": 2.653,
+    "fluDeferSgsr": 1.995
+   },
+   "rocha": {
+    "easuPass": 2.605,
+    "nitidezPass": 1.242,
+    "sgsrPass": 1.023,
+    "sgsrHpPass": 1.587,
+    "copyPass": 0.508,
+    "directEasu": 3.875,
+    "directSgsr": 2.39,
+    "fluCopyEasu": 4.89,
+    "fluDeferEasu": 4.14,
+    "fluCopySgsr": 2.783,
+    "fluDeferSgsr": 2.545
+   },
+   "noite": {
+    "easuPass": 2.117,
+    "nitidezPass": 1.18,
+    "sgsrPass": 0.755,
+    "sgsrHpPass": 1.13,
+    "copyPass": 0.505,
+    "directEasu": 3.765,
+    "directSgsr": 1.582,
+    "fluCopyEasu": 4.672,
+    "fluDeferEasu": 3.785,
+    "fluCopySgsr": 2.87,
+    "fluDeferSgsr": 2.02
+   }
+  },
+  "diffs": {
+   "caverna": {
+    "sgsrAutoVsHighp": {
+     "max": 23,
+     "mean": 0.181,
+     "changedPct": 18.02,
+     "over1Pct": 0.0191
+    },
+    "deferVsCopy_easu": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    },
+    "deferVsCopy_sgsr": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    }
+   },
+   "noite": {
+    "sgsrAutoVsHighp": {
+     "max": 45,
+     "mean": 0.2234,
+     "changedPct": 21.9278,
+     "over1Pct": 0.1069
+    },
+    "deferVsCopy_easu": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    },
+    "deferVsCopy_sgsr": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0
+    }
+   }
+  },
+  "precision": "mediump",
+  "upscale": true,
+  "output": [
+   2276,
+   1280
+  ],
+  "glError": 0
+ }
+}

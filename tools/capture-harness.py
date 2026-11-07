@@ -49,12 +49,15 @@ probe=r'''
  let savedFile=null;window.BxAndroid={saveFile:(name,mime,text)=>{savedFile={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const report=await api.exportMeasurement();delete window.BxAndroid;
  const segs=report.segments,seg=segs.find(s=>s.config.settings.capture==='direct'&&s.display.count>40);
- check(savedFile&&/^bx-v9\.7\.1-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===2,'Measurement is saved through the Android bridge (schema 2)');
+ check(savedFile&&/^bx-v9.8.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===2,'Measurement is saved through the Android bridge (schema 2)');
  check(seg&&seg.arrival.count>40&&seg.server.count>40&&seg.wait.count>40,`Direct segment records display, arrival, server and wait intervals (${seg&&[seg.display.count,seg.arrival.count,seg.server.count,seg.wait.count]})`);
  const longest=Math.max(...segs.flatMap(s=>[s.server.maxMs||0,s.arrival.maxMs||0]));
  check(longest<500,`No interval spans the switch between clocks (longest ${longest.toFixed(1)} ms)`);
  const shown=Math.max(...segs.map(s=>s.display.maxMs||0)),waited=Math.max(...segs.map(s=>s.wait.maxMs||0));
  check(shown<1000&&waited<1000,`No display or wait interval spans the hidden page (longest ${shown.toFixed(1)} / ${waited.toFixed(1)} ms)`);
+ // Without a GPU timer the adaptation follows the decoder's live rate, with no CAS/original reference.
+ {const engine=player.bxEngine,timer=engine.ext,cadence=engine.budget.cadence,calls=[];player.bxReferenceFps=null;engine.ext=null;engine.budget.cadence=(...args)=>calls.push(args);await wait(7000);engine.ext=timer;engine.budget.cadence=cadence;
+  check(calls.some(([reference,shown,margin])=>reference>=10&&shown>0&&margin===.95),`Without a GPU timer the cadence follows the live decoder rate (${JSON.stringify(calls.map(c=>c.map(v=>typeof v==='number'?Math.round(v*100)/100:v)))})`);}
  check(segs.every(s=>s.wait.hitches===null&&Number.isInteger(s.videoSkipped))&&segs.some(s=>s.videoSkipped>0),`Per-segment video skips are recorded (${segs.map(s=>s.videoSkipped)})`);
  check(report.timeline.length>=2&&report.timeline.every(r=>Number.isFinite(r.t))&&report.timeline.some(r=>r.capture==='direct'&&r.fpsReceived>0&&r.bitrateMbps>0),`Timeline has a row per second from getStats (${report.timeline.length} rows)`);
  check(report.metadata.gpuMethod===(player.bxEngine.ext?'timer':'fence')&&report.metadata.refreshMeasuredHz>20&&report.metadata.betterXcloud&&report.status.capture.active,`Metadata names the GPU method (${report.metadata.gpuMethod}) and the measured refresh (${report.metadata.refreshMeasuredHz} Hz)`);

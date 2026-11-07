@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v9.7.1';
+ const VERSION = 'v9.8.0';
  const num = v => typeof v === 'number' && Number.isFinite(v);
 
  /* =============================== api.ui =============================== */
@@ -457,7 +457,7 @@
  /* =============================== Panel model =============================== */
  // Heavy settings rebuild textures or restart the capture/pacer: leading edge plus one trailing update.
  const HEAVY = new Set(['fluidity', 'capture', 'output', 'gpuBudget', 'spatialMode']);
- const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural'];
+ const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'scaler', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural', 'desynchronized'];
  const TREAT = ['cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural'];
  const UI_KEY = 'BxImageFilter.ui.v1';
  const phoneTier = (() => { try { return matchMedia('(max-height:500px)').matches; } catch { return false; } })();
@@ -519,7 +519,7 @@
   verdict.dirty = true;
   if (lastSnap) updateSummaries(lastSnap);
  }
- const sigOf = () => SYNC_KEYS.map(k => settings[k]).join('|') + '|' + api.diagnostic;
+ const sigOf = () => SYNC_KEYS.map(k => settings[k]).join('|') + '|' + api.diagnostic + '|' + status.desynchronized;
  function syncAll(periodic) {
   const a = doc.activeElement;
   let skipped = false;
@@ -656,7 +656,7 @@
   const pill = h('span', {class: 'bxif-sw-pill', 'aria-hidden': 'true'}, h('span', {class: 'bxif-sw-knob'}));
   const tx = h('span', {class: 'bxif-sw-tx', 'aria-hidden': 'true'});
   const sw = h('div', {class: 'bxif-sw'}, input, pill, tx);
-  const lab = labelCell(o.label, null, o.sub);
+  const lab = labelCell(o.label, o.tag || null, o.sub);
   const {row, hint} = makeRow(o.key, lab, sw);
   setT(hint, o.hint || '');
   const c = {key: o.key, input, row, lab, hint};
@@ -790,6 +790,9 @@
   els.sharp = slider({key: 'sharpness', label: 'Nitidez', max: 20, step: 1, scale: 2, notch: 3, fmt: s => s === 0 ? 'Desl.' : fmt(s, 1)});
   els.method = choice({key: 'sharpening', label: 'Método', opts: [['usm', 'USM'], ['cas', 'CAS'], ['rcas', 'RCAS'], ['native', 'Nativo']], hint: v => (({
    usm: 'Recomendado: contorno limpo.', cas: 'AMD FidelityFX CAS.', rcas: 'AMD FidelityFX RCAS.', native: 'Segue o Processamento do menu do Better xCloud (CAS/USM).'})[v] || '') + ' Vale também para a referência Só nitidez.'});
+  // Spec 3 item 5: SGSR 1 replaces EASU + sharpening with one pass when the output is larger than the stream.
+  els.scaler = choice({key: 'scaler', label: 'Escalador/nitidez', opts: [['easu', 'EASU + nitidez'], ['sgsr', 'SGSR (menos GPU)']], hint: v => (({
+   easu: 'Atual: FSR 1 EASU amplia e o Método aplica a nitidez.', sgsr: 'Snapdragon GSR 1 amplia e dá nitidez numa passada só: menos GPU, um pouco menos de detalhe. Substitui o Método só quando a saída é maior que o stream; em saída nativa fica a nitidez atual.'})[v] || '')});
   els.output = choice({key: 'output', label: 'Resolução de saída', opts: [['auto', 'Auto'], ['native', 'Nativa'], ['1440', '2K'], ['2160', '4K']], unknown: v => v + 'p', hint: v => ({
    auto: 'Renderiza na altura real do vídeo na tela (FSR + nitidez no tamanho final). Em HDMI 1080p fica nativa.', native: 'Mantém a resolução do stream.',
    1440: 'Só para telas 1440p ou maiores; acima da tela só custa GPU.', 2160: 'Só para telas 4K; custo alto de GPU.'})[v] || 'Valor salvo fora das opções; escolha uma para substituí-lo.'});
@@ -802,7 +805,7 @@
   els.adaptive.row.append(els.qp, els.adaptiveOut);
   els.mode = choice({key: 'mode', label: 'Comparação', opts: [['original', 'Original'], ['cas', 'Só nitidez'], ['filtered', 'Tratada']], hint: v => (({
    original: 'Vídeo puro, sem tratamento.', cas: 'Referência: só a nitidez, sem limpeza.', filtered: 'Tratamento completo (use esta para jogar).'})[v] || '') + ' Com o jogo aberto, compare ao vivo à esquerda do menu.'});
-  s2.body.append(presetRow, els.sharp.row, els.method.row, els.output.row, els.adaptive.row, els.mode.row);
+  s2.body.append(presetRow, els.sharp.row, els.method.row, els.scaler.row, els.output.row, els.adaptive.row, els.mode.row);
   s2.update = updateNitidez;
   // [F] 03 Ajuste fino
   const s3 = section('ajuste', '03', 'Ajuste fino');
@@ -835,7 +838,13 @@
    h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Latência estimada'}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
    h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: 'Soma aproximada; não inclui controle, jogo nem tela.'}));
   els.stream = h('div', {'data-bxif-out': 'stream'}); els.decoder = h('div', {'data-bxif-out': 'decoder'}); els.quality = h('div', {'data-bxif-out': 'quality'}); els.drops = h('div', {'data-bxif-out': 'drops'});
-  s4.body.append(budget.row, els.gpu, els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
+  // Spec 3 item 11 (docs/medicoes/spec3/*item11*): on the Vostro at 30 FPS, display p95 50 → 34 ms and
+  // about −0.5 ms of GPU per frame; at 60 FPS the frames shown fell from 58-59 to 44 FPS. On the Poco F7
+  // no gain. Tearing was not evaluated. The attribute is fixed when the canvas is created.
+  els.desync = toggle({key: 'desynchronized', label: 'Baixa latência (desynchronized)', tag: 'EXP', get: () => valueOf('desynchronized'), set: (v, e) => commit('desynchronized', v, e),
+   hint: 'Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.'});
+  els.desyncOut = out('desynchronized'); els.desync.row.append(els.desyncOut);
+  s4.body.append(budget.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
   s4.update = updateDesempenho;
   // [H] 05 Ferramentas
   const s5 = section('ferramentas', '05', 'Indicadores e ferramentas');
@@ -928,11 +937,19 @@
   els.capture.setReason(fl === 'off' ? 'Disponível com a Fluidez ligada.' : !direct ? 'Este navegador não permite a captura direta.' : '');
   setHidden(els.corner.row, valueOf('hud') === 'off');
   els.mode.lab.setTag(settings.mode !== 'filtered' ? 'Comparando' : '', 'ok');
-  setT(els.sharp.hint, '0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.' + (settings.neural > 0 ? ' Com Reconstrução neural, use ~2,5.' : ''));
+  setT(els.sharp.hint, '0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.' + (settings.neural > 0 ? ' Com Reconstrução neural, use ~2,5.' : '') + (valueOf('scaler') === 'sgsr' ? ' Com SGSR, define a força dele (2 → 1,0).' : ''));
   const o = valueOf('output');
   setT(els.output.lab.tx, 'Resolução de saída' + (['auto', 'native', '1440', '2160'].includes(o) ? '' : ` (${o}p)`));
   setA(els.qp, 'data-hide', valueOf('adaptive') ? null : '');
+  updateDesync();
   updatePreset();
+ }
+ // The canvas keeps the attribute it was created with: a change shows as pending until the next session.
+ function updateDesync() {
+  const want = !!valueOf('desynchronized'), now = status.desynchronized;
+  if (now === null || now === undefined) setParts(els.desyncOut, want ? [['Aplicado ao abrir o próximo jogo.', 'lab']] : []);
+  else if (now === want) setParts(els.desyncOut, want ? [['Ativo nesta sessão', 'good']] : []);
+  else setParts(els.desyncOut, [[want ? 'Liga na próxima sessão (reabra o jogo ou recarregue).' : 'Desliga na próxima sessão (reabra o jogo ou recarregue).', 'lab']]);
  }
  function updatePreset(focused) {
   if (focused !== undefined) els.chipFocus = focused;
@@ -1025,7 +1042,7 @@
   setParts(s1.sum, fParts); setA(s1.sum, 'data-g', s.on && p ? worst(G('dev', s.gDev), G('hit', s.gHit)) : null);
   const preset = api.presets[api.preset()];
   if (settings.mode !== 'filtered') { setParts(s2.sum, [['Comparando: ' + (settings.mode === 'cas' ? 'Só nitidez' : 'Original'), null]]); setA(s2.sum, 'data-g', 'ok'); }
-  else { setParts(s2.sum, [[(preset ? preset.label : 'Personalizado') + ' · Nitidez ' + fmt(settings.sharpness, 1), null]]); setA(s2.sum, 'data-g', null); }
+  else { setParts(s2.sum, [[(preset ? preset.label : 'Personalizado') + ' · Nitidez ' + fmt(settings.sharpness, 1) + (settings.scaler === 'sgsr' ? ' · SGSR' : ''), null]]); setA(s2.sum, 'data-g', null); }
   const active = TREAT.filter(k => settings[k] > 0).length;
   setParts(s3.sum, [[`${active} de 7 ativos` + (adaptiveApplying() ? ' · adaptado' : ''), null]]);
   setParts(s4.sum, [['GPU ', null], [s.gpuShow === null ? '—' : (s.gpu === null ? '≈' : '') + fmtMs(s.gpuShow) + ' ms', G(s.gpu !== null ? 'gpu' : 'gpu-est', s.gGpuShow)], [' · Lat. ', null], [s.lat.total === null ? '—' : fmtInt(s.lat.total) + ' ms', G('total', s.gTotal)]]);

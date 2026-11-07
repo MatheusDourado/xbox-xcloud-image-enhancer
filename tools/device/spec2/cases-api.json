@@ -1,0 +1,6 @@
+[{"name":"pesado-webgl","expr":"B.heavySession('gl',__S__)"},
+{"name":"pesado-webgpu","expr":"B.heavySession('gpu',__S__)"},
+{"name":"pesado-webgl-invalidate","expr":"B.heavySession('gl',__S__,{inv:true})"},
+{"name":"pesado-webgl-clear","expr":"B.heavySession('gl',__S__,{clear:true})"},
+{"name":"pesado-webgl-b","expr":"B.heavySession('gl',__S__)"},
+{"name":"pesado-webgpu-b","expr":"B.heavySession('gpu',__S__)"}]

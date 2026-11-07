@@ -1,4 +1,6 @@
-# Better xCloud — tratamento experimental v9.7.1
+# Better xCloud — tratamento experimental v9.8.0
+
+A **v9.8.0** (beta de teste) reduz o custo de GPU no Poco F7: padrões novos, `mediump`, canvas sem MSAA, última passada sem cópia e SGSR como opção de escalador. Nada foi validado em partida real; o padrão antigo continua como preset **Padrão v9**. Veja [notas v9.8.0](docs/release-v9.8.0.md).
 
 A **v9.7.1** corrige o que a primeira medição num aparelho real (Poco F7, Gears of War: E-Day) mostrou:
 - **Adaptar à compressão** funciona sem o QP: o WebView do Android não informa o QP, e a adaptação ficava parada. Agora a compressão é estimada pela taxa de bits por pixel.
@@ -48,9 +50,9 @@ A v7.1 corrige as pendências de degradês, halos e movimento da v7. O caminho p
 
 Para o Vostro 3400 ligado à TV por HDMI 1080p, comece em **saída Automática (resolve para nativa), Nitidez 3–5 no painel, orçamento 6 ms, Cor nas bordas 50%, Detalhe 35%, Degradês 30–50%, temporal e AA desligados**. A TV continua responsável por ampliar o sinal recebido para seu painel 4K. Forçar 4K no canvas não cria informação de uma renderização 4K do jogo, nem muda o sinal HDMI.
 
-## Android (v9.7.1)
+## Android (v9.8.0)
 
-Há um APK de teste em `android/dist/xcloud-imagefilter-9.7.1.apk`: um app WebView próprio que abre o xCloud com este userscript (v9.7.1). Veja [android/README.md](android/README.md).
+Há um APK de teste em `android/dist/xcloud-imagefilter-9.8.0.apk`: um app WebView próprio que abre o xCloud com este userscript (v9.8.0). Veja [android/README.md](android/README.md).
 
 ## Instalar
 
@@ -90,7 +92,7 @@ O painel informa quadros, cadência e, quando disponível, tempo GPU total no pe
 
 **Manter todos os filtros ativos** impede essas reduções automáticas. Ajustar um controle do tratamento ou restaurá-lo reinicia a adaptação; ela não aumenta novamente a carga por conta própria. Todo o processamento dos pixels ocorre na GPU via WebGL2; essa opção não aumenta o clock nem altera a GPU escolhida pelo Chrome. A nitidez final permanece ativa conforme o controle nativo. CAS e USM têm limite de halos, e diferenças locais muito pequenas recebem menos reforço para evitar amplificar ruído.
 
-Sem timers GPU, a adaptação compara cadência com um trecho previamente medido em CAS/original. Sem essa referência, informa apenas cadência. Uma redução maior que 5% por três janelas de dois segundos reduz os mesmos tratamentos. A referência é mantida quando a saída cai automaticamente, mas é invalidada por mudanças de fonte, resolução selecionada ou alvo de FPS. Não confundir isso com medição de latência dos controles.
+Sem timers GPU, a adaptação compara os quadros exibidos com os quadros que o decodificador entrega naquele momento, respeitado o limite de FPS do Better xCloud. Uma queda por três janelas de dois segundos reduz os mesmos tratamentos: mais de 5% na captura direta e mais de 10% no elemento `<video>`, que também pula quadros sem sobrecarga. Se o navegador não informar os quadros recebidos, a referência é um trecho previamente medido em CAS/original, invalidada por mudanças de fonte, resolução selecionada ou alvo de FPS; sem ela, o painel informa apenas cadência. Não confundir isso com medição de latência dos controles.
 
 O filtro processa quadros novos e não aguarda quadros futuros. Não controla o bitrate enviado pelo servidor, não recupera garantidamente texturas apagadas e não implementa FSR temporal de jogos nem IA. A seleção de saída chega a 2160p. Forçar 4K usa quatro vezes mais pixels que 1080p em várias etapas e pode reduzir a fluidez. Se o Windows enviar sinal de 1080p para a TV, o resultado 4K será reduzido para esse sinal; o userscript não muda a resolução do Windows/HDMI. Para exibir 4K físico, configure a saída do Windows em 3840×2160, se suportada pelo equipamento e conexão.
 

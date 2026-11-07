@@ -1,0 +1,106 @@
+{
+ "name": "batches",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T01:12:35.190Z"
+ },
+ "after": {
+  "at": "2026-11-07T01:13:49.222Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1034,
+   623
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "render1280": {
+   "1": 3.9,
+   "2": 3.3,
+   "4": 3.1,
+   "8": 2.837,
+   "16": 2.763,
+   "40": 2.705
+  },
+  "render1080": {
+   "1": 3.9,
+   "2": 3.2,
+   "4": 2.975,
+   "8": 2.775,
+   "16": 2.706,
+   "40": 2.655
+  },
+  "encadeado": {
+   "1": 5.4,
+   "2": 4.65,
+   "4": 4.35,
+   "8": 4.25,
+   "16": 4.106,
+   "40": 4.08
+  },
+  "independente": {
+   "1": 5.5,
+   "2": 4.85,
+   "4": 4.575,
+   "8": 4.388,
+   "16": 4.325,
+   "40": 4.287
+  },
+  "spatial": {
+   "1": 2.9,
+   "2": 2.5,
+   "4": 2.1,
+   "8": 1.988,
+   "16": 1.931,
+   "40": 1.86
+  },
+  "easu": {
+   "1": 2.4,
+   "2": 2.05,
+   "4": 1.8,
+   "8": 1.563,
+   "16": 1.512,
+   "40": 1.455
+  },
+  "nitidez": {
+   "1": 1.8,
+   "2": 1.5,
+   "4": 1.225,
+   "8": 1,
+   "16": 0.925,
+   "40": 0.885
+  },
+  "copy1080": {
+   "1": 1.2,
+   "2": 1.25,
+   "4": 1,
+   "8": 0.9,
+   "16": 0.813,
+   "40": 0.765
+  }
+ }
+}

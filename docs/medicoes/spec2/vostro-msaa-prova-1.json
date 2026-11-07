@@ -1,0 +1,51 @@
+{
+ "name": "msaa-prova-1",
+ "device": "vostro",
+ "query": "aa=1&ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T02:21:44.867Z"
+ },
+ "after": {
+  "at": "2026-11-07T02:21:45.162Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "antialias": true,
+  "samplesParam": 4,
+  "maxSamples": 8,
+  "partial": 3120,
+  "levels": {
+   "64": 1158,
+   "128": 804,
+   "191": 1158
+  }
+ }
+}

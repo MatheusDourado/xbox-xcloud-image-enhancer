@@ -1,0 +1,98 @@
+{
+ "name": "passes-extra",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T02:53:46.920Z"
+ },
+ "after": {
+  "at": "2026-11-07T02:54:25.495Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "median": {
+   "spatialPadrao": 1.917,
+   "spatialVazio": 1.17,
+   "nitidez1080": 0.838,
+   "rcas1080": 0.873,
+   "semDetalhe": 1.887,
+   "semCompressao": 1.62,
+   "semDegrades": 1.505,
+   "corDetalhe": 1.253,
+   "soCor": 1.253,
+   "degradesCor": 1.622,
+   "spatialCand": 0.917
+  },
+  "scenes": {
+   "caverna": {
+    "spatialPadrao": 1.855,
+    "spatialVazio": 1.17,
+    "nitidez1080": 0.84,
+    "rcas1080": 0.88,
+    "semDetalhe": 1.845,
+    "semCompressao": 1.587,
+    "semDegrades": 1.453,
+    "corDetalhe": 1.253,
+    "soCor": 1.242,
+    "degradesCor": 1.577,
+    "spatialCand": 0.923
+   },
+   "rocha": {
+    "spatialPadrao": 1.917,
+    "spatialVazio": 1.165,
+    "nitidez1080": 0.838,
+    "rcas1080": 0.86,
+    "semDetalhe": 1.92,
+    "semCompressao": 1.663,
+    "semDegrades": 1.53,
+    "corDetalhe": 1.272,
+    "soCor": 1.262,
+    "degradesCor": 1.678,
+    "spatialCand": 0.9
+   },
+   "noite": {
+    "spatialPadrao": 1.938,
+    "spatialVazio": 1.173,
+    "nitidez1080": 0.835,
+    "rcas1080": 0.873,
+    "semDetalhe": 1.887,
+    "semCompressao": 1.62,
+    "semDegrades": 1.505,
+    "corDetalhe": 1.245,
+    "soCor": 1.253,
+    "degradesCor": 1.622,
+    "spatialCand": 0.917
+   }
+  },
+  "glError": 0,
+  "failed": {}
+ }
+}

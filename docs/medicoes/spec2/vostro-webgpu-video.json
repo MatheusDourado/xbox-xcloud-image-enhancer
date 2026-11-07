@@ -1,0 +1,145 @@
+{
+ "name": "webgpu-video",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T02:40:36.635Z"
+ },
+ "after": {
+  "at": "2026-11-07T02:41:22.680Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "adapter": "gen-12lp",
+  "liveExterno": {
+   "gpu": {
+    "n": 132,
+    "p50": 0.262,
+    "p95": 0.328,
+    "p99": 0.393,
+    "max": 0.393,
+    "mean": 0.266
+   },
+   "cpu": {
+    "n": 132,
+    "p50": 0.3,
+    "p95": 5.1,
+    "p99": 31.4,
+    "max": 34.6,
+    "mean": 1.227
+   }
+  },
+  "liveTextura": {
+   "gpu": {
+    "n": 145,
+    "p50": 0.131,
+    "p95": 0.131,
+    "p99": 0.197,
+    "max": 0.197,
+    "mean": 0.11
+   },
+   "cpu": {
+    "n": 145,
+    "p50": 0.1,
+    "p95": 0.2,
+    "p99": 1,
+    "max": 32.3,
+    "mean": 0.329
+   }
+  },
+  "liveCopiaExterna": {
+   "gpu": {
+    "n": 140,
+    "p50": 0.262,
+    "p95": 0.262,
+    "p99": 0.328,
+    "max": 0.328,
+    "mean": 0.248
+   },
+   "cpu": {
+    "n": 140,
+    "p50": 0.3,
+    "p95": 10.3,
+    "p99": 24.6,
+    "max": 32.5,
+    "mean": 1.525
+   }
+  },
+  "burstExterno": {
+   "n": 30,
+   "p50": 0.262,
+   "p95": 0.328,
+   "p99": 0.328,
+   "max": 0.328,
+   "mean": 0.293
+  },
+  "burstTextura": {
+   "n": 30,
+   "p50": 0.262,
+   "p95": 0.328,
+   "p99": 0.459,
+   "max": 0.459,
+   "mean": 0.256
+  },
+  "pesadoEspacado33": {
+   "n": 150,
+   "p50": 3.146,
+   "p95": 3.277,
+   "p99": 5.439,
+   "max": 5.505,
+   "mean": 3.258
+  },
+  "pesadoEspacado8": {
+   "n": 300,
+   "p50": 3.146,
+   "p95": 3.211,
+   "p99": 3.277,
+   "max": 3.342,
+   "mean": 3.158
+  },
+  "pesadoSaturado": {
+   "n": 40,
+   "p50": 3.146,
+   "p95": 3.539,
+   "p99": 3.736,
+   "max": 3.736,
+   "mean": 3.18
+  },
+  "pesadoEspacadoDepois": {
+   "n": 150,
+   "p50": 3.146,
+   "p95": 3.277,
+   "p99": 3.277,
+   "max": 3.342,
+   "mean": 3.169
+  }
+ }
+}

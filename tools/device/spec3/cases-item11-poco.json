@@ -1,0 +1,8 @@
+[{"name":"sync-30-1280-a","query":"aa=0","seconds":15,"cfg":{"output":1280}},
+{"name":"desync-30-1280-a","query":"aa=0&desync=1","seconds":15,"cfg":{"output":1280}},
+{"name":"desync-30-1280-b","query":"aa=0&desync=1","seconds":15,"cfg":{"output":1280}},
+{"name":"sync-30-1280-b","query":"aa=0","seconds":15,"cfg":{"output":1280}},
+{"name":"sync-60-1280-a","query":"aa=0&clip=game60","seconds":15,"cfg":{"output":1280}},
+{"name":"desync-60-1280-a","query":"aa=0&desync=1&clip=game60","seconds":15,"cfg":{"output":1280}},
+{"name":"desync-60-1280-b","query":"aa=0&desync=1&clip=game60","seconds":15,"cfg":{"output":1280}},
+{"name":"sync-60-1280-b","query":"aa=0&clip=game60","seconds":15,"cfg":{"output":1280}}]

@@ -1,0 +1,270 @@
+{
+ "name": "upload-live",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T01:52:54.375Z"
+ },
+ "after": {
+  "at": "2026-11-07T01:55:19.126Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "none": {
+   "frames": 358,
+   "cpu": {
+    "n": 349,
+    "p50": 0,
+    "p95": 0.1,
+    "p99": 0.1,
+    "max": 0.4,
+    "mean": 0.034
+   },
+   "total": {
+    "n": 349,
+    "p50": 0.9,
+    "p95": 1.2,
+    "p99": 2.3,
+    "max": 2.6,
+    "mean": 0.934
+   }
+  },
+  "tex": {
+   "frames": 359,
+   "cpu": {
+    "n": 350,
+    "p50": 0.1,
+    "p95": 0.3,
+    "p99": 0.5,
+    "max": 0.7,
+    "mean": 0.156
+   },
+   "total": {
+    "n": 350,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p99": 2.5,
+    "max": 2.6,
+    "mean": 1.932
+   }
+  },
+  "texNoFlip": {
+   "frames": 359,
+   "cpu": {
+    "n": 350,
+    "p50": 0.2,
+    "p95": 0.3,
+    "p99": 0.6,
+    "max": 0.9,
+    "mean": 0.166
+   },
+   "total": {
+    "n": 350,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p99": 2.6,
+    "max": 3.6,
+    "mean": 1.956
+   }
+  },
+  "sub": {
+   "frames": 357,
+   "cpu": {
+    "n": 348,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.8,
+    "max": 2.1,
+    "mean": 0.298
+   },
+   "total": {
+    "n": 348,
+    "p50": 4.8,
+    "p95": 5.5,
+    "p99": 5.9,
+    "max": 6.2,
+    "mean": 4.884
+   }
+  },
+  "subNoFlip": {
+   "frames": 358,
+   "cpu": {
+    "n": 349,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.9,
+    "max": 1.2,
+    "mean": 0.29
+   },
+   "total": {
+    "n": 349,
+    "p50": 4.8,
+    "p95": 5.4,
+    "p99": 5.8,
+    "max": 6.2,
+    "mean": 4.85
+   }
+  },
+  "texNoConv": {
+   "frames": 355,
+   "cpu": {
+    "n": 346,
+    "p50": 0.1,
+    "p95": 0.3,
+    "p99": 0.6,
+    "max": 1.3,
+    "mean": 0.16
+   },
+   "total": {
+    "n": 346,
+    "p50": 1.9,
+    "p95": 2.3,
+    "p99": 2.5,
+    "max": 3,
+    "mean": 1.916
+   }
+  },
+  "rgb": {
+   "frames": 358,
+   "cpu": {
+    "n": 349,
+    "p50": 0.1,
+    "p95": 0.3,
+    "p99": 0.5,
+    "max": 0.7,
+    "mean": 0.164
+   },
+   "total": {
+    "n": 349,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p99": 2.7,
+    "max": 2.7,
+    "mean": 1.942
+   }
+  },
+  "frame": {
+   "frames": 357,
+   "cpu": {
+    "n": 348,
+    "p50": 0.2,
+    "p95": 0.4,
+    "p99": 0.6,
+    "max": 0.7,
+    "mean": 0.187
+   },
+   "total": {
+    "n": 348,
+    "p50": 1.9,
+    "p95": 2.4,
+    "p99": 2.7,
+    "max": 3,
+    "mean": 1.955
+   }
+  },
+  "p1280": {
+   "frames": 358,
+   "cpu": {
+    "n": 349,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 1,
+    "mean": 0.303
+   },
+   "total": {
+    "n": 349,
+    "p50": 7,
+    "p95": 7.7,
+    "p99": 8.5,
+    "max": 8.6,
+    "mean": 6.816
+   }
+  },
+  "p1280NoUpload": {
+   "frames": 359,
+   "cpu": {
+    "n": 350,
+    "p50": 0.1,
+    "p95": 0.3,
+    "p99": 0.3,
+    "max": 0.8,
+    "mean": 0.133
+   },
+   "total": {
+    "n": 350,
+    "p50": 6.2,
+    "p95": 6.7,
+    "p99": 7.2,
+    "max": 7.5,
+    "mean": 5.922
+   }
+  },
+  "p1080": {
+   "frames": 357,
+   "cpu": {
+    "n": 348,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.8,
+    "max": 1.3,
+    "mean": 0.291
+   },
+   "total": {
+    "n": 348,
+    "p50": 6.9,
+    "p95": 7.6,
+    "p99": 8,
+    "max": 8.4,
+    "mean": 6.706
+   }
+  },
+  "p1080NoUpload": {
+   "frames": 355,
+   "cpu": {
+    "n": 346,
+    "p50": 0.1,
+    "p95": 0.2,
+    "p99": 0.3,
+    "max": 0.6,
+    "mean": 0.132
+   },
+   "total": {
+    "n": 346,
+    "p50": 6.2,
+    "p95": 6.7,
+    "p99": 8.1,
+    "max": 9.7,
+    "mean": 5.928
+   }
+  }
+ }
+}

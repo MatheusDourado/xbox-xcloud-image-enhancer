@@ -1,0 +1,503 @@
+{
+ "1080:padrao": {
+  "ssim": 0.9258,
+  "psnr": 35.6926,
+  "chroma": 39.9946,
+  "detail": 0.9516,
+  "energy": 1.5201,
+  "halo": 0.6706,
+  "band": 1.3507
+ },
+ "1080:semFiltro": {
+  "ssim": 0.9379,
+  "psnr": 38.1938,
+  "chroma": 39.8923,
+  "detail": 0.6732,
+  "energy": 0.6968,
+  "halo": 0.0484,
+  "band": 1.2281
+ },
+ "1080:sem-cleanup": {
+  "ssim": 0.9257,
+  "psnr": 35.6778,
+  "chroma": 39.9934,
+  "detail": 0.9537,
+  "energy": 1.5298,
+  "halo": 0.671,
+  "band": 1.3462
+ },
+ "1080:so-cleanup": {
+  "ssim": 0.9378,
+  "psnr": 38.1899,
+  "chroma": 39.8925,
+  "detail": 0.6721,
+  "energy": 0.6943,
+  "halo": 0.0484,
+  "band": 1.2299
+ },
+ "1080:sem-deband": {
+  "ssim": 0.9272,
+  "psnr": 35.7988,
+  "chroma": 39.9789,
+  "detail": 0.9462,
+  "energy": 1.4752,
+  "halo": 0.653,
+  "band": 1.3495
+ },
+ "1080:so-deband": {
+  "ssim": 0.9378,
+  "psnr": 38.197,
+  "chroma": 39.9064,
+  "detail": 0.6731,
+  "energy": 0.6983,
+  "halo": 0.0484,
+  "band": 1.2354
+ },
+ "1080:sem-chroma": {
+  "ssim": 0.9254,
+  "psnr": 35.5404,
+  "chroma": 39.9352,
+  "detail": 0.9642,
+  "energy": 1.5605,
+  "halo": 0.7466,
+  "band": 1.359
+ },
+ "1080:so-chroma": {
+  "ssim": 0.9379,
+  "psnr": 38.1902,
+  "chroma": 39.9706,
+  "detail": 0.6731,
+  "energy": 0.6971,
+  "halo": 0.0483,
+  "band": 1.2282
+ },
+ "1080:sem-detail": {
+  "ssim": 0.9308,
+  "psnr": 36.2594,
+  "chroma": 39.992,
+  "detail": 0.9181,
+  "energy": 1.3748,
+  "halo": 0.5526,
+  "band": 1.2923
+ },
+ "1080:so-detail": {
+  "ssim": 0.938,
+  "psnr": 38.0226,
+  "chroma": 39.8978,
+  "detail": 0.7087,
+  "energy": 0.7818,
+  "halo": 0.0732,
+  "band": 1.2195
+ },
+ "1080:semNitidez": {
+  "ssim": 0.938,
+  "psnr": 38.0415,
+  "chroma": 39.9818,
+  "detail": 0.6997,
+  "energy": 0.7673,
+  "halo": 0.0706,
+  "band": 1.2098
+ },
+ "1080:aa50": {
+  "ssim": 0.929,
+  "psnr": 36.3736,
+  "chroma": 39.9439,
+  "detail": 0.8405,
+  "energy": 1.2302,
+  "halo": 0.1934,
+  "band": 1.3039
+ },
+ "1080:neural50": {
+  "ssim": 0.9255,
+  "psnr": 35.6936,
+  "chroma": 39.9993,
+  "detail": 0.9546,
+  "energy": 1.5202,
+  "halo": 0.7918,
+  "band": 1.3879
+ },
+ "1080:rcas3": {
+  "ssim": 0.9358,
+  "psnr": 37.6109,
+  "chroma": 39.9818,
+  "detail": 0.7637,
+  "energy": 0.9527,
+  "halo": 0.1762,
+  "band": 1.2225
+ },
+ "1080:cas3": {
+  "ssim": 0.8998,
+  "psnr": 33.5533,
+  "chroma": 39.9942,
+  "detail": 1.0831,
+  "energy": 2.384,
+  "halo": 0.9387,
+  "band": 1.5204
+ },
+ "1080:quality16F": {
+  "ssim": 0.924,
+  "psnr": 35.3405,
+  "chroma": 39.9916,
+  "detail": 0.9818,
+  "energy": 1.6166,
+  "halo": 0.7392,
+  "band": 1.3812
+ },
+ "1080:spatialMp": {
+  "ssim": 0.9258,
+  "psnr": 35.6926,
+  "chroma": 39.9946,
+  "detail": 0.9516,
+  "energy": 1.5201,
+  "halo": 0.6706,
+  "band": 1.3507
+ },
+ "1080:debandV2": {
+  "ssim": 0.9258,
+  "psnr": 35.6925,
+  "chroma": 39.9944,
+  "detail": 0.9516,
+  "energy": 1.5201,
+  "halo": 0.6706,
+  "band": 1.351
+ },
+ "1080:gate": {
+  "ssim": 0.9258,
+  "psnr": 35.6924,
+  "chroma": 39.9945,
+  "detail": 0.9516,
+  "energy": 1.5201,
+  "halo": 0.6706,
+  "band": 1.3517
+ },
+ "1280:padrao": {
+  "ssim": 0.9198,
+  "psnr": 34.9905,
+  "chroma": 39.8304,
+  "detail": 0.723,
+  "energy": 1.2573,
+  "halo": 0.4304,
+  "band": 1.608
+ },
+ "1280:semFiltro": {
+  "ssim": 0.9258,
+  "psnr": 36.2572,
+  "chroma": 39.7495,
+  "detail": 0.5249,
+  "energy": 0.5876,
+  "halo": 0.0324,
+  "band": 1.613
+ },
+ "1280:sem-cleanup": {
+  "ssim": 0.9199,
+  "psnr": 34.9878,
+  "chroma": 39.8299,
+  "detail": 0.7242,
+  "energy": 1.2626,
+  "halo": 0.4305,
+  "band": 1.6032
+ },
+ "1280:so-cleanup": {
+  "ssim": 0.9257,
+  "psnr": 36.2533,
+  "chroma": 39.7495,
+  "detail": 0.5242,
+  "energy": 0.5861,
+  "halo": 0.0324,
+  "band": 1.6143
+ },
+ "1280:sem-deband": {
+  "ssim": 0.9201,
+  "psnr": 35.0238,
+  "chroma": 39.8139,
+  "detail": 0.719,
+  "energy": 1.2377,
+  "halo": 0.4252,
+  "band": 1.6186
+ },
+ "1280:so-deband": {
+  "ssim": 0.9257,
+  "psnr": 36.2582,
+  "chroma": 39.764,
+  "detail": 0.5248,
+  "energy": 0.5888,
+  "halo": 0.0324,
+  "band": 1.6208
+ },
+ "1280:sem-chroma": {
+  "ssim": 0.9194,
+  "psnr": 34.8798,
+  "chroma": 39.7798,
+  "detail": 0.733,
+  "energy": 1.2967,
+  "halo": 0.4886,
+  "band": 1.6146
+ },
+ "1280:so-chroma": {
+  "ssim": 0.9258,
+  "psnr": 36.2579,
+  "chroma": 39.8126,
+  "detail": 0.525,
+  "energy": 0.5879,
+  "halo": 0.0315,
+  "band": 1.6131
+ },
+ "1280:sem-detail": {
+  "ssim": 0.9224,
+  "psnr": 35.33,
+  "chroma": 39.8299,
+  "detail": 0.696,
+  "energy": 1.1458,
+  "halo": 0.3655,
+  "band": 1.5984
+ },
+ "1280:so-detail": {
+  "ssim": 0.9264,
+  "psnr": 36.165,
+  "chroma": 39.7507,
+  "detail": 0.5495,
+  "energy": 0.6519,
+  "halo": 0.0456,
+  "band": 1.5886
+ },
+ "1280:semNitidez": {
+  "ssim": 0.9267,
+  "psnr": 36.1865,
+  "chroma": 39.8233,
+  "detail": 0.5443,
+  "energy": 0.6397,
+  "halo": 0.0409,
+  "band": 1.5715
+ },
+ "1280:aa50": {
+  "ssim": 0.9224,
+  "psnr": 35.4327,
+  "chroma": 39.7886,
+  "detail": 0.6356,
+  "energy": 0.9982,
+  "halo": 0.1176,
+  "band": 1.5781
+ },
+ "1280:neural50": {
+  "ssim": 0.9182,
+  "psnr": 34.9484,
+  "chroma": 39.8328,
+  "detail": 0.7279,
+  "energy": 1.2845,
+  "halo": 0.5239,
+  "band": 1.6665
+ },
+ "1280:rcas3": {
+  "ssim": 0.9257,
+  "psnr": 35.9931,
+  "chroma": 39.8233,
+  "detail": 0.5838,
+  "energy": 0.7798,
+  "halo": 0.089,
+  "band": 1.5613
+ },
+ "1280:cas3": {
+  "ssim": 0.8977,
+  "psnr": 33.3013,
+  "chroma": 39.8313,
+  "detail": 0.8345,
+  "energy": 2.2416,
+  "halo": 0.7003,
+  "band": 1.7561
+ },
+ "1280:quality16F": {
+  "ssim": 0.9182,
+  "psnr": 34.743,
+  "chroma": 39.8432,
+  "detail": 0.7493,
+  "energy": 1.3714,
+  "halo": 0.4941,
+  "band": 1.6296
+ },
+ "1280:spatialMp": {
+  "ssim": 0.9198,
+  "psnr": 34.9905,
+  "chroma": 39.8304,
+  "detail": 0.723,
+  "energy": 1.2573,
+  "halo": 0.4304,
+  "band": 1.608
+ },
+ "1280:debandV2": {
+  "ssim": 0.9198,
+  "psnr": 34.9903,
+  "chroma": 39.8302,
+  "detail": 0.723,
+  "energy": 1.2573,
+  "halo": 0.4305,
+  "band": 1.6085
+ },
+ "1280:gate": {
+  "ssim": 0.9198,
+  "psnr": 34.9904,
+  "chroma": 39.8303,
+  "detail": 0.723,
+  "energy": 1.2573,
+  "halo": 0.4303,
+  "band": 1.6094
+ },
+ "1280:nativo-esticado": {
+  "ssim": 0.9264,
+  "psnr": 35.9418,
+  "chroma": 39.8355,
+  "detail": 0.5885,
+  "energy": 0.7384,
+  "halo": 0.1165,
+  "band": null
+ },
+ "1280:semFiltro-esticado": {
+  "ssim": 0.922,
+  "psnr": 36.0229,
+  "chroma": 39.7027,
+  "detail": 0.4238,
+  "energy": 0.37,
+  "halo": 0.0049,
+  "band": null
+ },
+ "1280:sgsr8s2": {
+  "ssim": 0.9106,
+  "psnr": 34.2225,
+  "chroma": 39.834,
+  "detail": 0.716,
+  "energy": 1.5944,
+  "halo": 0.2003,
+  "band": 1.6813
+ },
+ "1280:sgsr8s15": {
+  "ssim": 0.914,
+  "psnr": 34.5441,
+  "chroma": 39.8335,
+  "detail": 0.7072,
+  "energy": 1.4385,
+  "halo": 0.1846,
+  "band": 1.6619
+ },
+ "1280:sgsr20s2": {
+  "ssim": 0.913,
+  "psnr": 34.5273,
+  "chroma": 39.8302,
+  "detail": 0.6657,
+  "energy": 1.4446,
+  "halo": 0.175,
+  "band": 1.6866
+ },
+ "1280:sgsr20s15": {
+  "ssim": 0.9156,
+  "psnr": 34.8099,
+  "chroma": 39.8301,
+  "detail": 0.6588,
+  "energy": 1.3118,
+  "halo": 0.1613,
+  "band": 1.6744
+ },
+ "1280:sgsr20s12": {
+  "ssim": 0.9177,
+  "psnr": 35.0798,
+  "chroma": 39.8297,
+  "detail": 0.6483,
+  "energy": 1.1888,
+  "halo": 0.1465,
+  "band": 1.6633
+ },
+ "1280:sgsr20s1": {
+  "ssim": 0.9195,
+  "psnr": 35.3271,
+  "chroma": 39.8294,
+  "detail": 0.6343,
+  "energy": 1.0772,
+  "halo": 0.1304,
+  "band": 1.6532
+ },
+ "1280:sgsr30s15": {
+  "ssim": 0.9182,
+  "psnr": 35.07,
+  "chroma": 39.8281,
+  "detail": 0.621,
+  "energy": 1.1433,
+  "halo": 0.1381,
+  "band": 1.6623
+ },
+ "1280:sgsr30s12": {
+  "ssim": 0.9197,
+  "psnr": 35.3003,
+  "chroma": 39.828,
+  "detail": 0.6127,
+  "energy": 1.0447,
+  "halo": 0.1254,
+  "band": 1.6556
+ },
+ "1280:degrades60": {
+  "ssim": 0.9195,
+  "psnr": 34.9899,
+  "chroma": 39.8762,
+  "detail": 0.7226,
+  "energy": 1.259,
+  "halo": 0.4305,
+  "band": 1.633
+ },
+ "1280:usm2": {
+  "ssim": 0.9233,
+  "psnr": 35.4851,
+  "chroma": 39.8281,
+  "detail": 0.6685,
+  "energy": 1.0405,
+  "halo": 0.2669,
+  "band": 1.5764
+ },
+ "1280:usm15": {
+  "ssim": 0.9246,
+  "psnr": 35.707,
+  "chroma": 39.8269,
+  "detail": 0.6397,
+  "energy": 0.9378,
+  "halo": 0.2003,
+  "band": 1.5668
+ },
+ "sequencia": {
+  "padrao": {
+   "ssim": 0.9238,
+   "psnr": 34.7976,
+   "detail": 0.9774,
+   "energy": 1.5426,
+   "halo": 0.5572,
+   "flicker": 4.8509
+  },
+  "semFiltro": {
+   "ssim": 0.9393,
+   "psnr": 37.3262,
+   "detail": 0.6804,
+   "energy": 0.691,
+   "halo": 0.039,
+   "flicker": 3.7691
+  },
+  "temporal50": {
+   "ssim": 0.9249,
+   "psnr": 34.9074,
+   "detail": 0.9678,
+   "energy": 1.5103,
+   "halo": 0.5378,
+   "flicker": 4.7821
+  },
+  "semDetalhe": {
+   "ssim": 0.9301,
+   "psnr": 35.426,
+   "detail": 0.9394,
+   "energy": 1.3847,
+   "halo": 0.4363,
+   "flicker": 4.5278
+  },
+  "semNitidez": {
+   "ssim": 0.9391,
+   "psnr": 37.1727,
+   "detail": 0.7108,
+   "energy": 0.7681,
+   "halo": 0.054,
+   "flicker": 3.8243
+  }
+ }
+}

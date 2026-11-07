@@ -1,0 +1,79 @@
+{
+ "name": "api-single",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T01:15:16.065Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.187,
+  "tempC": 37,
+  "thermal": 0,
+  "cpu0": 46.4,
+  "gpuMaxC": 42.9,
+  "skinC": 39.684,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T01:15:38.010Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 37,
+  "thermal": 0,
+  "cpu0": 52,
+  "gpuMaxC": 56.2,
+  "skinC": 40.604,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "heavy.plain.M1": 6.5,
+  "heavy.plain.M40": 1.297,
+  "heavy.inv.M1": 6.7,
+  "heavy.inv.M40": 1.37,
+  "heavy.clear.M1": 6.6,
+  "heavy.clear.M40": 1.35,
+  "spatial.plain.M1": 9.6,
+  "spatial.plain.M40": 2.188,
+  "spatial.inv.M1": 9.4,
+  "spatial.inv.M40": 2.235,
+  "spatial.clear.M1": 9.5,
+  "spatial.clear.M40": 2.188
+ }
+}

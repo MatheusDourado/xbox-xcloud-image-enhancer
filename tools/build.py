@@ -1,6 +1,6 @@
 from pathlib import Path
 import json,re,hashlib
-source=Path('script.js').read_text()
+source=Path('script.js').read_text(encoding='utf-8')
 assert '// @version      6.7.12' in source
 marker='class VideoPlayer extends BaseStreamPlayer'
 assert source.count(marker)==1
@@ -14,7 +14,7 @@ cas=cas.replace('precision mediump float;','precision highp float;\nprecision hi
 texel='vec2 texelSize = 1.0 / iResolution.xy;'
 assert cas.count(texel)==1
 cas=cas.replace(texel,'vec2 texelSize = 1.0 / vec2(textureSize(tex, 0));')
-shaders={p.stem:p.read_text() for p in sorted(Path('src/shaders').glob('*.glsl'))}
+shaders={p.stem:p.read_text(encoding='utf-8') for p in sorted(Path('src/shaders').glob('*.glsl'))}
 # Neural restoration: weights from src/nn/restore.json (tools/nn/train.py) become shader constants.
 import sys; sys.path.insert(0,'tools')
 from nn_glsl import generate
@@ -22,6 +22,7 @@ shaders['nnFeatures'],shaders['nnApply']=generate('src/nn/restore.json')
 # Fuse finishing into sharpening to avoid a full-frame pass and RGBA8 rounding.
 finish=shaders['finish'].split('vec3 finishColor',1)[1].split('void main()',1)[0]
 shaders['rcas']=shaders['rcas'].replace('/* FINISH_COLOR */','vec3 finishColor'+finish)
+shaders['sgsr']=shaders['sgsr'].replace('/* FINISH_COLOR */','vec3 finishColor'+finish)
 cas=cas.replace('vec3 clarityBoost', 'uniform float shadows,deband;uniform bool diagnostic;\nvec3 finishColor'+finish+'\nvec3 clarityBoost')
 cas=cas.replace('fragColor = vec4(color, 1.0);','fragColor = vec4(finishColor(color), 1.0);')
 shaders['cas']=cas
@@ -46,11 +47,11 @@ for expression in ['e + (e - gaussianBlur) * sharpenFactor / 3.0','mix(e, outCol
     filtered=filtered.replace(needle,'return limitSharpen(e,'+expression+','+bounds+');')
 shaders['casFiltered']=filtered
 inputs=[Path('script.js'),Path('tools/build.py'),Path('tools/nn_glsl.py'),*sorted(Path('src').rglob('*.*'))]
-fingerprint=hashlib.sha256(b''.join(str(p).encode()+b'\0'+p.read_bytes() for p in inputs if p.is_file())).hexdigest()
-build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.9.7.1','sourceSha256':fingerprint})+';\n'
-bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+Path('src/restoration-engine.js').read_text()
+fingerprint=hashlib.sha256(b''.join(p.as_posix().encode()+b'\0'+p.read_bytes() for p in inputs if p.is_file())).hexdigest()
+build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.9.8.0','sourceSha256':fingerprint})+';\n'
+bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+Path('src/restoration-engine.js').read_text(encoding='utf-8')
 Path('output/restoration.bundle.js').parent.mkdir(parents=True,exist_ok=True)
-Path('output/restoration.bundle.js').write_text(bundle)
+Path('output/restoration.bundle.js').write_text(bundle,encoding='utf-8',newline='\n')
 # Repair upstream singleton lifecycle: a destroyed canvas must be recreated next session.
 old='destroy() {this.cleanUpCanvasPlayer();}}'
 assert source.count(old)==1
@@ -58,9 +59,9 @@ source=source.replace(old,'destroy() {this.cleanUpCanvasPlayer();this.playerType
 menu='\"video.processing.sharpness\",\"video.saturation\"'
 assert source.count(menu)==1
 source=source.replace(menu,'\"video.processing.sharpness\",($parent) => {window.BxImageFilter.mountControls($parent);},\"video.saturation\"')
-source=source.replace(marker,bundle+'\n'+Path('src/frame-pacing.js').read_text()+'\n'+'\n'.join(Path('src/'+n).read_text() for n in ('image-filter.js','panel.js','hud.js'))+'\n'+marker)
-source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.9.7.1')
+source=source.replace(marker,bundle+'\n'+Path('src/frame-pacing.js').read_text(encoding='utf-8')+'\n'+'\n'.join(Path('src/'+n).read_text(encoding='utf-8') for n in ('image-filter.js','panel.js','hud.js'))+'\n'+marker)
+source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.9.8.0')
 source='\n'.join(line for line in source.split('\n') if not line.startswith(('// @updateURL','// @downloadURL')))
 source=source.replace('// @grant        none','// @grant        none\n// @updateURL    none\n// @downloadURL  none').replace('CheckForUpdate: !0','CheckForUpdate: !1',1)
-Path('better-xcloud-image-filter.user.js').write_text(source)
-print('Built userscript v9.7.1 and shared player bundle')
+Path('better-xcloud-image-filter.user.js').write_text(source,encoding='utf-8',newline='\n')
+print('Built userscript v9.8.0 and shared player bundle')

@@ -1,0 +1,308 @@
+{
+ "name": "item2-rajada-r2",
+ "device": "poco",
+ "query": "aa=1",
+ "before": {
+  "at": "2026-11-07T04:02:58.724Z",
+  "level": 20,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 37,
+  "thermal": 0,
+  "cpu0": 48.4,
+  "gpuMaxC": 45.3,
+  "skinC": 40.189,
+  "socdPct": 80,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T04:03:53.172Z",
+  "level": 20,
+  "status": 2,
+  "voltageV": 3.687,
+  "currentA": 1.5,
+  "tempC": 37,
+  "thermal": 0,
+  "cpu0": 66.8,
+  "gpuMaxC": 56.6,
+  "skinC": 43.206,
+  "socdPct": 80,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "spatialVariants": true,
+  "mediumFloat": {
+   "precision": 10,
+   "rangeMin": 15,
+   "rangeMax": 15
+  }
+ },
+ "result": {
+  "median": {
+   "genDef": 2.017,
+   "defHp": 1.163,
+   "defMp": 0.867,
+   "defMpChromaHp": 0.955,
+   "defMpConst": 0.77,
+   "genV9": 3.318,
+   "v9Hp": 2.365,
+   "v9Mp": 1.95,
+   "renderGen": 4.292,
+   "renderHp": 4.117,
+   "renderMp": 4.005
+  },
+  "scenes": {
+   "caverna": {
+    "genDef": 1.777,
+    "defHp": 0.992,
+    "defMp": 0.74,
+    "defMpChromaHp": 0.813,
+    "defMpConst": 0.692,
+    "genV9": 2.938,
+    "v9Hp": 2.29,
+    "v9Mp": 1.85,
+    "renderGen": 4.11,
+    "renderHp": 3.847,
+    "renderMp": 3.61
+   },
+   "rocha": {
+    "genDef": 2.017,
+    "defHp": 1.163,
+    "defMp": 0.91,
+    "defMpChromaHp": 0.982,
+    "defMpConst": 0.77,
+    "genV9": 3.318,
+    "v9Hp": 2.485,
+    "v9Mp": 2.462,
+    "renderGen": 4.292,
+    "renderHp": 4.145,
+    "renderMp": 4.005
+   },
+   "noite": {
+    "genDef": 2.017,
+    "defHp": 1.278,
+    "defMp": 0.867,
+    "defMpChromaHp": 0.955,
+    "defMpConst": 1.03,
+    "genV9": 3.37,
+    "v9Hp": 2.365,
+    "v9Mp": 1.95,
+    "renderGen": 4.76,
+    "renderHp": 4.117,
+    "renderMp": 4.085
+   }
+  },
+  "diffs": {
+   "caverna": {
+    "defHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMp": {
+     "max": 53,
+     "mean": 0.0413,
+     "changedPct": 4.0498,
+     "over1Pct": 0.0306,
+     "over1": 1901,
+     "over8": 104
+    },
+    "defMpChromaHp": {
+     "max": 73,
+     "mean": 0.0433,
+     "changedPct": 4.2986,
+     "over1Pct": 0.0128,
+     "over1": 799,
+     "over8": 48
+    },
+    "defMpConst": {
+     "max": 53,
+     "mean": 0.0439,
+     "changedPct": 4.3116,
+     "over1Pct": 0.0306,
+     "over1": 1902,
+     "over8": 104
+    },
+    "v9Hp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Mp": {
+     "max": 53,
+     "mean": 0.0415,
+     "changedPct": 4.0618,
+     "over1Pct": 0.0338,
+     "over1": 2104,
+     "over8": 106
+    },
+    "debMp": {
+     "max": 1,
+     "mean": 0.0367,
+     "changedPct": 3.6672,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMp": {
+     "max": 53,
+     "mean": 0.0081,
+     "changedPct": 0.7268,
+     "over1Pct": 0.0305,
+     "over1": 1898,
+     "over8": 103
+    },
+    "chromaMpHp": {
+     "max": 40,
+     "mean": 0.0055,
+     "changedPct": 0.5283,
+     "over1Pct": 0.0091,
+     "over1": 566,
+     "over8": 38
+    }
+   },
+   "noite": {
+    "defHp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "defMp": {
+     "max": 79,
+     "mean": 0.0218,
+     "changedPct": 2.1606,
+     "over1Pct": 0.0072,
+     "over1": 449,
+     "over8": 22
+    },
+    "defMpChromaHp": {
+     "max": 32,
+     "mean": 0.0265,
+     "changedPct": 2.6443,
+     "over1Pct": 0.0033,
+     "over1": 208,
+     "over8": 9
+    },
+    "defMpConst": {
+     "max": 79,
+     "mean": 0.022,
+     "changedPct": 2.1801,
+     "over1Pct": 0.0072,
+     "over1": 450,
+     "over8": 22
+    },
+    "v9Hp": {
+     "max": 0,
+     "mean": 0,
+     "changedPct": 0,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "v9Mp": {
+     "max": 79,
+     "mean": 0.0247,
+     "changedPct": 2.4393,
+     "over1Pct": 0.0102,
+     "over1": 637,
+     "over8": 30
+    },
+    "debMp": {
+     "max": 1,
+     "mean": 0.0181,
+     "changedPct": 1.8134,
+     "over1Pct": 0,
+     "over1": 0,
+     "over8": 0
+    },
+    "chromaMp": {
+     "max": 79,
+     "mean": 0.0048,
+     "changedPct": 0.4591,
+     "over1Pct": 0.0075,
+     "over1": 464,
+     "over8": 22
+    },
+    "chromaMpHp": {
+     "max": 15,
+     "mean": 0.004,
+     "changedPct": 0.4001,
+     "over1Pct": 0.0023,
+     "over1": 143,
+     "over8": 2
+    }
+   },
+   "render-hp": {
+    "max": 0,
+    "over1Pct": 0
+   },
+   "render-mp": {
+    "max": 39,
+    "over1Pct": 0.4665
+   }
+  },
+  "failed": {},
+  "programs": {
+   "gen": [],
+   "hp": [
+    "spatial@highp.0.1.4.1.0.0.1.1"
+   ],
+   "mp": [
+    "spatial@mediump.0.1.4.1.0.0.1.1"
+   ]
+  },
+  "auto": "mediump",
+  "benchEngine": "mediump",
+  "mediumFloat": {
+   "precision": 10,
+   "rangeMin": 15,
+   "rangeMax": 15
+  },
+  "glError": 0,
+  "output": [
+   2276,
+   1280
+  ]
+ }
+}

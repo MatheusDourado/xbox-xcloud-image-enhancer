@@ -1,0 +1,117 @@
+{
+ "name": "candidato-conferencia",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T03:31:31.905Z",
+  "level": 19,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 39.4,
+  "thermal": 0,
+  "cpu0": 50.4,
+  "gpuMaxC": 47.4,
+  "skinC": 42.407,
+  "socdPct": 81,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T03:31:37.077Z",
+  "level": 19,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 39.4,
+  "thermal": 0,
+  "cpu0": 52.8,
+  "gpuMaxC": 47.8,
+  "skinC": 42.254,
+  "socdPct": 81,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "caverna": {
+   "referenciaVsEntrada": {
+    "max": 106,
+    "mean": 0.326,
+    "changedPct": 13.925,
+    "over1Pct": 4.3665
+   },
+   "candidatoVsEntrada": {
+    "max": 106,
+    "mean": 0.3397,
+    "changedPct": 15.265,
+    "over1Pct": 4.3827
+   },
+   "candidatoVsReferencia": {
+    "max": 53,
+    "mean": 0.0392,
+    "changedPct": 3.841,
+    "over1Pct": 0.0305
+   },
+   "sgsrMediumpVsHighp": {
+    "max": 23,
+    "mean": 0.0245,
+    "over1Pct": 0.0203
+   }
+  },
+  "noite": {
+   "referenciaVsEntrada": {
+    "max": 89,
+    "mean": 0.1531,
+    "changedPct": 10.134,
+    "over1Pct": 1.3167
+   },
+   "candidatoVsEntrada": {
+    "max": 89,
+    "mean": 0.1622,
+    "changedPct": 11.035,
+    "over1Pct": 1.3224
+   },
+   "candidatoVsReferencia": {
+    "max": 79,
+    "mean": 0.0211,
+    "changedPct": 2.093,
+    "over1Pct": 0.0072
+   },
+   "sgsrMediumpVsHighp": {
+    "max": 23,
+    "mean": 0.0227,
+    "over1Pct": 0.11
+   }
+  }
+ }
+}

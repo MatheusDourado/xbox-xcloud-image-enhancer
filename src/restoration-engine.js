@@ -2,7 +2,7 @@
 (() => {
   // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
-  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:.5,deband:.3,chroma:.75,detail:.2,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:3,processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0});
+  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false});
   function normalize(value={}) {
     if(!value || typeof value!=='object')value={};
     const result={...defaults};
@@ -10,6 +10,7 @@
     if([0,3,6,10].includes(value.gpuBudget))result.gpuBudget=value.gpuBudget;
     if(['original','cas','filtered'].includes(value.mode))result.mode=value.mode;
     if(['usm','cas','rcas','native'].includes(value.sharpening))result.sharpening=value.sharpening;
+    if(['easu','sgsr'].includes(value.scaler))result.scaler=value.scaler;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
     if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;
     if(['video','direct'].includes(value.capture))result.capture=value.capture;
@@ -21,6 +22,8 @@
     if(typeof value.upscale==='boolean')result.upscale=value.upscale;
     if(typeof value.lumaSharpen==='boolean')result.lumaSharpen=value.lumaSharpen;
     if(typeof value.adaptive==='boolean')result.adaptive=value.adaptive;
+    // Low-latency canvas (Spec 3 item 11): only an explicit true; it applies when the next canvas is created.
+    if(value.desynchronized===true)result.desynchronized=true;
     for(const [key,min,max] of [['neural',0,1],['antialias',0,1],['sharpness',0,10],['cleanup',0,1],['deband',0,1],['chroma',0,1],['detail',0,1],['temporal',0,1],['contrast',.8,1.2],['noiseFloor',0,8],['saturation',0,1.3],['shadows',0,1]])
       if(typeof value[key]==='number'&&Number.isFinite(value[key]))result[key]=Math.min(max,Math.max(min,value[key]));
     return result;
@@ -35,8 +38,14 @@
     const height=Math.min(2160,Math.floor(displayHeight/8)*8);
     return height>sourceHeight*1.04?String(height):'native';
   }
+  // SGSR 1 (Spec 3 item 5) parameters from the Nitidez slider. Measured on compressed video
+  // (docs/spec2-estudo.md, Ganho visual): edge threshold 20/255 and strength 1.0 at the default
+  // sharpness 2. The slope matches the edge energy of USM: SGSR 1.0/1.5 give 1.08/1.31 against USM
+  // 2/3 at 1.04/1.26, so strength = 0.2 + 0.4 x sharpness (3 -> 1.4, 4.5 -> 2.0, the upstream value).
+  // Sharpness 0 skips the edge step (threshold above any vote): plain bilinear scaling, no sharpening.
+  function sgsrParams(sharpness){return sharpness>0?{sharp:.2+.4*sharpness,threshold:20/255}:{sharp:1,threshold:4};}
   function outputSize(w,h,output){const height=/^\d+$/.test(output)?Number(output):h;return {width:Math.round(w*height/h),height};}
-  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',
+  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',
   configure(settings,height){this.settings=normalize(settings);this.sourceHeight=height;},
   outputFor(settings){
     if(settings.mode!=='filtered'||settings.gpuBudget===0||settings.output==='native'||this.outputCap===Infinity)return settings.output;
@@ -58,11 +67,18 @@
     else return;
     // Do not let timings from a more expensive pipeline trigger the next reduction.
     this.values=[];this.over=0;this.cadenceOver=0;this.revision++;
-  },cadence(reference,current){
+  },cadence(reference,current,ratio=.95){
     if(this.limitMs===0)return;
     if(!Number.isFinite(reference)||reference<=0||!Number.isFinite(current))return;
-    this.cadenceOver=current<reference*.95?this.cadenceOver+1:0;
+    this.cadenceOver=current<reference*ratio?this.cadenceOver+1:0;
     if(this.cadenceOver>=3){this.degrade();this.cadenceOver=0;}
+  },fenceTrend(p50,reference){
+    // Early warning only (docs/spec2-estudo.md 10.4, an inference): the fence p50 above 1.5 frame
+    // intervals for 3 windows in a row. It never reduces the treatment: the fence includes queued work,
+    // so it is an upper bound, and the GPU occupancy, not milliseconds, is what the study validated.
+    if(!Number.isFinite(p50)||!Number.isFinite(reference)||reference<=0){this.fenceOver=0;return false;}
+    this.fenceOver=p50>1.5*1000/reference?this.fenceOver+1:0;
+    return this.fenceOver>=3;
   },sample(ms,mode='filtered'){
     if(mode!=='filtered')return;
     if(!Number.isFinite(ms)||ms<0)return;
@@ -72,6 +88,18 @@
     this.over=this.limitMs>0&&this.p95>this.limitMs?this.over+1:0;
     if(this.over>=30){this.degrade();this.over=0;}
   }};}
+  // Reference for the cadence adaptation without GPU timers: the frames the decoder delivers right now,
+  // under Better xCloud's FPS limit. It follows the game (about 60 FPS in menus, 30 in a match) and falls
+  // with the network, so a stream problem never reads as GPU overload. Under 10 FPS it is a stall: no reference.
+  function liveCadence(received,limit){if(!Number.isFinite(received)||received<10)return null;return limit>0?Math.min(received,limit):received;}
+  // Fraction of the live rate the frames shown must stay above, per path and target rate (Spec 3 item 6).
+  // Direct capture shows every decoded frame: 5%. The <video> element skips frames that arrive together
+  // without any GPU overload: 0.1% at 30 FPS on the Poco F7 (10% kept), but 5-17% of 60 FPS shown at
+  // 60, with the GPU at 3.7% (bare video, 49.7 FPS) as well as at 88% (docs/medicoes/spec2 poco-base,
+  // poco-fps, poco-candidatos, poco-longa60; a file clip, not WebRTC). There 20%: above the worst loss
+  // without overload, while a sustained 30% fall still reduces.
+  // 45 FPS splits the two targets (the live rate is about 30 or 60, lower only on a weak network).
+  function cadenceMargin(direct,reference){return direct?.95:reference>45?.8:.9;}
   function createDiagnostics(){
     // One segment per distinct configuration: returning to an earlier one (e.g. the adaptive QP level)
     // continues its segment, with time counted only while it is current. Besides the GPU time, each
@@ -120,7 +148,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:2,version:'9.7.1',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:2,version:'9.8.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||segments.length>=256,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
           const sorted=[...gpu].sort((a,b)=>a-b);return {config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
@@ -273,10 +301,11 @@
   function compressionLevel(qp){if(!Number.isFinite(qp))return null;const t=Math.min(1,Math.max(0,(qp-20)/16));return Math.round(t*t*(3-2*t)*10)/10;}
   function compressionScales(level){if(level===null||!Number.isFinite(level))return {cleanup:1,deband:1,detail:1};
     return {cleanup:.6+.8*level,deband:.6+.8*level,detail:1.2-.4*level};}
-  // One-tap starting points. natural = v9 measured defaults (docs/analysis-v9.md); console = sharpness
+  // One-tap starting points. natural = Spec 3 defaults (docs/spec3-implementacao.md); v9 = the previous defaults (docs/analysis-v9.md); console = sharpness
   // 2 for less texture flicker (docs/analysis-v9.1.md); the others trade fidelity for a purpose.
   const presets=Object.freeze({
-    natural:{label:'Natural',description:'Padrão medido da v9: fidelidade com nitidez do render limpo.',values:{sharpness:3,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
+    natural:{label:'Natural',description:'Padrão da Spec 3: nitidez 2, degradês 60%, sem Compressão nem Detalhe (menos GPU, índice visual maior).',values:{sharpness:2,cleanup:0,deband:.6,chroma:.75,detail:0,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
+    v9:{label:'Padrão v9',description:'Padrão anterior (v9): nitidez 3, Compressão 50%, Degradês 30%, Detalhe 20%. Mais GPU.',values:{sharpness:3,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
     console:{label:'Console',description:'Nitidez 2: menos cintilação de textura, aparência de console.',values:{sharpness:2,cleanup:.5,deband:.3,chroma:.75,detail:.1,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
     sharp:{label:'Nítido',description:'Mais contorno e textura; mais cintilação em movimento.',values:{sharpness:4.5,cleanup:.35,deband:.2,chroma:.75,detail:.35,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
     clean:{label:'Bitrate baixo',description:'Mais limpeza de blocos e degradês para streams muito comprimidos.',values:{sharpness:2.5,cleanup:.8,deband:.6,chroma:.75,detail:.1,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
@@ -286,29 +315,84 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v9.7.1-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v9.8.0-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   const vertex='#version 300 es\nlayout(location=0) in vec2 position;void main(){gl_Position=vec4(position,0,1);}';
+  // Spatial pass variants (Spec 3, docs/spec2-estudo.md 10.2). The precision profile comes from the GPU:
+  // mediump color math where mediump really is half precision (Adreno/Mali report 10 bits, Poco F7
+  // spatial 2.9 -> 2.3 ms), highp elsewhere (Iris Xe and SwiftShader gain nothing and keep the
+  // generic shader's exact output). Strengths stay uniforms: the compression adaptation moves them.
+  function spatialPrecision(gl,requested='auto'){
+    if(requested==='highp'||requested==='mediump')return requested;
+    try{const f=gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER,gl.MEDIUM_FLOAT);return f&&f.precision>0&&f.precision<=10?'mediump':'highp';}catch{return 'highp';}
+  }
+  // What a variant compiles in: which filters run (strength > 0), the deband taps and the two flags.
+  // These change only with the settings or an adaptation step, never per frame.
+  function spatialProfile(u,precision='highp'){
+    // Taps as the generic loop counts them: tap i runs while i < debandTaps.
+    const deband=u.deband>0,taps=deband&&u.debandTaps>0?Math.min(4,Math.ceil(u.debandTaps)):0;
+    return {precision,cleanup:u.cleanup>0,deband,taps,chroma:u.chroma>0,detail:u.detail>0,antialias:u.antialias>0,quantize:!!u.quantize,selective:!!u.selective};
+  }
+  function spatialKey(p){return [p.precision,p.cleanup,p.deband,p.taps,p.chroma,p.detail,p.antialias,p.quantize,p.selective].map(v=>v===true?1:v===false?0:v).join('.');}
+  function spatialSource(code,p){
+    const lines=['#define SPATIAL_FIXED 1','#define SPATIAL_PRECISION '+p.precision,'#define SPATIAL_TAPS '+p.taps.toFixed(1),'#define SPATIAL_QUANTIZE '+p.quantize,'#define SPATIAL_SELECTIVE '+p.selective];
+    for(const k of ['cleanup','deband','chroma','detail','antialias'])lines.push('#define SPATIAL_'+k.toUpperCase()+' '+(p[k]?1:0));
+    const at=code.indexOf('\n');return code.slice(0,at+1)+lines.join('\n')+'\n'+code.slice(at+1);
+  }
+  // SGSR precision as the spatial pass: mediump color math on half-precision GPUs, highp elsewhere.
+  function sgsrSource(code,precision){const at=code.indexOf('\n');return code.slice(0,at+1)+'#define SGSR_PRECISION '+precision+'\n'+code.slice(at+1);}
   class Engine {
-    constructor(gl,shaders){
+    // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
+    // false keeps the generic uniform-driven spatial shader (benches, comparisons).
+    constructor(gl,shaders,options={}){
       this.gl=gl;this.programs={};this.targets={};this.queries=[];this.budget=createBudget();this.previous=null;this.frames=0;this.diagnostics=createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
       this.fenceTiming=!this.ext&&typeof gl.fenceSync==='function';this.fence=null;this.fenceAt=-Infinity;this.fenceValues=[];this.fenceGeneration=0;this.gpuEstimate=null;
       this.floatTargets=!!gl.getExtension('EXT_color_buffer_float');
+      this.spatialPrecision=spatialPrecision(gl,options.spatialPrecision);this.spatialCode=options.spatialVariants===false?null:shaders.spatial||null;
+      this.spatialJobs=new Map();this.spatialUsed=new Map();this.spatialFailed=new Set();this.parallelCompile=gl.getExtension('KHR_parallel_shader_compile');
       try {
         this.vao=gl.createVertexArray();gl.bindVertexArray(this.vao);this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
-        for(const [name,code]of Object.entries(shaders))this.programs[name]=this.compile(code);
+        for(const [name,code]of Object.entries(shaders))this.programs[name]=this.compile(name==='sgsr'?sgsrSource(code,this.spatialPrecision):code);
+        // Pre-warmed with the rest: the spatial variant of the default settings on an RGBA8 target.
+        if(this.spatialCode){const d=defaults;this.spatialVariant({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},true);}
         this.input=gl.createTexture();this.configure(this.input);
       }catch(e){this.destroy();throw e;}finally{gl.bindVertexArray(null);}
     }
-    compile(fragment){const gl=this.gl,p=gl.createProgram(),objects=[];try{
-      for(const [kind,code]of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){const s=gl.createShader(kind);objects.push(s);gl.shaderSource(s,code);gl.compileShader(s);
-        if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));gl.attachShader(p,s);}
-      gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(p));
-      return {program:p,locations:{}};
-    }catch(e){gl.deleteProgram(p);throw e;}finally{for(const s of objects)gl.deleteShader(s);}}
+    // Compilation in two halves: start() issues the work without waiting, finish() reads the status
+    // (which waits for the compiler) and deletes the shader objects.
+    startProgram(fragment){const gl=this.gl,program=gl.createProgram(),objects=[];
+      for(const [kind,code]of [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]]){const s=gl.createShader(kind);objects.push(s);gl.shaderSource(s,code);gl.compileShader(s);gl.attachShader(program,s);}
+      gl.linkProgram(program);return {program,objects};}
+    finishProgram({program,objects}){const gl=this.gl;try{
+      if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
+        for(const s of objects)if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));
+        throw new Error(gl.getProgramInfoLog(program));}
+      return {program,locations:{}};
+    }catch(e){gl.deleteProgram(program);throw e;}finally{for(const s of objects)gl.deleteShader(s);}}
+    compile(fragment){return this.finishProgram(this.startProgram(fragment));}
+    // Program name for the spatial pass with these uniforms. A new profile is compiled once and kept
+    // (up to 8, least recently used out); until it is ready the generic shader draws, so a settings or
+    // adaptation change never waits for the compiler inside a frame. Its status is read from the next
+    // frame on (the browser's GPU process compiles in the meantime), or when KHR_parallel_shader_compile
+    // reports it done. A variant that fails to build leaves the generic shader for that profile.
+    spatialVariant(u,wait=false){
+      if(!this.spatialCode)return 'spatial';
+      const gl=this.gl,name='spatial@'+spatialKey(spatialProfile(u,this.spatialPrecision));
+      if(!this.programs[name]){
+        if(this.spatialFailed.has(name))return 'spatial';
+        let job=this.spatialJobs.get(name);
+        if(!job){job=this.startProgram(spatialSource(this.spatialCode,spatialProfile(u,this.spatialPrecision)));job.frame=this.frames;this.spatialJobs.set(name,job);}
+        if(!wait&&(job.frame===this.frames||this.parallelCompile&&!gl.getProgramParameter(job.program,this.parallelCompile.COMPLETION_STATUS_KHR)))return 'spatial';
+        this.spatialJobs.delete(name);
+        try{this.programs[name]=this.finishProgram(job);}catch(e){this.spatialFailed.add(name);console.warn('[BxRestoration] spatial variant failed, using the generic shader',name,e);return 'spatial';}
+      }
+      this.spatialUsed.delete(name);this.spatialUsed.set(name,this.frames);
+      if(this.spatialUsed.size>8){const [old]=this.spatialUsed.keys();this.spatialUsed.delete(old);gl.deleteProgram(this.programs[old].program);delete this.programs[old];}
+      return name;
+    }
     configure(texture){const gl=this.gl;gl.bindTexture(gl.TEXTURE_2D,texture);
       for(const p of [gl.TEXTURE_MIN_FILTER,gl.TEXTURE_MAG_FILTER])gl.texParameteri(gl.TEXTURE_2D,p,gl.LINEAR);
       for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,p,gl.CLAMP_TO_EDGE);}
@@ -341,10 +425,14 @@
       }
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
+    dropQuery(item){for(const q of [].concat(item.q))this.gl.deleteQuery(q);}
+    // A slot leaving the pacer without being presented: its render() time still counts.
+    flushSlot(t){if(t.pendingQuery){this.queries.push(t.pendingQuery);t.pendingQuery=null;}t.final=null;}
     poll(){const gl=this.gl;if(!this.ext)return;
-      if(gl.getParameter(this.ext.GPU_DISJOINT_EXT)){for(const item of this.queries)gl.deleteQuery(item.q);this.queries=[];this.diagnostics.disjoint();return;}
-      while(this.queries.length&&gl.getQueryParameter(this.queries[0].q,gl.QUERY_RESULT_AVAILABLE)){
-        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=gl.getQueryParameter(item.q,gl.QUERY_RESULT)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms);}gl.deleteQuery(item.q);}
+      if(gl.getParameter(this.ext.GPU_DISJOINT_EXT)){for(const item of this.queries)this.dropQuery(item);this.queries=[];this.diagnostics.disjoint();return;}
+      // A deferred frame (render + present) is one sample made of two queries.
+      while(this.queries.length&&[].concat(this.queries[0].q).every(q=>gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))){
+        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=[].concat(item.q).reduce((a,q)=>a+gl.getQueryParameter(q,gl.QUERY_RESULT),0)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms);}this.dropQuery(item);}
     }
     // Without the timer query (Android WebView), every 0.5 s a fence after a frame, polled on later tasks,
     // times it from its first command until the GPU finished it: an upper bound of the GPU time (it also
@@ -370,23 +458,28 @@
     }
     // outputTarget: draw the final pass into that persistent texture instead of the canvas, so a
     // frame pacer can present it later with present(). Names starting with 'paced' stay allocated.
-    render(video,outW,outH,rawSettings,time,diagnostic=false,outputTarget=null){
+    // deferFinal (Spec 3 item 8, with outputTarget): the texture keeps the input of the last pass
+    // (sharpening or SGSR) and present() draws that pass straight to the canvas, instead of drawing
+    // it here and copying the result there: one full-screen copy less per frame. The last
+    // intermediate target is handed to the slot without a copy; the video upload and the temporal
+    // history, which the next frame reuses, are copied at source size.
+    render(video,outW,outH,rawSettings,time,diagnostic=false,outputTarget=null,deferFinal=false){
       const gl=this.gl,s=normalize(rawSettings),w=video.videoWidth||video.displayWidth||video.width,h=video.videoHeight||video.displayHeight||video.height;
       if(!w||!h||gl.isContextLost())return false;
-      const started=performance.now();
+      const started=performance.now();let deferredSlot=null;
       if(this.budget.limitMs!==s.gpuBudget){this.resetBudget();this.budget.limitMs=s.gpuBudget;}
       this.budget.configure(s,h);
       this.poll();let q=null;
       const revision=this.budget.revision;
       const filtered=s.mode==='filtered';
       const {hud:_hud,hudPosition:_position,...measured}=s;
-      const segment=this.diagnostics.active?this.diagnostics.frame({settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&this.floatTargets&&this.budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&this.budget.temporalAllowed,cleanup:filtered&&this.budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&this.budget.enhanceAllowed?s.chroma:0,detail:filtered&&this.budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*this.budget.debandScale:0,debandTaps:filtered&&s.deband>0?this.budget.debandTaps:0,antialias:filtered&&this.budget.antialiasAllowed?s.antialias:0}},performance.now()):null;
+      const segment=this.diagnostics.active?this.diagnostics.frame({settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&this.floatTargets&&this.budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&this.budget.temporalAllowed,cleanup:filtered&&this.budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&this.budget.enhanceAllowed?s.chroma:0,detail:filtered&&this.budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*this.budget.debandScale:0,debandTaps:filtered&&s.deband>0?this.budget.debandTaps:0,antialias:filtered&&this.budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}},performance.now()):null;
       this.usedTargets=new Set();
       if(this.ext&&this.queries.length<4){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
       try{
         gl.activeTexture(gl.TEXTURE0);this.configure(this.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
-        let source=this.input;
+        let source=this.input,sgsr=false;
         if(s.mode==='filtered'){
           // Neural restoration first: trained on decoded stream luma (tools/nn), needs float targets.
           if(s.neural>0&&this.floatTargets&&this.budget.neuralAllowed){
@@ -401,7 +494,8 @@
           const antialias=s.antialias>0&&this.budget.antialiasAllowed?s.antialias:0,fusedAntialias=temporalEnabled?0:antialias;
           if(cleanup>0||deband>0||chroma>0||detail>0||fusedAntialias>0){
             const spatial=this.target('spatial',w,h,s.processingMode==='quality');
-            this.draw('spatial',spatial,w,h,{source},{cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:this.budget.debandTaps,quantize:!spatial.fp,selective:s.spatialMode==='selective'});source=spatial.texture;
+            const u={cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:this.budget.debandTaps,quantize:!spatial.fp,selective:s.spatialMode==='selective'};
+            this.draw(this.spatialVariant(u),spatial,w,h,{source},u);source=spatial.texture;
           }
           if(temporalEnabled){
             const qw=Math.max(1,Math.ceil(w/4)),qh=Math.max(1,Math.ceil(h/4));
@@ -419,17 +513,30 @@
           }
           this.previous=temporalEnabled?{time,w,h}:null;
           if(temporalEnabled&&antialias>0){const aa=this.target('aa',w,h,s.processingMode==='quality');this.draw('antialias',aa,w,h,{source},{amount:antialias});source=aa.texture;}
-          if(s.upscale&&outW>w&&outH>h){const scaled=this.target('scaled',outW,outH,s.processingMode==='quality');this.draw('easu',scaled,outW,outH,{source});source=scaled.texture;}
+          // Upscale: EASU then the sharpening pass, or SGSR alone as the last pass (item 5). At native
+          // output SGSR is never used: the sharpening pass stays (SGSR was measured only when scaling).
+          if(s.upscale&&outW>w&&outH>h){if(s.scaler==='sgsr')sgsr=true;else{const scaled=this.target('scaled',outW,outH,s.processingMode==='quality');this.draw('easu',scaled,outW,outH,{source});source=scaled.texture;}}
         }else this.previous=null;
-        // One sharpening stage. 'native' follows the Better xCloud menu (CAS/USM). The
+        // One last pass to the output: SGSR (scaling and sharpening, with the finishing of the sharpening
+        // pass), or one sharpening stage. 'native' follows the Better xCloud menu (CAS/USM). The
         // reference applies the same method and strength with the unmodified upstream shader.
-        const method=s.sharpening==='native'?s.processing:s.sharpening;
-        const casName=s.mode!=='original'&&method==='rcas'?'rcas':s.mode==='filtered'?'casFiltered':'cas';const p=this.programs[casName];gl.useProgram(p.program);gl.uniform1i(gl.getUniformLocation(p.program,'filterId'),method==='usm'?1:2);
-        this.draw(casName,outputTarget?this.target(outputTarget,outW,outH):null,outW,outH,{data:source},{iResolution:[outW,outH],qualityMode:s.mode==='filtered'&&s.processingMode==='quality',rcasStrength:s.sharpness/10,haloMargin:(2+s.sharpness)/255,noiseFloor:s.noiseFloor/255,lumaSharpen:s.lumaSharpen,sharpenFactor:s.mode==='original'?0:s.mode==='cas'?s.sharpness/1.2:s.sharpness/(s.processingMode==='quality'?1:1.2),brightness:1,contrast:s.mode==='filtered'?s.contrast:1,saturation:s.mode==='filtered'?s.saturation:1,shadows:s.mode==='filtered'?s.shadows:0,deband:s.mode==='filtered'?s.deband*this.budget.debandScale:0,diagnostic});
+        let final;
+        if(sgsr)final={name:'sgsr',textures:{source},uniforms:{...sgsrParams(s.sharpness),brightness:1,contrast:s.contrast,saturation:s.saturation,shadows:s.shadows,deband:s.deband*this.budget.debandScale,diagnostic}};
+        else{const method=s.sharpening==='native'?s.processing:s.sharpening;
+          const casName=s.mode!=='original'&&method==='rcas'?'rcas':s.mode==='filtered'?'casFiltered':'cas';
+          final={name:casName,filterId:method==='usm'?1:2,textures:{data:source},uniforms:{iResolution:[outW,outH],qualityMode:s.mode==='filtered'&&s.processingMode==='quality',rcasStrength:s.sharpness/10,haloMargin:(2+s.sharpness)/255,noiseFloor:s.noiseFloor/255,lumaSharpen:s.lumaSharpen,sharpenFactor:s.mode==='original'?0:s.mode==='cas'?s.sharpness/1.2:s.sharpness/(s.processingMode==='quality'?1:1.2),brightness:1,contrast:s.mode==='filtered'?s.contrast:1,saturation:s.mode==='filtered'?s.saturation:1,shadows:s.mode==='filtered'?s.shadows:0,deband:s.mode==='filtered'?s.deband*this.budget.debandScale:0,diagnostic}};}
+        if(outputTarget&&deferFinal){
+          const old=this.targets[outputTarget];if(old)this.flushSlot(old);
+          const owner=source===this.input?null:Object.keys(this.targets).find(k=>this.targets[k].texture===source&&!k.startsWith('history')&&!k.startsWith('paced'));
+          let slot;
+          if(owner){slot=this.targets[owner];this.targets[outputTarget]=slot;if(old)this.targets[owner]=old;else delete this.targets[owner];}
+          else{const fp=source!==this.input;slot=this.target(outputTarget,w,h,fp);this.draw('copy',slot,w,h,{source});}
+          slot.final={name:final.name,filterId:final.filterId,key:Object.keys(final.textures)[0],uniforms:final.uniforms,w:outW,h:outH};deferredSlot=slot;
+        }else this.drawFinal(final,outputTarget?this.target(outputTarget,outW,outH):null,outW,outH);
         if(this.fenceTiming&&!this.fence&&started-this.fenceAt>=500)this.startFence(started,s.mode,segment);
         this.frames++;return true;
       }finally{
-        if(q){gl.endQuery(this.ext.TIME_ELAPSED_EXT);this.queries.push({q,mode:s.mode,revision,segment});}
+        if(q){gl.endQuery(this.ext.TIME_ELAPSED_EXT);const item={q,mode:s.mode,revision,segment};if(deferredSlot)deferredSlot.pendingQuery=item;else this.queries.push(item);}
         for(const [name,t] of Object.entries(this.targets))if(!this.usedTargets.has(name)&&!name.startsWith('paced')){
           gl.deleteTexture(t.texture);if(t.second)gl.deleteTexture(t.second);gl.deleteFramebuffer(t.fbo);delete this.targets[name];
         }
@@ -437,19 +544,26 @@
         gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);
       }
     }
+    drawFinal(f,target,w,h){if(f.filterId){const p=this.programs[f.name];this.gl.useProgram(p.program);this.gl.uniform1i(this.gl.getUniformLocation(p.program,'filterId'),f.filterId);}
+      this.draw(f.name,target,w,h,f.textures,f.uniforms);}
     // Shows a frame stored by render(...,outputTarget) on the canvas (exact copy at output size).
+    // A deferred slot (render(...,deferFinal)) runs its last pass here, timed with its render().
     present(name){const t=this.targets[name],gl=this.gl;if(!t||gl.isContextLost())return false;
-      this.draw('copy',null,t.w,t.h,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);return true;}
-    releasePaced(){const gl=this.gl;for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);delete this.targets[name];}}
+      if(t.final){const item=t.pendingQuery;t.pendingQuery=null;let q=null;if(item&&this.ext){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
+        this.drawFinal({...t.final,textures:{[t.final.key]:t.texture}},null,t.final.w,t.final.h);
+        if(q){gl.endQuery(this.ext.TIME_ELAPSED_EXT);item.q=[].concat(item.q,q);}if(item)this.queries.push(item);}
+      else this.draw('copy',null,t.w,t.h,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);return true;}
+    releasePaced(){const gl=this.gl;for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){if(t.pendingQuery)this.dropQuery(t.pendingQuery);gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);delete this.targets[name];}}
     resetHistory(){this.previous=null;}
-    resetBudget(){for(const item of this.queries)this.gl.deleteQuery(item.q);this.queries=[];this.budget=createBudget();this.resetHistory();this.fenceGeneration++;this.fenceValues=[];this.gpuEstimate=null;}
+    resetBudget(){for(const item of this.queries)this.dropQuery(item);this.queries=[];for(const t of Object.values(this.targets))if(t.pendingQuery){this.dropQuery(t.pendingQuery);t.pendingQuery=null;}this.budget=createBudget();this.resetHistory();this.fenceGeneration++;this.fenceValues=[];this.gpuEstimate=null;}
     destroy(){const gl=this.gl;
       for(const t of Object.values(this.targets)){gl.deleteTexture(t.texture);if(t.second)gl.deleteTexture(t.second);gl.deleteFramebuffer(t.fbo);}
       for(const p of Object.values(this.programs))gl.deleteProgram(p.program);
-      for(const item of this.queries)gl.deleteQuery(item.q);
+      for(const item of this.queries)this.dropQuery(item);for(const t of Object.values(this.targets))if(t.pendingQuery)this.dropQuery(t.pendingQuery);
       if(this.fence){gl.deleteSync(this.fence.sync);this.fence=null;}
+      for(const job of this.spatialJobs?.values()||[]){gl.deleteProgram(job.program);for(const s of job.objects)gl.deleteShader(s);}this.spatialJobs?.clear();this.spatialUsed?.clear();
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

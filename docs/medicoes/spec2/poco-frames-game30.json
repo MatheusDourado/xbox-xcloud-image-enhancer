@@ -1,0 +1,18 @@
+{
+ "layers": {
+  "TX - com.imagefilter.xcloud/com.imagefilter.xcloud.MainActivity#1181": {
+   "frames": 964,
+   "jank:buffer_stuffing+unknown": 655,
+   "jank:none": 224,
+   "jank:app_deadline": 1,
+   "jank:buffer_stuffing": 83,
+   "jank:display_hal+buffer_stuffing": 1
+  }
+ },
+ "display": {
+  "frames": 966,
+  "jank:unknown": 657,
+  "jank:none": 308,
+  "jank:display_hal": 1
+ }
+}

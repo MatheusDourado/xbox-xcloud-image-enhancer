@@ -1,0 +1,100 @@
+{
+ "name": "linha-game30",
+ "device": "poco",
+ "query": "aa=1&clip=game30",
+ "before": {
+  "at": "2026-11-07T02:17:37.551Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.187,
+  "tempC": 38.4,
+  "thermal": 0,
+  "cpu0": 48,
+  "gpuMaxC": 45.3,
+  "skinC": 40.699,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T02:17:53.962Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 38.4,
+  "thermal": 0,
+  "cpu0": 51.2,
+  "gpuMaxC": 48.6,
+  "skinC": 40.781,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "frames": 420,
+  "fps": 30,
+  "cpu": {
+   "n": 420,
+   "p50": 2.2,
+   "p95": 4.2,
+   "p99": 6.3,
+   "max": 25,
+   "mean": 2.516
+  },
+  "gaps": {
+   "n": 419,
+   "p50": 33.3,
+   "p95": 50.6,
+   "p99": 51.6,
+   "max": 53.2,
+   "mean": 33.346
+  },
+  "raf": {
+   "n": 841,
+   "p50": 16.7,
+   "p95": 16.7,
+   "p99": 16.8,
+   "max": 16.8,
+   "mean": 16.651
+  },
+  "dropped": 1,
+  "decoded": 421,
+  "fence": {
+   "p50": 24.600000001490116,
+   "p95": 38.399999998509884,
+   "count": 27
+  }
+ }
+}

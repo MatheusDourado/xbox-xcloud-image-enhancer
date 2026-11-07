@@ -79,7 +79,7 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  passes=[];render({sharpening:'rcas',sharpness:2,cleanup:.35,deband:.3});check(passes.length===2,'RCAS retains two passes',passes);
  passes=[];render({cleanup:.35,deband:1,chroma:.5,detail:.35,antialias:1,sharpness:2});check(passes.length===2&&!passes.includes('antialias'),'AA is fused into the spatial pass without temporal',passes);
  passes=[];render({antialias:1,temporal:.3},2);check(passes.includes('antialias'),'Temporal keeps AA as a separate pass after history',passes);
- passes=[];render({neural:1,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpness:2});check(passes.join()==='nnFeatures,nnApply,spatial,casFiltered','Neural restoration adds two passes before the spatial pass',passes);
+ passes=[];render({neural:1,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpness:2});check(passes.map(p=>p.split('@')[0]).join()==='nnFeatures,nnApply,spatial,casFiltered','Neural restoration adds two passes before the spatial pass',passes);
  passes=[];render({});check(passes.length===1,'Disabled treatments bypass intermediate passes',passes);
  check(Object.keys(engine.targets).length===0,'Disabled treatments release unused intermediate textures',Object.keys(engine.targets));
  {let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
@@ -115,6 +115,80 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  engine.render(input,128,96,{...rcasOnly,mode:'original'},3);const plain=pixels();
  engine.render(input,128,96,{...rcasOnly,mode:'original',sharpening:'cas'},3);const plainCas=pixels();
  check(plain.every((v,i)=>v===plainCas[i]),'Original stays unsharpened with RCAS selected');
+ // Spec 3 item 5: SGSR 1 as the one last pass when scaling up; the EASU path stays as it was and is the default.
+ {const OW=192,OH=144,off={gpuBudget:0,cleanup:0,deband:0,chroma:0,detail:0,output:'144',sharpness:2};
+  const up=(s,diag=false)=>{passes=[];const nat=s.output==='native';engine.render(input,nat?128:OW,nat?96:OH,{...off,...s},5,diag,'pacedS');const t=engine.targets.pacedS;gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);const p=new Uint8Array(t.w*t.h*4);gl.readPixels(0,0,t.w,t.h,gl.RGBA,gl.UNSIGNED_BYTE,p);return {p,passes:passes.slice(),w:t.w,h:t.h};};
+  const same=(a,b)=>a.p.length===b.p.length&&a.p.every((v,i)=>v===b.p[i]);
+  const e0=up({}),e1=up({scaler:'easu'}),e2=up({scaler:'bogus'});
+  check(e0.passes.join()==='easu,casFiltered'&&same(e0,e1)&&same(e0,e2),'EASU + sharpening stays the default scaling path, byte for byte',e0.passes);
+  const g=up({scaler:'sgsr'});check(g.passes.join()==='sgsr'&&g.w===OW&&g.h===OH,'SGSR replaces EASU and sharpening with one pass at output size',{passes:g.passes,w:g.w,h:g.h});
+  check(!same(g,e0),'SGSR output differs from EASU');
+  const gf=up({scaler:'sgsr',deband:.6,chroma:.75});check(gf.passes.length===2&&gf.passes[1]==='sgsr'&&gf.passes[0].startsWith('spatial'),'SGSR follows the spatial pass',gf.passes);
+  const n0=up({output:'native'}),n1=up({output:'native',scaler:'sgsr'});check(n1.passes.join()==='casFiltered'&&same(n0,n1),'At native output SGSR keeps the current sharpening pass',n1.passes);
+  // Finite output: SGSR straight into a float target on a noisy frame with flat areas.
+  if(engine.floatTargets){const f={texture:gl.createTexture(),fbo:gl.createFramebuffer()};gl.bindTexture(gl.TEXTURE_2D,f.texture);gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA32F,OW,OH);gl.bindFramebuffer(gl.FRAMEBUFFER,f.fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,f.texture,0);engine.draw('sgsr',f,OW,OH,{source:engine.input},{...BxRestoration.sgsrParams(2),brightness:1,contrast:1,saturation:1,shadows:0,deband:0,diagnostic:false});
+   gl.bindFramebuffer(gl.FRAMEBUFFER,f.fbo);const v=new Float32Array(OW*OH*4);gl.readPixels(0,0,OW,OH,gl.RGBA,gl.FLOAT,v);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(f.fbo);gl.deleteTexture(f.texture);check(v.every(x=>Number.isFinite(x)&&x>=0&&x<=1),'SGSR output is finite and within 0..1 (no NaN)');}
+  for(const level of [0,100,255]){ctx.fillStyle=`rgb(${level},${level},${level})`;ctx.fillRect(0,0,128,96);
+   const f=up({scaler:'sgsr',sharpness:10});check(f.p.every((v,i)=>i%4===3||Math.abs(v-level)<=1),'SGSR uniform '+level);}
+  step(100,120);{const s=up({scaler:'sgsr',sharpness:10}),row=Array.from({length:OW},(_,x)=>s.p[(60*OW+x)*4]);
+   check(Math.min(...row)>=99&&Math.max(...row)<=121,'SGSR never overshoots the local range at a step',[Math.min(...row),Math.max(...row)]);}
+  // It takes over the finishing of the sharpening pass: dither of fractional levels and the diagnostic tint.
+  step(50,62);{const d=up({scaler:'sgsr',cleanup:1,deband:.3}),col=new Set(Array.from({length:120},(_,y)=>d.p[((y+12)*OW+96)*4]));
+   check(col.size>1,'SGSR dithers fractional levels at presentation',[...col]);}
+  ctx.fillStyle='rgb(100,100,100)';ctx.fillRect(0,0,128,96);{const t=up({scaler:'sgsr'},true),i=(70*OW+96)*4;check(t.p[i]>t.p[i+1]+60,'SGSR applies the diagnostic tint',[t.p[i],t.p[i+1],t.p[i+2]]);}
+  // The Nitidez slider still acts: more sharpness, more high-frequency gain against plain scaling.
+  {let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
+   for(let y=0;y<96;y+=2)for(let x=0;x<128;x+=2){const v=Math.round(110+(rnd()*2-1)*30);ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect(x,y,2,2);}
+   const hp=b=>{let s=0;for(let y=4;y<OH-4;y++)for(let x=4;x<OW-4;x++){const i=(y*OW+x)*4;s+=Math.abs(4*b[i]-b[i-4]-b[i+4]-b[i-OW*4]-b[i+OW*4]);}return s;};
+   const s0=hp(up({scaler:'sgsr',sharpness:0}).p),s2=hp(up({scaler:'sgsr',sharpness:2}).p),s6=hp(up({scaler:'sgsr',sharpness:6}).p);
+   check(s6>s2&&s2>s0*.9,'SGSR strength follows the Nitidez slider',{s0,s2,s6});}}
+ // Spec 3 item 8: with Fluidez the last pass runs in present(), straight to the canvas. Same bytes as
+ // drawing it at render time, one full-screen pass less, on every path that feeds the last pass.
+ {const c2=document.createElement('canvas'),g2=c2.getContext('webgl2',{preserveDrawingBuffer:true,antialias:false});
+  const direct=new BxRestoration.Engine(g2,BxShaders),deferred=new BxRestoration.Engine(g2,BxShaders);
+  let count=0;const d0=deferred.draw.bind(deferred);deferred.draw=(...a)=>{count++;return d0(...a);};
+  const read=()=>{const p=new Uint8Array(c2.width*c2.height*4);g2.readPixels(0,0,c2.width,c2.height,g2.RGBA,g2.UNSIGNED_BYTE,p);return p;};
+  {const img=ctx.createImageData(128,96);let seed=5;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
+   for(let i=0;i<img.data.length;i+=4){const x=(i/4)%128,y=Math.floor(i/512),v=x<64?40+x+y*.3:100+rnd()*60;img.data[i]=v;img.data[i+1]=v*.9+10;img.data[i+2]=x%7<3?200:v;img.data[i+3]=255;}ctx.putImageData(img,0,0);}
+  const base={gpuBudget:0,cleanup:0,deband:0,chroma:0,detail:0,sharpness:2};
+  const cases=[['filters native',{deband:.6,chroma:.75},'native'],['nothing to do',{},'native'],['temporal history',{temporal:.5,deband:.3},'native'],['temporal + AA',{temporal:.5,antialias:.5},'native'],
+   ['EASU upscale',{deband:.6,chroma:.75},'144'],['SGSR upscale',{deband:.6,chroma:.75,scaler:'sgsr'},'144'],['SGSR from the upload',{scaler:'sgsr'},'144'],['quality targets',{deband:.6,processingMode:'quality'},'144'],
+   ['only sharpening',{mode:'cas'},'native'],['original',{mode:'original'},'native'],['rcas',{sharpening:'rcas',sharpness:5,deband:.3},'144'],['diagnostic',{deband:.3},'144',true]];
+  const bad=[],passes={};
+  for(const [name,s,output,diag] of cases){const o=BxRestoration.outputSize(128,96,output);c2.width=o.width;c2.height=o.height;direct.resetHistory();deferred.resetHistory();
+   for(let f=0;f<3;f++){const st={...base,...s,output},t=1+f/30;
+    count=0;deferred.render(input,o.width,o.height,st,t,!!diag,'pacedD'+(f%2),true);deferred.present('pacedD'+(f%2));const n=count;
+    const b=read();direct.render(input,o.width,o.height,st,t,!!diag);const a=read();
+    let diff=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff++;if(diff)bad.push({name,f,diff});if(f===2)passes[name]=n;}}
+  check(!bad.length,'Deferred last pass in present() gives the same bytes as drawing it in render()',{bad,passes});
+  // Draws per frame: the slot copy is gone where an intermediate target exists (copy kept for upload/history).
+  check(passes['filters native']===2&&passes['EASU upscale']===3&&passes['SGSR upscale']===2&&passes['SGSR from the upload']===2,'Deferred last pass saves the present copy',passes);
+  // A slot rendered again before it was shown (pacer drop) and the reuse of swapped targets stay consistent.
+  {const o=BxRestoration.outputSize(128,96,'144');c2.width=o.width;c2.height=o.height;const st={...base,deband:.6,output:'144'};
+   for(let f=0;f<12;f++)deferred.render(input,o.width,o.height,st,2+f/30,false,'pacedD'+(f%3),true);deferred.present('pacedD2');const b=read();direct.render(input,o.width,o.height,st,2);const a=read();
+   check(a.every((v,i)=>v===b[i])&&Object.keys(deferred.targets).filter(k=>k.startsWith('paced')).length===3,'Deferred slots survive drops and reuse',Object.keys(deferred.targets));}
+  check(g2.getError()===g2.NO_ERROR,'No GL errors with deferred slots');
+  deferred.releasePaced();direct.destroy();deferred.destroy();}
+ // Compiled spatial variants (Spec 3): the highp profile must give the generic shader's bytes exactly,
+ // on a frame with smooth ramps, colored edges, thin lines and noise, for several filter sets.
+ {const img=ctx.createImageData(128,96);let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
+  for(let y=0;y<96;y++)for(let x=0;x<128;x++){const i=(y*128+x)*4,ramp=40+x*.6+y*.2;let r=ramp,g=ramp+10,b=ramp*1.2;
+   if(x>=64&&x<96){r=x%9<4?200:40;g=y%7<3?60:180;b=90;}if(x>=96){const n=rnd()*24-12;r=120+n;g=110+(y%4)*3+n;b=100+(x%3)*5;}if(x%17===0){r+=6;g-=4;}
+   img.data[i]=r;img.data[i+1]=g;img.data[i+2]=b;img.data[i+3]=255;}
+  ctx.putImageData(img,0,0);
+  const v=new BxRestoration.Engine(gl,BxShaders,{spatialPrecision:'highp'}),ta=v.target('pacedA',128,96),tb=v.target('pacedB',128,96);
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,v.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
+  const read=t=>{gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);const p=new Uint8Array(128*96*4);gl.readPixels(0,0,128,96,gl.RGBA,gl.UNSIGNED_BYTE,p);return p;};
+  const base={cleanup:0,deband:0,chroma:0,detail:0,antialias:0,debandTaps:4,quantize:true,selective:true},sets=[
+   {...base,deband:.6,chroma:.75},{...base,cleanup:.5,deband:.3,chroma:.75,detail:.2},{cleanup:1,deband:1,chroma:1,detail:1,antialias:1,debandTaps:2,quantize:false,selective:false},
+   {...base,deband:.3,debandTaps:2},{...base,cleanup:.35,selective:false},{...base,antialias:.5},{...base,detail:.35,chroma:.5,quantize:false},{...base}];
+  const bad=[];let changed=0;
+  for(const u of sets){const name=v.spatialVariant(u,true);v.draw('spatial',ta,128,96,{source:v.input},u);v.draw(name,tb,128,96,{source:v.input},u);const a=read(ta),b=read(tb);
+   let diff=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff++;if(name==='spatial'||diff)bad.push({u,name,diff});if(name!=='spatial')changed++;}
+  check(!bad.length&&changed===sets.length,'Highp spatial variants match the generic shader byte for byte',{bad,variants:changed});
+  const fresh=v.spatialVariant({...base,deband:.3,detail:.1});check(fresh==='spatial','A new spatial profile draws with the generic shader until its variant is built',fresh);
+  gl.bindFramebuffer(gl.FRAMEBUFFER,null);v.destroy();}
  check(gl.getError()===gl.NO_ERROR,'No GL errors');
  engine.destroy();fallback.destroy();
  document.getElementById('result').textContent=JSON.stringify({passed:checks,failures});

@@ -3,6 +3,11 @@
 (() => {
  // v9 has measured defaults; a new key keeps v8.x saved values from overriding them.
  const key='BxImageFilter.v9';let saved;try{saved=JSON.parse(localStorage.getItem(key));}catch{}
+ // Spec 3 changed the defaults (sharpness 2, no Compression/Detail, Debanding 60%). A user still on the
+ // untouched v9 defaults moves to the new ones once; anything customised stays. 'Padrão v9' brings them back.
+ try{if(saved&&typeof saved==='object'&&!localStorage.getItem('BxImageFilter.spec3')){const v9=BxRestoration.presets.v9.values;
+  if(Object.entries(v9).every(([k,v])=>saved[k]===undefined||saved[k]===v))for(const k of ['sharpness','cleanup','deband','detail'])delete saved[k];}
+  localStorage.setItem('BxImageFilter.spec3','1');}catch{}
  const settings=BxRestoration.normalize(saved);
  // Native image controls own sharpening; removed experimental color overrides stay neutral.
  settings.contrast=1;settings.saturation=1;settings.shadows=0;
@@ -10,7 +15,11 @@
   // Display intervals (ms) of the last ~8 s at 30 FPS, oldest first: the HUD's pacing graph.
   intervals:[],intervalsTotal:0,net:null,warnings:[],adaptive:null,capture:{active:false,frames:0,reason:''},
   // GPU time estimate {p50, p95, count} from fences when the browser has no GPU timer (see Engine.startFence).
-  gpuEstimate:null};
+  gpuEstimate:null,
+  // Fence trend above 1.5 frame intervals for 3 windows (Engine budget.fenceTrend): a warning only.
+  gpuTrend:false,
+  // desynchronized attribute of the current canvas context (null before the first player).
+  desynchronized:null};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -21,7 +30,7 @@
   return Math.round((screen?.height||0)*dpr);
  }
  // Settings that do not change the processed image keep the GPU adaptation.
- const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition']);
+ const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized']);
  // Bumped by every capture/Fluidez change: a failed direct capture is retried after the user changes either.
  let captureEpoch=0;
  const api=window.BxImageFilter={settings,status,diagnostic:false,panelOpen:false,presets:BxRestoration.presets,
@@ -89,7 +98,7 @@
   const pc=peer();
   // A new session starts from scratch: no deltas or QP level carried over from the previous game.
   if(pc!==telemetryPeer){telemetryPeer=pc;lastRtp=null;status.net=null;status.adaptive=null;bppSamples=[];}
-  if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring)){updateWarnings();return;}
+  if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring||activeEngine&&!activeEngine.ext)){updateWarnings();return;}
   telemetryBusy=true;
   try{let rtp=null,rtt=null;const stats=await pc.getStats();
    if(peer()!==pc)return;
@@ -138,6 +147,7 @@
   if(net?.lossPct>1)w.push({level:net.lossPct>2?'error':'warn',key:'loss',text:`Perda de pacotes de ${dec(net.lossPct)}%.`});
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
+  if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   status.warnings=w;
  }
@@ -202,6 +212,9 @@
  function fallback(player){const gl=player.gl;if(gl&&!gl.isContextLost()){gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,player.bxOriginalTexture);gl.useProgram(player.program);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,player.$canvas.width,player.$canvas.height);player.updateCanvas();frame.call(player);}}
  proto.setupShaders=async function(){
   await setup.call(this);if(this.isStopped||!this.gl)return;
+  // Context attributes are fixed when the canvas gets its context (one canvas per player): the panel
+  // compares this with the setting to say when a change waits for the next session.
+  try{status.desynchronized=!!this.gl.getContextAttributes()?.desynchronized;}catch{status.desynchronized=null;}
   this.bxEngine?.destroy();this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
   try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
   catch(error){status.mode='error';status.error=String(error.message||error);console.warn('[Bx Restoration]',error);}
@@ -255,7 +268,17 @@
   if(direct)status.capture={active:true,frames:player.bxDirect.rendered,reason:''};
   if(newFrame&&now-(player.bxCadenceMark||0)>2000){
    if(settings.mode!=='filtered')player.bxReferenceFps=status.fps;
-   else if(!player.bxEngine.ext)player.bxEngine.budget.cadence(player.bxReferenceFps,status.fps);
+   else if(!player.bxEngine.ext){
+    // Frames shown against frames decoded now. The <video> element also skips frames that arrive together
+    // with no GPU overload, more at 60 FPS: the margin depends on the path and the rate (cadenceMargin).
+    // A page that was just hidden leaves a gap in the window. Without a live figure, the reference
+    // measured in CAS/original (same path) stays.
+    const budget=player.bxEngine.budget,live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
+    if(live===null)budget.cadence(player.bxReferenceFps,status.fps);
+    else if(span>0&&now-hiddenAt>4000)budget.cadence(live,(list.length-1)*1000/span,BxRestoration.cadenceMargin(direct,live));
+    // Early warning from the fence trend: shown, never acted on.
+    status.gpuTrend=budget.fenceTrend(player.bxEngine.gpuEstimate?.p50,live??player.bxReferenceFps??status.fps);
+   }
    player.bxCadenceMark=now;
   }
  }
@@ -307,7 +330,7 @@
    // boot): the pacer's 'frame' clock and the temporal time base.
    const pacer=ensurePacer(player,settings.fluidity),slot=freeSlot(timing),check=d.rendered<3;
    if(check)player.gl.getError();
-   if(!player.bxEngine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot))return;
+   if(!player.bxEngine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
    // Some drivers may not take a decoder frame as a texture: check the first frames once and fall back.
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
@@ -347,8 +370,9 @@
    const timing=this.bxTiming||(startTiming(this),this.bxTiming);
    if(settings.fluidity!=='off'){
     // Process now, show on the pacer's clock. A settings change on the same frame redraws it at once.
+    // The last pass (sharpening or SGSR) runs at present(), straight to the canvas (Spec 3 item 8).
     const pacer=ensurePacer(this,settings.fluidity),slot=newFrame||!timing.shown?freeSlot(timing):timing.shown;
-    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot))return;
+    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot,true))return;
     timing.lastSlot=slot;
     if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;pacer.add({slot,arrival:performance.now(),rtp});}
     else if(this.bxEngine.present(slot))this.gl.useProgram(this.program);

@@ -1,0 +1,8 @@
+[{"name":"antes-1080-a","query":"sv=0&aa=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"item2-1080-a","query":"aa=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"item9-1080-a","query":"sv=0&aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"depois-1080-a","query":"aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"depois-1080-b","query":"aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"item9-1080-b","query":"sv=0&aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"item2-1080-b","query":"aa=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"antes-1080-b","query":"sv=0&aa=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}}]

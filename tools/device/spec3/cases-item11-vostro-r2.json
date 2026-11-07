@@ -1,0 +1,12 @@
+[{"name":"sync-60-1080-a","query":"aa=0&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"desync-60-1080-a","query":"aa=0&desync=1&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"desync-60-1080-b","query":"aa=0&desync=1&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"sync-60-1080-b","query":"aa=0&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080}},
+{"name":"sync-60-1080-fluidez-a","query":"aa=0&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"desync-60-1080-fluidez-a","query":"aa=0&desync=1&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"desync-60-1080-fluidez-b","query":"aa=0&desync=1&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"sync-60-1080-fluidez-b","query":"aa=0&clip=game60&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"sync-30-1080-fluidez-a","query":"aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"desync-30-1080-fluidez-a","query":"aa=0&desync=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"desync-30-1080-fluidez-b","query":"aa=0&desync=1&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}},
+{"name":"sync-30-1080-fluidez-b","query":"aa=0&ow=1920&oh=1080","seconds":20,"cfg":{"output":1080,"fluid":true}}]

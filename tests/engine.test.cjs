@@ -52,7 +52,7 @@ test('explicit output below source resolution is retained before adaptation',()=
 });
 
 test('v9 sharpening defaults to luma-only USM and keeps every method selectable',()=>{
- const a=api();assert.equal(a.defaults.sharpening,'usm');assert.equal(a.defaults.lumaSharpen,true);assert.equal(a.defaults.sharpness,3);assert.equal(a.defaults.spatialMode,'selective');
+ const a=api();assert.equal(a.defaults.sharpening,'usm');assert.equal(a.defaults.lumaSharpen,true);assert.equal(a.defaults.sharpness,2);assert.equal(a.defaults.cleanup,0);assert.equal(a.defaults.detail,0);assert.equal(a.defaults.deband,.6);assert.equal(a.presets.v9.values.sharpness,3);assert.equal(a.defaults.spatialMode,'selective');
  for(const m of ['usm','cas','rcas','native'])assert.equal(a.normalize({sharpening:m}).sharpening,m);
  assert.equal(a.normalize({sharpening:'bad',spatialMode:'bad'}).sharpening,'usm');
  assert.equal(a.normalize({sharpening:'rcas',spatialMode:'legacy'}).spatialMode,'legacy');
@@ -100,7 +100,7 @@ test('display-matched output degrades to native under overload',()=>{
 });
 test('v8.5 chroma and detail are bounded and degrade last under overload',()=>{
  const a=api(),s=a.normalize({chroma:7,detail:-1});assert.equal(s.chroma,1);assert.equal(s.detail,0);
- assert.ok(a.defaults.chroma>0&&a.defaults.detail>0);
+ assert.ok(a.defaults.chroma>0&&a.presets.v9.values.detail>0);
  const p=a.createBudget();p.configure({cleanup:.35,deband:0,chroma:.5,detail:.35},1080);
  for(let i=0;i<90;i++)p.sample(9);
  assert.equal(p.cleanupAllowed,false);assert.equal(p.enhanceAllowed,true);
@@ -231,7 +231,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,2);assert.equal(r.version,'9.7.1');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,2);assert.equal(r.version,'9.8.0');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -252,6 +252,96 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v9\.7\.1-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v9.8.0-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
+
+test('without GPU timers the live decoder rate is the reference, under the FPS limit',()=>{const a=api();
+ assert.equal(a.liveCadence(30,60),30);assert.equal(a.liveCadence(60,30),30);assert.equal(a.liveCadence(60,0),60);
+ assert.equal(a.liveCadence(null,60),null);assert.equal(a.liveCadence(undefined,60),null);assert.equal(a.liveCadence(4,60),null);
+});
+test('a sustained gap to the live rate reduces the treatment; a healthy or stalled stream does not',()=>{const a=api(),setup=()=>{const p=a.createBudget();p.limitMs=6;p.configure({deband:.3,cleanup:.5,output:'native'},1080);return p;};
+ const overloaded=setup();for(let i=0;i<3;i++)overloaded.cadence(a.liveCadence(30,60),26,.95);assert.equal(overloaded.revision,1);
+ const healthy=setup();for(let i=0;i<30;i++)healthy.cadence(a.liveCadence(30,60),29.4,.95);assert.equal(healthy.revision,0);
+ const stalled=setup();for(let i=0;i<30;i++)stalled.cadence(a.liveCadence(3,60),3,.95);assert.equal(stalled.revision,0);
+ const network=setup();for(let i=0;i<30;i++)network.cadence(a.liveCadence(18,60),18,.95);assert.equal(network.revision,0);
+});
+test('the video element keeps a wider margin for frames it skips without overload',()=>{const a=api(),p=a.createBudget();p.limitMs=6;p.configure({deband:.3,output:'native'},1080);
+ for(let i=0;i<30;i++)p.cadence(30,29.4*.97,.9);assert.equal(p.revision,0);
+ for(let i=0;i<3;i++)p.cadence(30,26,.9);assert.equal(p.revision,1);
+});
+// Spec 3 item 6: margin per path and target rate.
+test('cadence margin: 20% on the video path at 60 FPS, 10% at 30 FPS, 5% with direct capture',()=>{const a=api();
+ assert.equal(a.cadenceMargin(false,60),.8);assert.equal(a.cadenceMargin(false,30),.9);assert.equal(a.cadenceMargin(true,60),.95);assert.equal(a.cadenceMargin(true,30),.95);
+ const setup=()=>{const p=a.createBudget();p.limitMs=6;p.configure({deband:.3,cleanup:.5,output:'native'},1080);return p;};
+ const run=(direct,live,shown,windows)=>{const p=setup(),ref=a.liveCadence(live,60);for(let i=0;i<windows;i++)p.cadence(ref,shown,a.cadenceMargin(direct,ref));return p.revision;};
+ // The <video> element at 60 FPS loses 5-17% with an idle GPU: 12% must not reduce, even for a minute.
+ assert.equal(run(false,60,60*.88,30),0);
+ // A sustained 30% fall does, at 60 and at 30 FPS.
+ assert.equal(run(false,60,60*.7,3),1);assert.equal(run(false,30,30*.7,3),1);
+ // 30 FPS keeps 10%: 12% reduces, 8% does not.
+ assert.equal(run(false,30,30*.88,3),1);assert.equal(run(false,30,30*.92,30),0);
+ // Direct capture keeps 5%: 8% reduces at either rate.
+ assert.equal(run(true,60,60*.92,3),1);assert.equal(run(true,30,30*.92,3),1);
+ // Two windows over the margin are not sustained.
+ assert.equal(run(false,60,60*.7,2),0);
+});
+test('fence trend is only a warning: 3 windows above 1.5 intervals, never a reduction',()=>{const a=api(),p=a.createBudget();p.limitMs=6;p.configure({deband:.3,output:'native'},1080);
+ assert.equal(p.fenceTrend(41.7,60),false);assert.equal(p.fenceTrend(41.7,60),false);assert.equal(p.fenceTrend(41.7,60),true);assert.equal(p.revision,0);
+ assert.equal(p.fenceTrend(15,60),false);assert.equal(p.fenceTrend(null,60),false);
+ // 30 FPS: 1.5 x 33.3 ms = 50 ms; the Spec 3 default measured 0.4-0.7 interval.
+ for(let i=0;i<5;i++)assert.equal(p.fenceTrend(21.5,30),false);
+ for(let i=0;i<3;i++)p.fenceTrend(51,30);assert.equal(p.fenceOver,3);assert.equal(p.revision,0);
+});
+// Spec 3: compiled spatial variants, mediump only where mediump is real half precision.
+function fakeGl(precision){const calls={programs:0};return new Proxy({},{get(_,k){
+ if(k==='calls')return calls;if(k==='getShaderPrecisionFormat')return ()=>precision===null?null:({precision,rangeMin:15,rangeMax:15});
+ if(k==='getExtension')return ()=>null;if(k==='createProgram')return ()=>{calls.programs++;return {};};
+ if(typeof k==='string'&&/^[A-Z][A-Z0-9_]+$/.test(k))return k;return ()=>true;}});}
+const spatialUniforms={cleanup:0,deband:.6,chroma:.75,detail:0,antialias:0,debandTaps:4,quantize:true,selective:true};
+test('spatial precision is mediump only for half-precision mediump GPUs, unless forced',()=>{const a=api();
+ assert.equal(a.spatialPrecision(fakeGl(10)),'mediump');assert.equal(a.spatialPrecision(fakeGl(23)),'highp');assert.equal(a.spatialPrecision(fakeGl(null)),'highp');
+ assert.equal(a.spatialPrecision({getShaderPrecisionFormat(){throw new Error('lost');}}),'highp');
+ assert.equal(a.spatialPrecision(fakeGl(10),'highp'),'highp');assert.equal(a.spatialPrecision(fakeGl(23),'mediump'),'mediump');});
+test('spatial profile keys on enabled filters and flags, not on strengths',()=>{const a=api(),key=u=>a.spatialKey(a.spatialProfile(u,'mediump'));
+ assert.equal(key(spatialUniforms),'mediump.0.1.4.1.0.0.1.1');
+ assert.equal(key({...spatialUniforms,deband:.78,chroma:.4}),key(spatialUniforms),'compression adaptation must not recompile');
+ assert.notEqual(key({...spatialUniforms,debandTaps:2}),key(spatialUniforms),'adaptation step to 2 taps is a new variant');
+ assert.equal(a.spatialProfile({...spatialUniforms,deband:0}).taps,0);assert.equal(a.spatialProfile({...spatialUniforms,debandTaps:2.5}).taps,3);
+ assert.notEqual(key({...spatialUniforms,quantize:false}),key(spatialUniforms));assert.equal(a.spatialProfile(spatialUniforms).precision,'highp');});
+test('spatial variant source defines the profile right after #version',()=>{const a=api(),code=a.spatialSource('#version 300 es\nvoid main(){}',a.spatialProfile(spatialUniforms,'mediump'));
+ const lines=code.split('\n');assert.equal(lines[0],'#version 300 es');for(const d of ['SPATIAL_FIXED 1','SPATIAL_PRECISION mediump','SPATIAL_TAPS 4.0','SPATIAL_QUANTIZE true','SPATIAL_SELECTIVE true','SPATIAL_CLEANUP 0','SPATIAL_DEBAND 1','SPATIAL_CHROMA 1','SPATIAL_DETAIL 0','SPATIAL_ANTIALIAS 0'])assert.ok(lines.includes('#define '+d),d);});
+test('engine pre-warms the default spatial variant and never compiles per frame',()=>{const a=api(),gl=fakeGl(10),shaders={spatial:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'};
+ const e=new a.Engine(gl,shaders);assert.equal(gl.calls.programs,3,'two shaders and the default variant');assert.equal(e.spatialPrecision,'mediump');
+ const name=e.spatialVariant(spatialUniforms);assert.match(name,/^spatial@mediump\./);
+ for(let i=0;i<50;i++){e.frames++;assert.equal(e.spatialVariant({...spatialUniforms,deband:.5+i/100}),name);}assert.equal(gl.calls.programs,3);
+ const other={...spatialUniforms,debandTaps:2};assert.equal(e.spatialVariant(other),'spatial','generic shader while the new variant compiles');assert.equal(e.spatialVariant(other),'spatial');assert.equal(gl.calls.programs,4);
+ e.frames++;assert.match(e.spatialVariant(other),/^spatial@mediump\.0\.1\.2\./);assert.equal(gl.calls.programs,4);
+ assert.equal(new a.Engine(fakeGl(23),shaders).spatialVariant(spatialUniforms).split('.')[0],'spatial@highp');
+ assert.equal(new a.Engine(fakeGl(10),shaders,{spatialVariants:false}).spatialVariant(spatialUniforms),'spatial');});
+test('spatial variant cache keeps at most eight programs',()=>{const a=api(),gl=fakeGl(10),e=new a.Engine(gl,{spatial:'#version 300 es\nvoid main(){}'});
+ for(let i=0;i<20;i++){const u={...spatialUniforms,cleanup:i&1,detail:i&2,antialias:i&4,chroma:i&8,quantize:!(i&16)};e.spatialVariant(u,true);}
+ assert.ok(Object.keys(e.programs).filter(k=>k.startsWith('spatial@')).length<=8);});
+test('production WebGL2 contexts are created without MSAA (one full-screen triangle, Spec 3 item 9)',()=>{
+ for(const file of ['script.js','better-xcloud-image-filter.user.js','player/player.js']){const code=fs.readFileSync(file,'utf8'),calls=[...code.matchAll(/getContext\(["']webgl2["'],\s*\{([^}]*)\}/g)].map(m=>m[1]);
+  assert.ok(calls.length>0,file);for(const attrs of calls)assert.match(attrs,/antialias:\s*(!1|false)/,file);}});
+// Spec 3 item 5: SGSR 1 as an optional scaler; EASU + sharpening stays the default.
+test('scaler setting defaults to EASU, accepts SGSR and rejects anything else',()=>{const a=api();
+ assert.equal(a.defaults.scaler,'easu');assert.equal(a.normalize({}).scaler,'easu');assert.equal(a.normalize({scaler:'sgsr'}).scaler,'sgsr');
+ for(const bad of ['SGSR','fsr',1,null,true])assert.equal(a.normalize({scaler:bad}).scaler,'easu');
+ for(const p of Object.values(a.presets))assert.equal('scaler' in p.values,false,'presets keep the chosen scaler');});
+test('sharpness maps to the measured SGSR strength and threshold',()=>{const a=api();
+ assert.equal(a.sgsrParams(2).sharp,1);assert.equal(a.sgsrParams(2).threshold,20/255);
+ assert.ok(Math.abs(a.sgsrParams(3).sharp-1.4)<1e-9);assert.ok(Math.abs(a.sgsrParams(4.5).sharp-2)<1e-9);
+ for(let s=.5;s<10;s+=.5)assert.ok(a.sgsrParams(s+.5).sharp>a.sgsrParams(s).sharp);
+ assert.ok(a.sgsrParams(0).threshold>3,'sharpness 0 never takes the edge step (the vote is at most 3)');});
+test('SGSR source gets its precision right after #version and the engine compiles it with the GPU profile',()=>{const a=api();
+ const lines=a.sgsrSource('#version 300 es\nvoid main(){}','mediump').split('\n');assert.equal(lines[0],'#version 300 es');assert.equal(lines[1],'#define SGSR_PRECISION mediump');
+ const compiled=[],gl=fakeGl(10),wrap=new Proxy(gl,{get(t,k){return k==='shaderSource'?(_,code)=>compiled.push(code):t[k];}});
+ new a.Engine(wrap,{sgsr:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'});
+ assert.ok(compiled.some(c=>c.includes('#define SGSR_PRECISION mediump')));assert.equal(compiled.filter(c=>c.includes('SGSR_PRECISION')).length,1,'only the SGSR shader');
+ compiled.length=0;new a.Engine(new Proxy(fakeGl(23),{get(t,k){return k==='shaderSource'?(_,code)=>compiled.push(code):t[k];}}),{sgsr:'#version 300 es\nvoid main(){}'});
+ assert.ok(compiled.some(c=>c.includes('#define SGSR_PRECISION highp')));});
+test('GPU adaptation drops the SGSR pass like EASU: output reduced to native',()=>{const a=api();
+ for(const scaler of ['easu','sgsr']){const s=a.normalize({output:'1280',scaler,deband:0,chroma:0}),p=a.createBudget();p.configure(s,1080);
+  assert.equal(p.outputFor(s),'1280');for(let i=0;i<90;i++)p.sample(20);assert.equal(p.outputFor(s),'native',scaler);assert.match(p.reason,/nativa/);}});

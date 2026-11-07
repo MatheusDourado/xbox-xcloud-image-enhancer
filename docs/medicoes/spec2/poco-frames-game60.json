@@ -1,0 +1,30 @@
+{
+ "layers": {
+  "TX - com.imagefilter.xcloud/com.imagefilter.xcloud.MainActivity#1181": {
+   "frames": 907,
+   "jank:buffer_stuffing+unknown": 84,
+   "jank:none": 10,
+   "jank:app_deadline": 1,
+   "jank:buffer_stuffing": 810,
+   "jank:app_deadline+buffer_stuffing": 2
+  },
+  "TX - NavigationBar0#122": {
+   "frames": 1,
+   "jank:none": 1
+  },
+  "TX - StatusBar#123": {
+   "frames": 9,
+   "jank:none": 9
+  },
+  "TX - StatusBar1#128": {
+   "frames": 9,
+   "jank:none": 8,
+   "jank:app_deadline": 1
+  }
+ },
+ "display": {
+  "frames": 912,
+  "jank:unknown": 86,
+  "jank:none": 826
+ }
+}
