@@ -28,6 +28,7 @@ const cases={
  sgsr8:sg('sgsr',8/255),sgsr20:sg('sgsr',20/255),sgsrHp8:sg('sgsrHp',8/255),
  rcas1280:i=>{const t=t1280(i);e.draw('rcas',t,OW,OH,{data:big.texture},{...sharpU([OW,OH]),rcasStrength:.5});return t;},rcas1080:i=>{const t=t1080(i);e.draw('rcas',t,W,H,{data:big2.texture},{...sharpU([W,H]),rcasStrength:.5});return t;},
  semDetalhe:spatial('spatial',uSp({cleanup:.5,deband:.3,chroma:.75})),semCompressao:spatial('spatial',uSp({deband:.3,chroma:.75,detail:.2})),semDegrades:spatial('spatial',uSp({cleanup:.5,chroma:.75,detail:.2})),corDetalhe:spatial('spatial',uSp({chroma:.75,detail:.2})),soCor:spatial('spatial',uSp({chroma:.75})),degradesCor:spatial('spatial',uSp({deband:.3,chroma:.75})),
+ spatialCand:spatial('spatialCand',{}),sgsrCand:i=>{const t=t1280(i);e.draw('sgsr20s1',t,OW,OH,{source:big2.texture});return t;},
  present1280:copy(big.texture,OW,OH,t1280),
  present1280inv:inv(copy(big.texture,OW,OH,t1280),'inv'),present1280clear:inv(copy(big.texture,OW,OH,t1280),'clear'),easu1280inv:inv(easu,'inv'),nitidez1280inv:inv(sharp('casFiltered',big.texture,OW,OH,t1280),'inv'),
  neural:i=>{e.draw('nnFeatures',P,W,H,{source:e.input});const t=t1080(i);e.draw('nnApply',t,W,H,{source:e.input,featA:P.texture,featB:P.second},{strength:.5});return t;},
@@ -86,5 +87,16 @@ async function renders2(rounds=5){await frameAt(4);const st=B.settings({output:S
  const c={fixo:f('fixo'),rot:f('rot'),rotDuplo:f('rot duplo'),fixoDuplo:f('duplo'),canvas:f('canvas'),canvasDuplo:f('canvas duplo')},v={};for(const k in c){v[k]=[];c[k]();}for(let r=0;r<rounds;r++)for(const k in c){v[k].push(c[k]());await sleep(0);}
  await video.play();return Object.fromEntries(Object.keys(c).map(k=>[k,stat(v[k])]));}
 B.renders2=renders2;
+// Does the candidate really filter on this GPU? Distance of each output to the input and to the highp reference with the same filters.
+async function candCheck(){const n=W*H*4,a=e.target('pacedC1',W,H),b=e.target('pacedC2',W,H),out={};const pa=new Uint8Array(n),pb=new Uint8Array(n),pi=new Uint8Array(n);
+ const read=(t,p)=>{gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,p);};
+ const cmp=(x,y)=>{let mx=0,s=0,ch=0,ov=0;for(let i=0;i<n;i++){if((i&3)===3)continue;const d=Math.abs(x[i]-y[i]);if(d>mx)mx=d;s+=d;if(d)ch++;if(d>1)ov++;}return {max:mx,mean:+(s/(n*.75)).toFixed(4),changedPct:+(ch/(n*.75)*100).toFixed(3),over1Pct:+(ov/(n*.75)*100).toFixed(4)};};
+ for(const [scene,sec] of [['caverna',4],['noite',20]]){await frameAt(sec);e.draw('copy',a,W,H,{source:e.input});read(a,pi);
+  e.draw('spatial',a,W,H,{source:e.input},uSp({deband:.3,chroma:.75}));read(a,pa);e.draw('spatialCand',b,W,H,{source:e.input},{});read(b,pb);
+  out[scene]={referenciaVsEntrada:cmp(pa,pi),candidatoVsEntrada:cmp(pb,pi),candidatoVsReferencia:cmp(pb,pa)};
+  const c=e.target('pacedC3',OW,OH),d=e.target('pacedC4',OW,OH),m=OW*OH*4,qa=new Uint8Array(m),qb=new Uint8Array(m);e.draw('sgsr',c,OW,OH,{source:a.texture},{sharp:1,threshold:20/255});e.draw('sgsrHp',d,OW,OH,{source:a.texture},{sharp:1,threshold:20/255});
+  gl.bindFramebuffer(gl.FRAMEBUFFER,c.fbo);gl.readPixels(0,0,OW,OH,gl.RGBA,gl.UNSIGNED_BYTE,qa);gl.bindFramebuffer(gl.FRAMEBUFFER,d.fbo);gl.readPixels(0,0,OW,OH,gl.RGBA,gl.UNSIGNED_BYTE,qb);let mx=0,s=0,ov=0;for(let i=0;i<m;i++){if((i&3)===3)continue;const v=Math.abs(qa[i]-qb[i]);if(v>mx)mx=v;s+=v;if(v>1)ov++;}out[scene].sgsrMediumpVsHighp={max:mx,mean:+(s/(m*.75)).toFixed(4),over1Pct:+(ov/(m*.75)*100).toFixed(4)};}
+ await video.play();return out;}
+B.candCheck=candCheck;
 B.warm=warm;Object.assign(B,{passes,renders,diffs,compile,failed,variants,cases,frameAt});
 })();

@@ -49,6 +49,9 @@ const variants={
  casMp:rep(S.casFiltered,[...hp,['vec2 texelSize =','highp vec2 texelSize ='],['vec3 clarityBoost(sampler2D tex, vec2 coord,','vec3 clarityBoost(sampler2D tex, highp vec2 coord,']]),
  sgsr:SGSR,sgsrHp:SGSR.replace('precision mediump float;','precision highp float;').replace('precision mediump sampler2D;','precision highp sampler2D;'),
 };
+// Candidate: mediump, constants, without the filters that showed no gain (Compressao) or added only overshoot (Detalhe).
+const cand=rep(S.spatial,[...hp,...spatialCoords,['uniform float cleanup, deband, debandTaps, chroma, detail, antialias;'+String.fromCharCode(10)+'uniform bool quantize,selective;','const float cleanup=0.,deband=.3,debandTaps=4.,chroma=.75,detail=0.,antialias=0.;'+String.fromCharCode(10)+'const bool quantize=true,selective=true;']]);
+variants.spatialCand=cand;
 const fixed=(t,k)=>SGSR.replace('uniform float sharp,threshold;',`const float sharp=${k.toFixed(1)},threshold=${t}./255.;`);
 Object.assign(variants,{sgsr8s2:fixed(8,2),sgsr8s15:fixed(8,1.5),sgsr20s2:fixed(20,2),sgsr20s15:fixed(20,1.5),sgsr20s12:fixed(20,1.2),sgsr20s1:fixed(20,1),sgsr30s15:fixed(30,1.5),sgsr30s12:fixed(30,1.2)});
 return variants;};

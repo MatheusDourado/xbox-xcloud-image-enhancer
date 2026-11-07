@@ -1,0 +1,99 @@
+{
+ "name": "custo-candidato",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T03:32:31.948Z",
+  "level": 19,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.187,
+  "tempC": 39.1,
+  "thermal": 0,
+  "cpu0": 50.4,
+  "gpuMaxC": 47.4,
+  "skinC": 42.194,
+  "socdPct": 81,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T03:33:04.749Z",
+  "level": 19,
+  "status": 2,
+  "voltageV": 3.687,
+  "currentA": -0.187,
+  "tempC": 39.1,
+  "thermal": 0,
+  "cpu0": 62.8,
+  "gpuMaxC": 66.6,
+  "skinC": 43.971,
+  "socdPct": 81,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "median": {
+   "spatialPadrao": 2.973,
+   "degradesCor": 1.94,
+   "spatialCand": 0.807,
+   "spatialMpConst": 1.795,
+   "spatialVazio": 0.685
+  },
+  "scenes": {
+   "caverna": {
+    "spatialPadrao": 2.973,
+    "degradesCor": 1.87,
+    "spatialCand": 0.777,
+    "spatialMpConst": 2.177,
+    "spatialVazio": 0.81
+   },
+   "rocha": {
+    "spatialPadrao": 3.06,
+    "degradesCor": 1.988,
+    "spatialCand": 0.848,
+    "spatialMpConst": 1.795,
+    "spatialVazio": 0.685
+   },
+   "noite": {
+    "spatialPadrao": 2.46,
+    "degradesCor": 1.94,
+    "spatialCand": 0.807,
+    "spatialMpConst": 1.692,
+    "spatialVazio": 0.662
+   }
+  },
+  "glError": 0,
+  "failed": {}
+ }
+}

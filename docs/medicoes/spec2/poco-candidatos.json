@@ -1,0 +1,2951 @@
+{
+ "name": "candidatos",
+ "device": "poco",
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "rows": [
+  {
+   "name": "atual-30-a",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fluid": true
+   },
+   "gpuBusyPct": 50.2,
+   "gpuMsPerFrame": 16.68,
+   "fps": 30.1,
+   "cpu": {
+    "n": 316,
+    "p50": 2.3,
+    "p95": 4.1,
+    "p99": 14,
+    "max": 25.5,
+    "mean": 2.621
+   },
+   "gaps": {
+    "n": 315,
+    "p50": 33.2,
+    "p95": 50.7,
+    "p99": 52.5,
+    "max": 56,
+    "mean": 33.252
+   },
+   "raf": {
+    "n": 630,
+    "p50": 16.7,
+    "p95": 16.7,
+    "p99": 16.8,
+    "max": 16.8,
+    "mean": 16.651
+   },
+   "dropped": 1,
+   "decoded": 320,
+   "fence": {
+    "p50": 24.5,
+    "p95": 38,
+    "count": 21
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15810700.539745,
+      "lengthMs": 911.57474,
+      "activeMs": 277.151927,
+      "share": 0.3040364271173201,
+      "uids": {
+       "10422": 277.151927
+      }
+     },
+     {
+      "startMs": 15811618.244953,
+      "lengthMs": 921.865,
+      "activeMs": 461.000312,
+      "share": 0.5000735595775955,
+      "uids": {
+       "10422": 461.000312
+      }
+     },
+     {
+      "startMs": 15812551.763859,
+      "lengthMs": 916.656927,
+      "activeMs": 445.915416,
+      "share": 0.4864583497550987,
+      "uids": {
+       "10422": 445.915416
+      }
+     },
+     {
+      "startMs": 15813469.461307,
+      "lengthMs": 928.083124,
+      "activeMs": 462.735208,
+      "share": 0.49859241703009355,
+      "uids": {
+       "10422": 462.735208
+      }
+     },
+     {
+      "startMs": 15814397.544431,
+      "lengthMs": 926.740885,
+      "activeMs": 461.92276,
+      "share": 0.49843787781090504,
+      "uids": {
+       "10422": 461.92276
+      }
+     },
+     {
+      "startMs": 15815324.285316,
+      "lengthMs": 927.827396,
+      "activeMs": 469.788072,
+      "share": 0.5063313219951526,
+      "uids": {
+       "10422": 469.788072
+      }
+     },
+     {
+      "startMs": 15816252.112712,
+      "lengthMs": 928.234479,
+      "activeMs": 475.29026,
+      "share": 0.5120368514128422,
+      "uids": {
+       "10422": 475.29026
+      }
+     },
+     {
+      "startMs": 15817181.751045,
+      "lengthMs": 927.142916,
+      "activeMs": 477.665625,
+      "share": 0.515201719990276,
+      "uids": {
+       "10422": 477.665625
+      }
+     },
+     {
+      "startMs": 15818114.706617,
+      "lengthMs": 921.558438,
+      "activeMs": 460.535624,
+      "share": 0.4997356705880436,
+      "uids": {
+       "1000": 1.088645,
+       "10422": 459.446979
+      }
+     },
+     {
+      "startMs": 15819036.265055,
+      "lengthMs": 927.900103,
+      "activeMs": 490.364583,
+      "share": 0.5284669992110131,
+      "uids": {
+       "1000": 0.388906,
+       "10422": 489.975677
+      }
+     },
+     {
+      "startMs": 15819977.712971,
+      "lengthMs": 914.634739,
+      "activeMs": 459.260468,
+      "share": 0.5021244529834111,
+      "uids": {
+       "10422": 459.260468
+      }
+     },
+     {
+      "startMs": 15820895.359064,
+      "lengthMs": 925.142917,
+      "activeMs": 381.394895,
+      "share": 0.41225510998534726,
+      "uids": {
+       "10422": 381.394895
+      }
+     },
+     {
+      "startMs": 15821824.625054,
+      "lengthMs": 932.530624,
+      "activeMs": 40.517656,
+      "share": 0.043449142534540505,
+      "uids": {
+       "10422": 40.517656
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:27:13.915Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 50,
+    "gpuMaxC": 46.6,
+    "skinC": 42.234,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:27:26.410Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.687,
+    "currentA": 0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 51.2,
+    "gpuMaxC": 49,
+    "skinC": 42.06,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "mp-easu-usm2-30-a",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "easu",
+     "sharp": 2
+    }
+   },
+   "gpuBusyPct": 40,
+   "gpuMsPerFrame": 13.42,
+   "fps": 29.81,
+   "cpu": {
+    "n": 313,
+    "p50": 2,
+    "p95": 3.1,
+    "p99": 3.6,
+    "max": 19.5,
+    "mean": 2.121
+   },
+   "gaps": {
+    "n": 312,
+    "p50": 32.6,
+    "p95": 50.9,
+    "p99": 51.8,
+    "max": 83.4,
+    "mean": 33.471
+   },
+   "raf": null,
+   "dropped": 4,
+   "decoded": 321,
+   "fence": {
+    "p50": 21.300000000745058,
+    "p95": 39,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15824621.305469,
+      "lengthMs": 910.779687,
+      "activeMs": 110.685572,
+      "share": 0.12152837132829028,
+      "uids": {
+       "1000": 0.56401,
+       "10422": 110.121562
+      }
+     },
+     {
+      "startMs": 15825532.085156,
+      "lengthMs": 928.323177,
+      "activeMs": 368.364739,
+      "share": 0.39680657353662085,
+      "uids": {
+       "10422": 368.364739
+      }
+     },
+     {
+      "startMs": 15826460.408333,
+      "lengthMs": 927.729062,
+      "activeMs": 369.641197,
+      "share": 0.3984365825547459,
+      "uids": {
+       "10422": 369.641197
+      }
+     },
+     {
+      "startMs": 15827388.137395,
+      "lengthMs": 928.369271,
+      "activeMs": 367.977812,
+      "share": 0.39637009053911265,
+      "uids": {
+       "10422": 367.977812
+      }
+     },
+     {
+      "startMs": 15828321.369426,
+      "lengthMs": 922.867083,
+      "activeMs": 369.187343,
+      "share": 0.4000438955953097,
+      "uids": {
+       "10422": 369.187343
+      }
+     },
+     {
+      "startMs": 15829254.170103,
+      "lengthMs": 918.032864,
+      "activeMs": 369.750625,
+      "share": 0.4027640398285349,
+      "uids": {
+       "10422": 369.750625
+      }
+     },
+     {
+      "startMs": 15830186.761769,
+      "lengthMs": 913.835416,
+      "activeMs": 369.030624,
+      "share": 0.40382613492405944,
+      "uids": {
+       "1000": 0.534322,
+       "10422": 368.496302
+      }
+     },
+     {
+      "startMs": 15831100.926404,
+      "lengthMs": 927.138698,
+      "activeMs": 371.292083,
+      "share": 0.4004709153020382,
+      "uids": {
+       "1000": 0.569479,
+       "10422": 370.722604
+      }
+     },
+     {
+      "startMs": 15832033.007133,
+      "lengthMs": 923.218593,
+      "activeMs": 371.958541,
+      "share": 0.4028932517393527,
+      "uids": {
+       "10422": 371.958541
+      }
+     },
+     {
+      "startMs": 15832965.516403,
+      "lengthMs": 918.679115,
+      "activeMs": 336.512447,
+      "share": 0.36630031259609075,
+      "uids": {
+       "10422": 336.512447
+      }
+     },
+     {
+      "startMs": 15833885.254789,
+      "lengthMs": 927.383437,
+      "activeMs": 363.766354,
+      "share": 0.3922502165627959,
+      "uids": {
+       "10422": 363.766354
+      }
+     },
+     {
+      "startMs": 15834815.736142,
+      "lengthMs": 924.417865,
+      "activeMs": 350.391927,
+      "share": 0.37904062682734935,
+      "uids": {
+       "10422": 350.391927
+      }
+     },
+     {
+      "startMs": 15835740.154007,
+      "lengthMs": 928.328905,
+      "activeMs": 59.971614,
+      "share": 0.06460168769602191,
+      "uids": {
+       "10422": 59.971614
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:27:28.119Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 51.2,
+    "gpuMaxC": 48.6,
+    "skinC": 42.073,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:27:40.569Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.4,
+    "gpuMaxC": 49.8,
+    "skinC": 42.327,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "sgsr-30-a",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 26,
+   "gpuMsPerFrame": 8.69,
+   "fps": 29.9,
+   "cpu": {
+    "n": 314,
+    "p50": 1.9,
+    "p95": 3.2,
+    "p99": 3.9,
+    "max": 5.5,
+    "mean": 1.993
+   },
+   "gaps": {
+    "n": 313,
+    "p50": 33,
+    "p95": 50.8,
+    "p99": 51.5,
+    "max": 52.4,
+    "mean": 33.301
+   },
+   "raf": null,
+   "dropped": 5,
+   "decoded": 323,
+   "fence": {
+    "p50": 17.799999998882413,
+    "p95": 22.90000000037253,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15838525.063485,
+      "lengthMs": 927.017031,
+      "activeMs": 38.021875,
+      "share": 0.04101529284632959,
+      "uids": {
+       "10422": 38.021875
+      }
+     },
+     {
+      "startMs": 15839459.376974,
+      "lengthMs": 921.00776,
+      "activeMs": 194.480885,
+      "share": 0.21116096242229274,
+      "uids": {
+       "10422": 194.480885
+      }
+     },
+     {
+      "startMs": 15840393.520255,
+      "lengthMs": 914.815312,
+      "activeMs": 207.6675,
+      "share": 0.2270048361411773,
+      "uids": {
+       "10422": 207.6675
+      }
+     },
+     {
+      "startMs": 15841308.84765,
+      "lengthMs": 928.265937,
+      "activeMs": 237.930677,
+      "share": 0.2563173628550371,
+      "uids": {
+       "10422": 237.930677
+      }
+     },
+     {
+      "startMs": 15842241.884317,
+      "lengthMs": 922.424687,
+      "activeMs": 239.617395,
+      "share": 0.25976906123285487,
+      "uids": {
+       "10422": 239.617395
+      }
+     },
+     {
+      "startMs": 15843164.309004,
+      "lengthMs": 927.945051,
+      "activeMs": 239.955312,
+      "share": 0.2585878460598633,
+      "uids": {
+       "10422": 239.955312
+      }
+     },
+     {
+      "startMs": 15844107.001139,
+      "lengthMs": 917.366458,
+      "activeMs": 247.116822,
+      "share": 0.2693763433849028,
+      "uids": {
+       "10422": 247.116822
+      }
+     },
+     {
+      "startMs": 15845037.974316,
+      "lengthMs": 910.08703,
+      "activeMs": 233.476666,
+      "share": 0.2565432297172722,
+      "uids": {
+       "1000": 0.542239,
+       "10422": 232.934427
+      }
+     },
+     {
+      "startMs": 15845952.460044,
+      "lengthMs": 924.274531,
+      "activeMs": 241.091145,
+      "share": 0.2608436529557472,
+      "uids": {
+       "1000": 0.511302,
+       "10422": 240.579843
+      }
+     },
+     {
+      "startMs": 15846886.252648,
+      "lengthMs": 918.054739,
+      "activeMs": 238.832291,
+      "share": 0.2601503819479766,
+      "uids": {
+       "10422": 238.832291
+      }
+     },
+     {
+      "startMs": 15847818.339835,
+      "lengthMs": 913.821198,
+      "activeMs": 241.209478,
+      "share": 0.2639569737798969,
+      "uids": {
+       "1000": 0.523645,
+       "10422": 240.685833
+      }
+     },
+     {
+      "startMs": 15848734.184731,
+      "lengthMs": 926.305156,
+      "activeMs": 218.844166,
+      "share": 0.23625493670468137,
+      "uids": {
+       "1000": 0.558958,
+       "10422": 218.285208
+      }
+     },
+     {
+      "startMs": 15849667.274053,
+      "lengthMs": 921.383698,
+      "activeMs": 87.145052,
+      "share": 0.0945806314884464,
+      "uids": {
+       "1000": 0.566875,
+       "10422": 86.578177
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:27:42.299Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 51.2,
+    "gpuMaxC": 49,
+    "skinC": 42.307,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:27:54.769Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 51.6,
+    "gpuMaxC": 48.6,
+    "skinC": 42.633,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "cand-30-a",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialCand",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 14.2,
+   "gpuMsPerFrame": 4.79,
+   "fps": 29.71,
+   "cpu": {
+    "n": 312,
+    "p50": 1.8,
+    "p95": 3.2,
+    "p99": 3.8,
+    "max": 4.4,
+    "mean": 1.907
+   },
+   "gaps": {
+    "n": 311,
+    "p50": 32.6,
+    "p95": 51.2,
+    "p99": 51.8,
+    "max": 95.7,
+    "mean": 33.529
+   },
+   "raf": null,
+   "dropped": 4,
+   "decoded": 321,
+   "fence": {
+    "p50": 12.599999999627471,
+    "p95": 19.90000000037253,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15852445.983792,
+      "lengthMs": 926.270833,
+      "activeMs": 37.569375,
+      "share": 0.04055981648296163,
+      "uids": {
+       "10422": 37.569375
+      }
+     },
+     {
+      "startMs": 15853377.638687,
+      "lengthMs": 922.580573,
+      "activeMs": 113.29776,
+      "share": 0.12280527394109783,
+      "uids": {
+       "10422": 113.29776
+      }
+     },
+     {
+      "startMs": 15854300.21926,
+      "lengthMs": 928.13401,
+      "activeMs": 149.346197,
+      "share": 0.16091016533269803,
+      "uids": {
+       "10422": 149.346197
+      }
+     },
+     {
+      "startMs": 15855228.35327,
+      "lengthMs": 927.923541,
+      "activeMs": 141.313437,
+      "share": 0.1522899579072108,
+      "uids": {
+       "10422": 141.313437
+      }
+     },
+     {
+      "startMs": 15856162.895561,
+      "lengthMs": 921.376823,
+      "activeMs": 139.848384,
+      "share": 0.1517819642398363,
+      "uids": {
+       "1000": 1.36552,
+       "10422": 138.482864
+      }
+     },
+     {
+      "startMs": 15857092.82004,
+      "lengthMs": 919.492708,
+      "activeMs": 128.511354,
+      "share": 0.13976332045038906,
+      "uids": {
+       "10422": 128.511354
+      }
+     },
+     {
+      "startMs": 15858026.550925,
+      "lengthMs": 915.012864,
+      "activeMs": 130.16526,
+      "share": 0.1422551147871075,
+      "uids": {
+       "10422": 130.16526
+      }
+     },
+     {
+      "startMs": 15858941.563789,
+      "lengthMs": 931.818333,
+      "activeMs": 130.75375,
+      "share": 0.14032107479473685,
+      "uids": {
+       "10422": 130.75375
+      }
+     },
+     {
+      "startMs": 15859873.480091,
+      "lengthMs": 922.585729,
+      "activeMs": 127.909062,
+      "share": 0.13864192560039046,
+      "uids": {
+       "10422": 127.909062
+      }
+     },
+     {
+      "startMs": 15860796.06582,
+      "lengthMs": 928.596614,
+      "activeMs": 133.227083,
+      "share": 0.1434714288113913,
+      "uids": {
+       "10422": 133.227083
+      }
+     },
+     {
+      "startMs": 15861724.662434,
+      "lengthMs": 928.224219,
+      "activeMs": 131.396718,
+      "share": 0.14155708858960508,
+      "uids": {
+       "10422": 131.396718
+      }
+     },
+     {
+      "startMs": 15862655.651705,
+      "lengthMs": 924.453072,
+      "activeMs": 136.733488,
+      "share": 0.14790744077921134,
+      "uids": {
+       "1000": 0.519218,
+       "10422": 136.21427
+      }
+     },
+     {
+      "startMs": 15863589.210923,
+      "lengthMs": 923.052552,
+      "activeMs": 94.599687,
+      "share": 0.10248570007745345,
+      "uids": {
+       "10422": 94.599687
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:27:56.461Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 50.4,
+    "gpuMaxC": 47.8,
+    "skinC": 42.547,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:28:08.908Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.687,
+    "currentA": 0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.4,
+    "gpuMaxC": 48.6,
+    "skinC": 42.64,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "atual-60-a",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fluid": true
+   },
+   "gpuBusyPct": 89.2,
+   "gpuMsPerFrame": 16.27,
+   "fps": 54.86,
+   "cpu": {
+    "n": 576,
+    "p50": 1.7,
+    "p95": 3.8,
+    "p99": 5.2,
+    "max": 23.7,
+    "mean": 1.986
+   },
+   "gaps": {
+    "n": 575,
+    "p50": 16.7,
+    "p95": 33.4,
+    "p99": 34.4,
+    "max": 35.6,
+    "mean": 18.185
+   },
+   "raf": {
+    "n": 629,
+    "p50": 16.7,
+    "p95": 16.7,
+    "p99": 16.8,
+    "max": 16.8,
+    "mean": 16.651
+   },
+   "dropped": 59,
+   "decoded": 636,
+   "fence": {
+    "p50": 43.40000000037253,
+    "p95": 51.19999999925494,
+    "count": 21
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15871945.783524,
+      "lengthMs": 916.406875,
+      "activeMs": 488.70177,
+      "share": 0.5332803401327604,
+      "uids": {
+       "10422": 488.70177
+      }
+     },
+     {
+      "startMs": 15872863.057065,
+      "lengthMs": 929.274115,
+      "activeMs": 826.871093,
+      "share": 0.889803212693598,
+      "uids": {
+       "10422": 826.871093
+      }
+     },
+     {
+      "startMs": 15873792.33118,
+      "lengthMs": 923.923801,
+      "activeMs": 841.778489,
+      "share": 0.9110908151612819,
+      "uids": {
+       "10422": 841.778489
+      }
+     },
+     {
+      "startMs": 15874716.254981,
+      "lengthMs": 928.209896,
+      "activeMs": 827.633489,
+      "share": 0.8916447589780921,
+      "uids": {
+       "10422": 827.633489
+      }
+     },
+     {
+      "startMs": 15875644.464877,
+      "lengthMs": 928.259218,
+      "activeMs": 828.369739,
+      "share": 0.8923905337398976,
+      "uids": {
+       "10422": 828.369739
+      }
+     },
+     {
+      "startMs": 15876572.724095,
+      "lengthMs": 928.087656,
+      "activeMs": 830.495833,
+      "share": 0.8948463301186284,
+      "uids": {
+       "10422": 830.495833
+      }
+     },
+     {
+      "startMs": 15877500.811751,
+      "lengthMs": 927.437291,
+      "activeMs": 835.316979,
+      "share": 0.9006721932642237,
+      "uids": {
+       "10422": 835.316979
+      }
+     },
+     {
+      "startMs": 15878428.249042,
+      "lengthMs": 928.040156,
+      "activeMs": 851.155989,
+      "share": 0.9171542669754906,
+      "uids": {
+       "1000": 0.380156,
+       "10422": 850.775833
+      }
+     },
+     {
+      "startMs": 15879356.289198,
+      "lengthMs": 930.094427,
+      "activeMs": 783.816041,
+      "share": 0.8427273814855359,
+      "uids": {
+       "1000": 1.031979,
+       "10422": 782.784062
+      }
+     },
+     {
+      "startMs": 15880286.383625,
+      "lengthMs": 926.338489,
+      "activeMs": 798.13052,
+      "share": 0.8615970614171469,
+      "uids": {
+       "1000": 0.36526,
+       "10422": 797.76526
+      }
+     },
+     {
+      "startMs": 15881212.722114,
+      "lengthMs": 927.39625,
+      "activeMs": 800.815052,
+      "share": 0.8635090469688658,
+      "uids": {
+       "10422": 800.815052
+      }
+     },
+     {
+      "startMs": 15882140.118364,
+      "lengthMs": 928.066354,
+      "activeMs": 582.54276,
+      "share": 0.6276951615466064,
+      "uids": {
+       "10422": 582.54276
+      }
+     },
+     {
+      "startMs": 15883069.201697,
+      "lengthMs": 927.642083,
+      "activeMs": 40.621718,
+      "share": 0.04379029233842984,
+      "uids": {
+       "10422": 40.621718
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:28:15.124Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.4,
+    "gpuMaxC": 48.2,
+    "skinC": 42.798,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:28:27.607Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 55.2,
+    "gpuMaxC": 52.2,
+    "skinC": 42.626,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "mp-easu-usm2-60-a",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "easu",
+     "sharp": 2
+    }
+   },
+   "gpuBusyPct": 69.1,
+   "gpuMsPerFrame": 12.9,
+   "fps": 53.52,
+   "cpu": {
+    "n": 562,
+    "p50": 1.8,
+    "p95": 3.5,
+    "p99": 5.6,
+    "max": 19.6,
+    "mean": 1.997
+   },
+   "gaps": {
+    "n": 561,
+    "p50": 16.8,
+    "p95": 33.5,
+    "p99": 34.2,
+    "max": 82.5,
+    "mean": 18.639
+   },
+   "raf": null,
+   "dropped": 75,
+   "decoded": 640,
+   "fence": {
+    "p50": 30,
+    "p95": 46.69999999925494,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15885867.258623,
+      "lengthMs": 912.980312,
+      "activeMs": 190.705363,
+      "share": 0.2088822294340998,
+      "uids": {
+       "1000": 0.35427,
+       "10422": 190.351093
+      }
+     },
+     {
+      "startMs": 15886780.238935,
+      "lengthMs": 928.05875,
+      "activeMs": 648.795,
+      "share": 0.6990882850897101,
+      "uids": {
+       "10422": 648.795
+      }
+     },
+     {
+      "startMs": 15887708.297685,
+      "lengthMs": 928.104426,
+      "activeMs": 624.371666,
+      "share": 0.6727385933185928,
+      "uids": {
+       "10422": 624.371666
+      }
+     },
+     {
+      "startMs": 15888636.402111,
+      "lengthMs": 927.798854,
+      "activeMs": 648.413541,
+      "share": 0.6988729703690709,
+      "uids": {
+       "10422": 648.413541
+      }
+     },
+     {
+      "startMs": 15889564.200965,
+      "lengthMs": 928.674531,
+      "activeMs": 641.63901,
+      "share": 0.6909191418322638,
+      "uids": {
+       "10422": 641.63901
+      }
+     },
+     {
+      "startMs": 15890493.096173,
+      "lengthMs": 927.227917,
+      "activeMs": 640.250885,
+      "share": 0.6905000089638156,
+      "uids": {
+       "10422": 640.250885
+      }
+     },
+     {
+      "startMs": 15891420.32409,
+      "lengthMs": 927.919895,
+      "activeMs": 612.831093,
+      "share": 0.6604353417813076,
+      "uids": {
+       "10422": 612.831093
+      }
+     },
+     {
+      "startMs": 15892348.243985,
+      "lengthMs": 932.126354,
+      "activeMs": 650.657031,
+      "share": 0.6980352268851311,
+      "uids": {
+       "10422": 650.657031
+      }
+     },
+     {
+      "startMs": 15893280.723255,
+      "lengthMs": 923.497656,
+      "activeMs": 645.291875,
+      "share": 0.6987477129016124,
+      "uids": {
+       "10422": 645.291875
+      }
+     },
+     {
+      "startMs": 15894209.846901,
+      "lengthMs": 922.286354,
+      "activeMs": 594.177135,
+      "share": 0.6442436586240546,
+      "uids": {
+       "10422": 594.177135
+      }
+     },
+     {
+      "startMs": 15895132.133255,
+      "lengthMs": 928.08427,
+      "activeMs": 609.946562,
+      "share": 0.657210322075602,
+      "uids": {
+       "1000": 0.495156,
+       "10422": 609.451406
+      }
+     },
+     {
+      "startMs": 15896060.217525,
+      "lengthMs": 929.065208,
+      "activeMs": 569.868906,
+      "share": 0.6133788038697064,
+      "uids": {
+       "1000": 0.368281,
+       "10422": 569.500625
+      }
+     },
+     {
+      "startMs": 15896991.332681,
+      "lengthMs": 924.886875,
+      "activeMs": 52.079635,
+      "share": 0.05630919457041706,
+      "uids": {
+       "1000": 0.621354,
+       "10422": 51.458281
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:28:29.320Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 54.4,
+    "gpuMaxC": 51.4,
+    "skinC": 42.739,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:28:41.788Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 53.6,
+    "gpuMaxC": 51.4,
+    "skinC": 42.956,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "cand-60-a",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialCand",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 30.9,
+   "gpuMsPerFrame": 5.43,
+   "fps": 56.95,
+   "cpu": {
+    "n": 598,
+    "p50": 1.6,
+    "p95": 3.2,
+    "p99": 4.7,
+    "max": 6.7,
+    "mean": 1.798
+   },
+   "gaps": {
+    "n": 597,
+    "p50": 16.7,
+    "p95": 31.3,
+    "p99": 33.9,
+    "max": 37.5,
+    "mean": 17.545
+   },
+   "raf": null,
+   "dropped": 37,
+   "decoded": 639,
+   "fence": {
+    "p50": 15.799999998882413,
+    "p95": 30,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15899772.192576,
+      "lengthMs": 928.158697,
+      "activeMs": 48.485416,
+      "share": 0.052238282264352905,
+      "uids": {
+       "10422": 48.485416
+      }
+     },
+     {
+      "startMs": 15900704.72419,
+      "lengthMs": 923.524583,
+      "activeMs": 232.082238,
+      "share": 0.25130055254847505,
+      "uids": {
+       "1000": 0.532916,
+       "10422": 231.549322
+      }
+     },
+     {
+      "startMs": 15901637.6757,
+      "lengthMs": 919.125469,
+      "activeMs": 253.48703,
+      "share": 0.27579154157896585,
+      "uids": {
+       "1000": 0.517343,
+       "10422": 252.969687
+      }
+     },
+     {
+      "startMs": 15902556.801169,
+      "lengthMs": 927.857343,
+      "activeMs": 297.748229,
+      "share": 0.32089871492238653,
+      "uids": {
+       "10422": 297.748229
+      }
+     },
+     {
+      "startMs": 15903484.868199,
+      "lengthMs": 927.874323,
+      "activeMs": 300.70875,
+      "share": 0.3240834912078928,
+      "uids": {
+       "10422": 300.70875
+      }
+     },
+     {
+      "startMs": 15904417.791168,
+      "lengthMs": 922.404531,
+      "activeMs": 277.804218,
+      "share": 0.3011739520607363,
+      "uids": {
+       "1000": 0.74125,
+       "10422": 277.062968
+      }
+     },
+     {
+      "startMs": 15905350.854865,
+      "lengthMs": 917.423698,
+      "activeMs": 298.295156,
+      "share": 0.3251443762029352,
+      "uids": {
+       "10422": 298.295156
+      }
+     },
+     {
+      "startMs": 15906268.278563,
+      "lengthMs": 928.498281,
+      "activeMs": 250.40302,
+      "share": 0.26968603509994005,
+      "uids": {
+       "10422": 250.40302
+      }
+     },
+     {
+      "startMs": 15907198.843719,
+      "lengthMs": 925.308072,
+      "activeMs": 292.876041,
+      "share": 0.3165173306734106,
+      "uids": {
+       "10422": 292.876041
+      }
+     },
+     {
+      "startMs": 15908129.424187,
+      "lengthMs": 922.70276,
+      "activeMs": 285.147812,
+      "share": 0.30903539510383604,
+      "uids": {
+       "10422": 285.147812
+      }
+     },
+     {
+      "startMs": 15909052.126947,
+      "lengthMs": 928.08599,
+      "activeMs": 278.605989,
+      "share": 0.30019415442312625,
+      "uids": {
+       "10422": 278.605989
+      }
+     },
+     {
+      "startMs": 15909980.212937,
+      "lengthMs": 928.451041,
+      "activeMs": 252.323905,
+      "share": 0.27176867046024455,
+      "uids": {
+       "1000": 0.472447,
+       "10422": 251.851458
+      }
+     },
+     {
+      "startMs": 15910910.877676,
+      "lengthMs": 925.447552,
+      "activeMs": 86.500156,
+      "share": 0.09346845838325801,
+      "uids": {
+       "10422": 86.500156
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:28:43.474Z",
+    "level": 20,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 53.6,
+    "gpuMaxC": 51,
+    "skinC": 42.936,
+    "socdPct": 80,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:28:55.960Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.687,
+    "currentA": -0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 53.6,
+    "gpuMaxC": 50.6,
+    "skinC": 43.152,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "atual-30-b",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fluid": true
+   },
+   "gpuBusyPct": 50.8,
+   "gpuMsPerFrame": 16.88,
+   "fps": 30.1,
+   "cpu": {
+    "n": 316,
+    "p50": 2,
+    "p95": 3.7,
+    "p99": 12,
+    "max": 26.7,
+    "mean": 2.357
+   },
+   "gaps": {
+    "n": 315,
+    "p50": 33.1,
+    "p95": 50.9,
+    "p99": 51.7,
+    "max": 52.7,
+    "mean": 33.253
+   },
+   "raf": {
+    "n": 630,
+    "p50": 16.7,
+    "p95": 16.7,
+    "p99": 16.8,
+    "max": 16.8,
+    "mean": 16.651
+   },
+   "dropped": 1,
+   "decoded": 320,
+   "fence": {
+    "p50": 24.59999999962747,
+    "p95": 40.29999999888241,
+    "count": 20
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15917951.6696,
+      "lengthMs": 924.594062,
+      "activeMs": 294.980364,
+      "share": 0.31903770110952756,
+      "uids": {
+       "10422": 294.980364
+      }
+     },
+     {
+      "startMs": 15918885.516058,
+      "lengthMs": 918.680052,
+      "activeMs": 443.701979,
+      "share": 0.4829777004889184,
+      "uids": {
+       "10422": 443.701979
+      }
+     },
+     {
+      "startMs": 15919804.19611,
+      "lengthMs": 929.492447,
+      "activeMs": 472.240572,
+      "share": 0.5080628395897013,
+      "uids": {
+       "10422": 472.240572
+      }
+     },
+     {
+      "startMs": 15920734.301474,
+      "lengthMs": 925.903385,
+      "activeMs": 470.0325,
+      "share": 0.5076474582712537,
+      "uids": {
+       "10422": 470.0325
+      }
+     },
+     {
+      "startMs": 15921668.467255,
+      "lengthMs": 919.861979,
+      "activeMs": 468.771614,
+      "share": 0.5096108162983438,
+      "uids": {
+       "10422": 468.771614
+      }
+     },
+     {
+      "startMs": 15922588.329234,
+      "lengthMs": 927.786354,
+      "activeMs": 460.546301,
+      "share": 0.49639262208851154,
+      "uids": {
+       "1000": 0.529947,
+       "10422": 460.016354
+      }
+     },
+     {
+      "startMs": 15923516.115588,
+      "lengthMs": 932.134531,
+      "activeMs": 490.284114,
+      "share": 0.5259799929029773,
+      "uids": {
+       "10422": 490.284114
+      }
+     },
+     {
+      "startMs": 15924448.250119,
+      "lengthMs": 929.593801,
+      "activeMs": 469.834009,
+      "share": 0.5054186124031608,
+      "uids": {
+       "1000": 0.409687,
+       "10422": 469.424322
+      }
+     },
+     {
+      "startMs": 15925377.84392,
+      "lengthMs": 924.144271,
+      "activeMs": 487.980781,
+      "share": 0.5280352822746656,
+      "uids": {
+       "10422": 487.980781
+      }
+     },
+     {
+      "startMs": 15926314.179545,
+      "lengthMs": 914.678698,
+      "activeMs": 481.71875,
+      "share": 0.5266535134723341,
+      "uids": {
+       "10422": 481.71875
+      }
+     },
+     {
+      "startMs": 15927229.15168,
+      "lengthMs": 927.365052,
+      "activeMs": 470.824427,
+      "share": 0.5077012833129709,
+      "uids": {
+       "10422": 470.824427
+      }
+     },
+     {
+      "startMs": 15928156.516732,
+      "lengthMs": 928.202499,
+      "activeMs": 395.222552,
+      "share": 0.4257934582440722,
+      "uids": {
+       "10422": 395.222552
+      }
+     },
+     {
+      "startMs": 15929093.132356,
+      "lengthMs": 919.192708,
+      "activeMs": 47.007447,
+      "share": 0.051139925927262686,
+      "uids": {
+       "1000": 0.473697,
+       "10422": 46.53375
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:29:01.192Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 54,
+    "gpuMaxC": 49.4,
+    "skinC": 42.91,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:29:13.653Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.093,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 52.8,
+    "gpuMaxC": 49.4,
+    "skinC": 43.056,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "mp-easu-usm2-30-b",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "easu",
+     "sharp": 2
+    }
+   },
+   "gpuBusyPct": 40.9,
+   "gpuMsPerFrame": 13.73,
+   "fps": 29.81,
+   "cpu": {
+    "n": 313,
+    "p50": 1.7,
+    "p95": 3.2,
+    "p99": 4.1,
+    "max": 11.3,
+    "mean": 1.893
+   },
+   "gaps": {
+    "n": 312,
+    "p50": 45,
+    "p95": 51.1,
+    "p99": 52.1,
+    "max": 64.7,
+    "mean": 33.459
+   },
+   "raf": null,
+   "dropped": 4,
+   "decoded": 322,
+   "fence": {
+    "p50": 22.09999999962747,
+    "p95": 40.29999999888241,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15931872.588657,
+      "lengthMs": 923.526979,
+      "activeMs": 134.829062,
+      "share": 0.14599363642412877,
+      "uids": {
+       "10422": 134.829062
+      }
+     },
+     {
+      "startMs": 15932809.44699,
+      "lengthMs": 915.883438,
+      "activeMs": 373.457395,
+      "share": 0.407756467149917,
+      "uids": {
+       "10422": 373.457395
+      }
+     },
+     {
+      "startMs": 15933740.192146,
+      "lengthMs": 912.130885,
+      "activeMs": 375.097604,
+      "share": 0.41123221477145794,
+      "uids": {
+       "10422": 375.097604
+      }
+     },
+     {
+      "startMs": 15934654.877563,
+      "lengthMs": 925.255312,
+      "activeMs": 378.722916,
+      "share": 0.40931720260148047,
+      "uids": {
+       "10422": 378.722916
+      }
+     },
+     {
+      "startMs": 15935586.924593,
+      "lengthMs": 921.828594,
+      "activeMs": 377.082552,
+      "share": 0.4090592919924113,
+      "uids": {
+       "10422": 377.082552
+      }
+     },
+     {
+      "startMs": 15936518.764593,
+      "lengthMs": 918.202083,
+      "activeMs": 377.686822,
+      "share": 0.41133300500256,
+      "uids": {
+       "10422": 377.686822
+      }
+     },
+     {
+      "startMs": 15937436.966676,
+      "lengthMs": 928.794896,
+      "activeMs": 379.624687,
+      "share": 0.4087282225978124,
+      "uids": {
+       "10422": 379.624687
+      }
+     },
+     {
+      "startMs": 15938365.761572,
+      "lengthMs": 926.381249,
+      "activeMs": 390.361822,
+      "share": 0.4213835528529788,
+      "uids": {
+       "10422": 390.361822
+      }
+     },
+     {
+      "startMs": 15939292.142821,
+      "lengthMs": 928.095781,
+      "activeMs": 380.206562,
+      "share": 0.40966306472198044,
+      "uids": {
+       "10422": 380.206562
+      }
+     },
+     {
+      "startMs": 15940233.310842,
+      "lengthMs": 915.031041,
+      "activeMs": 350.10026,
+      "share": 0.3826102550765816,
+      "uids": {
+       "1000": 0.536406,
+       "10422": 349.563854
+      }
+     },
+     {
+      "startMs": 15941148.536362,
+      "lengthMs": 927.829323,
+      "activeMs": 350.906562,
+      "share": 0.3782016296546816,
+      "uids": {
+       "1000": 0.906354,
+       "10422": 350.000208
+      }
+     },
+     {
+      "startMs": 15942076.365685,
+      "lengthMs": 927.767031,
+      "activeMs": 363.72651,
+      "share": 0.3920450908973936,
+      "uids": {
+       "10422": 363.72651
+      }
+     },
+     {
+      "startMs": 15943004.132716,
+      "lengthMs": 927.960781,
+      "activeMs": 49.702708,
+      "share": 0.05356121618247571,
+      "uids": {
+       "10422": 49.702708
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:29:15.365Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 51.6,
+    "gpuMaxC": 48.6,
+    "skinC": 42.969,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:29:27.805Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 52.4,
+    "gpuMaxC": 49.4,
+    "skinC": 42.553,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "sgsr-30-b",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 27.1,
+   "gpuMsPerFrame": 9.02,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 1.7,
+    "p95": 3.1,
+    "p99": 4.1,
+    "max": 6.1,
+    "mean": 1.87
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 45.4,
+    "p95": 51.1,
+    "p99": 51.9,
+    "max": 52.8,
+    "mean": 33.353
+   },
+   "raf": null,
+   "dropped": 3,
+   "decoded": 321,
+   "fence": {
+    "p50": 18.09999999962747,
+    "p95": 22.59999999962747,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15945793.878235,
+      "lengthMs": 923.043125,
+      "activeMs": 45.412291,
+      "share": 0.04919844996407941,
+      "uids": {
+       "1000": 0.541354,
+       "10422": 44.870937
+      }
+     },
+     {
+      "startMs": 15946726.728912,
+      "lengthMs": 917.746562,
+      "activeMs": 203.013437,
+      "share": 0.2212086053012095,
+      "uids": {
+       "10422": 203.013437
+      }
+     },
+     {
+      "startMs": 15947644.475474,
+      "lengthMs": 928.483958,
+      "activeMs": 211.453854,
+      "share": 0.22774098806777662,
+      "uids": {
+       "10422": 211.453854
+      }
+     },
+     {
+      "startMs": 15948575.136516,
+      "lengthMs": 924.989739,
+      "activeMs": 226.017708,
+      "share": 0.24434617863366373,
+      "uids": {
+       "10422": 226.017708
+      }
+     },
+     {
+      "startMs": 15949509.337922,
+      "lengthMs": 918.820624,
+      "activeMs": 234.578177,
+      "share": 0.255303560752463,
+      "uids": {
+       "10422": 234.578177
+      }
+     },
+     {
+      "startMs": 15950441.766411,
+      "lengthMs": 914.435468,
+      "activeMs": 243.163697,
+      "share": 0.26591673826020057,
+      "uids": {
+       "10422": 243.163697
+      }
+     },
+     {
+      "startMs": 15951356.939431,
+      "lengthMs": 927.2425,
+      "activeMs": 256.758593,
+      "share": 0.2769055484406722,
+      "uids": {
+       "10422": 256.758593
+      }
+     },
+     {
+      "startMs": 15952289.610316,
+      "lengthMs": 922.511719,
+      "activeMs": 253.573333,
+      "share": 0.27487274988210747,
+      "uids": {
+       "10422": 253.573333
+      }
+     },
+     {
+      "startMs": 15953221.371878,
+      "lengthMs": 918.821875,
+      "activeMs": 256.307968,
+      "share": 0.2789528362066913,
+      "uids": {
+       "10422": 256.307968
+      }
+     },
+     {
+      "startMs": 15954153.877711,
+      "lengthMs": 914.659271,
+      "activeMs": 248.486354,
+      "share": 0.27167095100706634,
+      "uids": {
+       "10422": 248.486354
+      }
+     },
+     {
+      "startMs": 15955069.502815,
+      "lengthMs": 927.336146,
+      "activeMs": 250.960207,
+      "share": 0.2706248517136956,
+      "uids": {
+       "1000": 0.505468,
+       "10422": 250.454739
+      }
+     },
+     {
+      "startMs": 15956001.772242,
+      "lengthMs": 922.42802,
+      "activeMs": 219.257083,
+      "share": 0.23769560144107504,
+      "uids": {
+       "10422": 219.257083
+      }
+     },
+     {
+      "startMs": 15956924.200262,
+      "lengthMs": 928.054531,
+      "activeMs": 107.815156,
+      "share": 0.11617329844166237,
+      "uids": {
+       "10422": 107.815156
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:29:29.520Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.093,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 52,
+    "gpuMaxC": 49,
+    "skinC": 42.606,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:29:41.989Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 51.2,
+    "gpuMaxC": 48.2,
+    "skinC": 42.587,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "cand-30-b",
+   "query": "aa=1",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialCand",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 14.4,
+   "gpuMsPerFrame": 4.83,
+   "fps": 29.81,
+   "cpu": {
+    "n": 313,
+    "p50": 1.8,
+    "p95": 3.1,
+    "p99": 3.7,
+    "max": 6.3,
+    "mean": 1.875
+   },
+   "gaps": {
+    "n": 312,
+    "p50": 33.3,
+    "p95": 51,
+    "p99": 51.7,
+    "max": 95.4,
+    "mean": 33.418
+   },
+   "raf": null,
+   "dropped": 2,
+   "decoded": 320,
+   "fence": {
+    "p50": 12.099999999627471,
+    "p95": 18.199999999254942,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15959713.133959,
+      "lengthMs": 923.341042,
+      "activeMs": 39.812135,
+      "share": 0.04311747576363014,
+      "uids": {
+       "1000": 0.517552,
+       "10422": 39.294583
+      }
+     },
+     {
+      "startMs": 15960645.952813,
+      "lengthMs": 918.268021,
+      "activeMs": 129.125833,
+      "share": 0.14061889344614342,
+      "uids": {
+       "10422": 129.125833
+      }
+     },
+     {
+      "startMs": 15961564.558177,
+      "lengthMs": 935.187031,
+      "activeMs": 149.769843,
+      "share": 0.16014961503459943,
+      "uids": {
+       "10422": 149.769843
+      }
+     },
+     {
+      "startMs": 15962511.556042,
+      "lengthMs": 908.674843,
+      "activeMs": 148.388436,
+      "share": 0.16330201847571124,
+      "uids": {
+       "1000": 0.535468,
+       "10422": 147.852968
+      }
+     },
+     {
+      "startMs": 15963427.692395,
+      "lengthMs": 924.552083,
+      "activeMs": 136.862082,
+      "share": 0.14803068914831485,
+      "uids": {
+       "1000": 0.564166,
+       "10422": 136.297916
+      }
+     },
+     {
+      "startMs": 15964362.248801,
+      "lengthMs": 918.066562,
+      "activeMs": 129.386458,
+      "share": 0.14093363526728686,
+      "uids": {
+       "10422": 129.386458
+      }
+     },
+     {
+      "startMs": 15965294.689061,
+      "lengthMs": 909.738385,
+      "activeMs": 130.44427,
+      "share": 0.1433865737126174,
+      "uids": {
+       "10422": 130.44427
+      }
+     },
+     {
+      "startMs": 15966209.924686,
+      "lengthMs": 922.336302,
+      "activeMs": 131.246666,
+      "share": 0.14229805952059338,
+      "uids": {
+       "10422": 131.246666
+      }
+     },
+     {
+      "startMs": 15967132.433488,
+      "lengthMs": 927.942187,
+      "activeMs": 129.614531,
+      "share": 0.13967953264312574,
+      "uids": {
+       "10422": 129.614531
+      }
+     },
+     {
+      "startMs": 15968060.375675,
+      "lengthMs": 929.198333,
+      "activeMs": 133.924635,
+      "share": 0.14412922434719866,
+      "uids": {
+       "10422": 133.924635
+      }
+     },
+     {
+      "startMs": 15968992.413435,
+      "lengthMs": 923.699375,
+      "activeMs": 138.929583,
+      "share": 0.15040562628939746,
+      "uids": {
+       "10422": 138.929583
+      }
+     },
+     {
+      "startMs": 15969922.952601,
+      "lengthMs": 921.217812,
+      "activeMs": 149.513593,
+      "share": 0.16229993716187502,
+      "uids": {
+       "10422": 149.513593
+      }
+     },
+     {
+      "startMs": 15970844.170413,
+      "lengthMs": 928.341979,
+      "activeMs": 98.780104,
+      "share": 0.10640486613177276,
+      "uids": {
+       "10422": 98.780104
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:29:43.671Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 50.8,
+    "gpuMaxC": 48.2,
+    "skinC": 42.547,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:29:56.147Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 52,
+    "gpuMaxC": 48.6,
+    "skinC": 42.659,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "atual-60-b",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fluid": true
+   },
+   "gpuBusyPct": 87.3,
+   "gpuMsPerFrame": 16.14,
+   "fps": 54.1,
+   "cpu": {
+    "n": 568,
+    "p50": 2,
+    "p95": 3.6,
+    "p99": 5.3,
+    "max": 23.4,
+    "mean": 2.192
+   },
+   "gaps": {
+    "n": 567,
+    "p50": 16.8,
+    "p95": 33.4,
+    "p99": 34.7,
+    "max": 36.9,
+    "mean": 18.499
+   },
+   "raf": {
+    "n": 628,
+    "p50": 16.7,
+    "p95": 16.7,
+    "p99": 16.8,
+    "max": 33.3,
+    "mean": 16.704
+   },
+   "dropped": 71,
+   "decoded": 637,
+   "fence": {
+    "p50": 44.59999999962747,
+    "p95": 54,
+    "count": 21
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15978845.496452,
+      "lengthMs": 927.462968,
+      "activeMs": 324.333333,
+      "share": 0.349699496573323,
+      "uids": {
+       "10422": 324.333333
+      }
+     },
+     {
+      "startMs": 15979772.95942,
+      "lengthMs": 927.132708,
+      "activeMs": 763.146406,
+      "share": 0.8231253189699785,
+      "uids": {
+       "10422": 763.146406
+      }
+     },
+     {
+      "startMs": 15980700.092128,
+      "lengthMs": 928.016615,
+      "activeMs": 785.030729,
+      "share": 0.8459231400722281,
+      "uids": {
+       "10422": 785.030729
+      }
+     },
+     {
+      "startMs": 15981628.108743,
+      "lengthMs": 928.61776,
+      "activeMs": 828.236197,
+      "share": 0.8919021718904019,
+      "uids": {
+       "10422": 828.236197
+      }
+     },
+     {
+      "startMs": 15982556.726503,
+      "lengthMs": 927.431614,
+      "activeMs": 829.330156,
+      "share": 0.8942224348198681,
+      "uids": {
+       "1000": 0.365104,
+       "10422": 828.965052
+      }
+     },
+     {
+      "startMs": 15983484.158117,
+      "lengthMs": 928.568333,
+      "activeMs": 802.267864,
+      "share": 0.8639836568710555,
+      "uids": {
+       "10422": 802.267864
+      }
+     },
+     {
+      "startMs": 15984412.72645,
+      "lengthMs": 928.893593,
+      "activeMs": 739.497708,
+      "share": 0.7961059410601403,
+      "uids": {
+       "10422": 739.497708
+      }
+     },
+     {
+      "startMs": 15985341.620043,
+      "lengthMs": 926.741771,
+      "activeMs": 843.009843,
+      "share": 0.9096491270597967,
+      "uids": {
+       "10422": 843.009843
+      }
+     },
+     {
+      "startMs": 15986268.361814,
+      "lengthMs": 927.904843,
+      "activeMs": 810.174427,
+      "share": 0.8731223175650566,
+      "uids": {
+       "10422": 810.174427
+      }
+     },
+     {
+      "startMs": 15987196.266657,
+      "lengthMs": 927.904635,
+      "activeMs": 805.157604,
+      "share": 0.8677158984123406,
+      "uids": {
+       "10422": 805.157604
+      }
+     },
+     {
+      "startMs": 15988124.717438,
+      "lengthMs": 927.478437,
+      "activeMs": 842.182916,
+      "share": 0.9080350360749142,
+      "uids": {
+       "10422": 842.182916
+      }
+     },
+     {
+      "startMs": 15989052.195875,
+      "lengthMs": 927.908125,
+      "activeMs": 815.269009,
+      "share": 0.8786096242017495,
+      "uids": {
+       "1000": 0.334322,
+       "10422": 814.934687
+      }
+     },
+     {
+      "startMs": 15989987.41176,
+      "lengthMs": 920.792604,
+      "activeMs": 46.962968,
+      "share": 0.05100276413601602,
+      "uids": {
+       "10422": 46.962968
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:30:02.250Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.687,
+    "currentA": -0.187,
+    "tempC": 39.5,
+    "thermal": 0,
+    "cpu0": 52.8,
+    "gpuMaxC": 49,
+    "skinC": 42.421,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:30:14.747Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": 0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 54,
+    "gpuMaxC": 51.4,
+    "skinC": 42.962,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "mp-easu-usm2-60-b",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialMpConst",
+     "scale": "easu",
+     "sharp": 2
+    }
+   },
+   "gpuBusyPct": 69.5,
+   "gpuMsPerFrame": 12.65,
+   "fps": 54.95,
+   "cpu": {
+    "n": 577,
+    "p50": 2.1,
+    "p95": 4,
+    "p99": 5,
+    "max": 14.9,
+    "mean": 2.324
+   },
+   "gaps": {
+    "n": 576,
+    "p50": 16.8,
+    "p95": 33.2,
+    "p99": 34.5,
+    "max": 50,
+    "mean": 18.183
+   },
+   "raf": null,
+   "dropped": 58,
+   "decoded": 640,
+   "fence": {
+    "p50": 31.200000001117587,
+    "p95": 52.899999998509884,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 15992768.449311,
+      "lengthMs": 923.743594,
+      "activeMs": 127.75927,
+      "share": 0.13830598753792278,
+      "uids": {
+       "10422": 127.75927
+      }
+     },
+     {
+      "startMs": 15993692.192905,
+      "lengthMs": 931.921406,
+      "activeMs": 663.874947,
+      "share": 0.7123722480519994,
+      "uids": {
+       "1000": 0.238697,
+       "10422": 663.63625
+      }
+     },
+     {
+      "startMs": 15994624.114311,
+      "lengthMs": 928.247187,
+      "activeMs": 638.143749,
+      "share": 0.6874717833106668,
+      "uids": {
+       "1000": 0.217812,
+       "10422": 637.925937
+      }
+     },
+     {
+      "startMs": 15995552.361498,
+      "lengthMs": 923.817916,
+      "activeMs": 658.811302,
+      "share": 0.7131397763452771,
+      "uids": {
+       "10422": 658.811302
+      }
+     },
+     {
+      "startMs": 15996476.179414,
+      "lengthMs": 927.941718,
+      "activeMs": 622.315781,
+      "share": 0.6706410207973859,
+      "uids": {
+       "10422": 622.315781
+      }
+     },
+     {
+      "startMs": 15997404.121132,
+      "lengthMs": 928.051771,
+      "activeMs": 648.375468,
+      "share": 0.6986414855944497,
+      "uids": {
+       "10422": 648.375468
+      }
+     },
+     {
+      "startMs": 15998332.172903,
+      "lengthMs": 927.956093,
+      "activeMs": 693.214062,
+      "share": 0.7470332564538698,
+      "uids": {
+       "10422": 693.214062
+      }
+     },
+     {
+      "startMs": 15999260.128996,
+      "lengthMs": 927.942292,
+      "activeMs": 617.30625,
+      "share": 0.6652420687384728,
+      "uids": {
+       "10422": 617.30625
+      }
+     },
+     {
+      "startMs": 16000188.071288,
+      "lengthMs": 928.167083,
+      "activeMs": 644.961458,
+      "share": 0.6948764611597414,
+      "uids": {
+       "10422": 644.961458
+      }
+     },
+     {
+      "startMs": 16001116.238371,
+      "lengthMs": 927.958749,
+      "activeMs": 664.118281,
+      "share": 0.7156765122541023,
+      "uids": {
+       "10422": 664.118281
+      }
+     },
+     {
+      "startMs": 16002045.096391,
+      "lengthMs": 927.563489,
+      "activeMs": 620.552655,
+      "share": 0.6690136711493611,
+      "uids": {
+       "1000": 0.489635,
+       "10422": 620.06302
+      }
+     },
+     {
+      "startMs": 16002972.65988,
+      "lengthMs": 927.480521,
+      "activeMs": 581.169374,
+      "share": 0.6266108676583193,
+      "uids": {
+       "1000": 0.748854,
+       "10422": 580.42052
+      }
+     },
+     {
+      "startMs": 16003900.140401,
+      "lengthMs": 928.273697,
+      "activeMs": 165.236978,
+      "share": 0.1780045890926499,
+      "uids": {
+       "1000": 0.499635,
+       "10422": 164.737343
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:30:16.439Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.281,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.8,
+    "gpuMaxC": 49.8,
+    "skinC": 42.916,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:30:28.913Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.687,
+    "currentA": 0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 54.8,
+    "gpuMaxC": 51,
+    "skinC": 42.752,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "cand-60-b",
+   "query": "aa=1&clip=game60",
+   "cfg": {
+    "output": 1280,
+    "fast": {
+     "spatial": "spatialCand",
+     "scale": "sgsr20s1"
+    }
+   },
+   "gpuBusyPct": 30.2,
+   "gpuMsPerFrame": 5.48,
+   "fps": 55.05,
+   "cpu": {
+    "n": 578,
+    "p50": 2,
+    "p95": 3.9,
+    "p99": 5,
+    "max": 6.1,
+    "mean": 2.125
+   },
+   "gaps": {
+    "n": 577,
+    "p50": 16.7,
+    "p95": 33.1,
+    "p99": 34,
+    "max": 38.8,
+    "mean": 18.121
+   },
+   "raf": null,
+   "dropped": 64,
+   "decoded": 643,
+   "fence": {
+    "p50": 14.099999999627471,
+    "p95": 34.29999999888241,
+    "count": 30
+   },
+   "trace": {
+    "periods": [
+     {
+      "startMs": 16006689.452535,
+      "lengthMs": 922.614271,
+      "activeMs": 37.352552,
+      "share": 0.04048555628726016,
+      "uids": {
+       "10422": 37.352552
+      }
+     },
+     {
+      "startMs": 16007620.808264,
+      "lengthMs": 919.705989,
+      "activeMs": 184.564895,
+      "share": 0.20067814845989873,
+      "uids": {
+       "10422": 184.564895
+      }
+     },
+     {
+      "startMs": 16008553.940816,
+      "lengthMs": 914.611926,
+      "activeMs": 226.092656,
+      "share": 0.24720064277841047,
+      "uids": {
+       "10422": 226.092656
+      }
+     },
+     {
+      "startMs": 16009470.853888,
+      "lengthMs": 925.352083,
+      "activeMs": 274.462708,
+      "share": 0.29660354479366313,
+      "uids": {
+       "10422": 274.462708
+      }
+     },
+     {
+      "startMs": 16010403.440659,
+      "lengthMs": 920.909426,
+      "activeMs": 277.825364,
+      "share": 0.30168587285151754,
+      "uids": {
+       "10422": 277.825364
+      }
+     },
+     {
+      "startMs": 16011336.19894,
+      "lengthMs": 916.404999,
+      "activeMs": 279.038593,
+      "share": 0.3044926569633433,
+      "uids": {
+       "10422": 279.038593
+      }
+     },
+     {
+      "startMs": 16012252.603939,
+      "lengthMs": 927.85651,
+      "activeMs": 280.097707,
+      "share": 0.3018761025883194,
+      "uids": {
+       "1000": 0.461666,
+       "10422": 279.636041
+      }
+     },
+     {
+      "startMs": 16013184.67972,
+      "lengthMs": 923.475312,
+      "activeMs": 273.728229,
+      "share": 0.2964109873248025,
+      "uids": {
+       "10422": 273.728229
+      }
+     },
+     {
+      "startMs": 16014116.59373,
+      "lengthMs": 923.542083,
+      "activeMs": 282.841145,
+      "share": 0.30625691043902326,
+      "uids": {
+       "10422": 282.841145
+      }
+     },
+     {
+      "startMs": 16015040.135813,
+      "lengthMs": 923.940156,
+      "activeMs": 302.579895,
+      "share": 0.3274886290362728,
+      "uids": {
+       "10422": 302.579895
+      }
+     },
+     {
+      "startMs": 16015964.644979,
+      "lengthMs": 927.999948,
+      "activeMs": 265.811927,
+      "share": 0.28643528221404596,
+      "uids": {
+       "10422": 265.811927
+      }
+     },
+     {
+      "startMs": 16016896.613208,
+      "lengthMs": 923.516875,
+      "activeMs": 256.649322,
+      "share": 0.27790431225200946,
+      "uids": {
+       "10422": 256.649322
+      }
+     },
+     {
+      "startMs": 16017827.713729,
+      "lengthMs": 920.914479,
+      "activeMs": 111.50677,
+      "share": 0.12108265484226359,
+      "uids": {
+       "10422": 111.50677
+      }
+     }
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T03:30:30.616Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.093,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.8,
+    "gpuMaxC": 49.8,
+    "skinC": 43.008,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "after": {
+    "at": "2026-11-07T03:30:43.113Z",
+    "level": 19,
+    "status": 2,
+    "voltageV": 3.737,
+    "currentA": -0.187,
+    "tempC": 39.4,
+    "thermal": 0,
+    "cpu0": 52.8,
+    "gpuMaxC": 49.8,
+    "skinC": 42.798,
+    "socdPct": 81,
+    "coolGpu": 3,
+    "coolBattery": 10,
+    "focus": "com.imagefilter.xcloud"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false
+   },
+   "samples": 0
+  }
+ ]
+}

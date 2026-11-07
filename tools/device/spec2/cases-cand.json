@@ -1,0 +1,148 @@
+[
+{
+"name": "atual-30-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "mp-easu-usm2-30-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "easu",
+"sharp": 2
+}
+}
+},
+{
+"name": "sgsr-30-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "sgsr20s1"
+}
+}
+},
+{
+"name": "cand-30-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialCand",
+"scale": "sgsr20s1"
+}
+}
+},
+{
+"name": "atual-60-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "mp-easu-usm2-60-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "easu",
+"sharp": 2
+}
+}
+},
+{
+"name": "cand-60-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialCand",
+"scale": "sgsr20s1"
+}
+}
+},
+{
+"name": "atual-30-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "mp-easu-usm2-30-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "easu",
+"sharp": 2
+}
+}
+},
+{
+"name": "sgsr-30-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "sgsr20s1"
+}
+}
+},
+{
+"name": "cand-30-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialCand",
+"scale": "sgsr20s1"
+}
+}
+},
+{
+"name": "atual-60-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "mp-easu-usm2-60-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "easu",
+"sharp": 2
+}
+}
+},
+{
+"name": "cand-60-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialCand",
+"scale": "sgsr20s1"
+}
+}
+}
+]
