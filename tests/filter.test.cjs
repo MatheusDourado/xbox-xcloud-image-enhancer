@@ -34,3 +34,13 @@ test('controls are inserted beside native sharpness in the video menu',()=>{
  const source=fs.readFileSync('better-xcloud-image-filter.user.js','utf8');
  assert.ok(source.includes('"video.processing.sharpness",($parent) => {window.BxImageFilter.mountControls($parent);},"video.saturation"'));
 });
+test('the scaler choice is saved and validated on load',()=>{
+ assert.equal(load('{"scaler":"sgsr"}').context.window.BxImageFilter.settings.scaler,'sgsr');
+ assert.equal(load('{"scaler":"bogus"}').context.window.BxImageFilter.settings.scaler,'easu');
+ assert.equal(load(null).context.window.BxImageFilter.settings.scaler,'easu');
+ const store={};const context={WebGL2Player:class{},window:{setInterval(){return 1;},clearInterval(){},setTimeout(){return 0;},clearTimeout(){},addEventListener(){}},document:{readyState:'loading',addEventListener(){}},localStorage:{getItem:k=>store[k]??null,setItem(k,v){store[k]=v;}},console};
+ vm.runInNewContext(fs.readFileSync('src/restoration-engine.js','utf8'),context);vm.runInNewContext(fs.readFileSync('src/image-filter.js','utf8'),context);
+ const a=context.window.BxImageFilter;context.window.setTimeout=f=>{f();return 0;};
+ a.update({scaler:'sgsr'});assert.equal(JSON.parse(store['BxImageFilter.v9']).scaler,'sgsr','saved');
+ a.reset();assert.equal(a.settings.scaler,'easu','Restaurar returns to EASU');assert.equal(JSON.parse(store['BxImageFilter.v9']).scaler,'easu');
+});

@@ -22,6 +22,7 @@ shaders['nnFeatures'],shaders['nnApply']=generate('src/nn/restore.json')
 # Fuse finishing into sharpening to avoid a full-frame pass and RGBA8 rounding.
 finish=shaders['finish'].split('vec3 finishColor',1)[1].split('void main()',1)[0]
 shaders['rcas']=shaders['rcas'].replace('/* FINISH_COLOR */','vec3 finishColor'+finish)
+shaders['sgsr']=shaders['sgsr'].replace('/* FINISH_COLOR */','vec3 finishColor'+finish)
 cas=cas.replace('vec3 clarityBoost', 'uniform float shadows,deband;uniform bool diagnostic;\nvec3 finishColor'+finish+'\nvec3 clarityBoost')
 cas=cas.replace('fragColor = vec4(color, 1.0);','fragColor = vec4(finishColor(color), 1.0);')
 shaders['cas']=cas

@@ -302,3 +302,23 @@ test('spatial variant cache keeps at most eight programs',()=>{const a=api(),gl=
 test('production WebGL2 contexts are created without MSAA (one full-screen triangle, Spec 3 item 9)',()=>{
  for(const file of ['script.js','better-xcloud-image-filter.user.js','player/player.js']){const code=fs.readFileSync(file,'utf8'),calls=[...code.matchAll(/getContext\(["']webgl2["'],\s*\{([^}]*)\}/g)].map(m=>m[1]);
   assert.ok(calls.length>0,file);for(const attrs of calls)assert.match(attrs,/antialias:\s*(!1|false)/,file);}});
+// Spec 3 item 5: SGSR 1 as an optional scaler; EASU + sharpening stays the default.
+test('scaler setting defaults to EASU, accepts SGSR and rejects anything else',()=>{const a=api();
+ assert.equal(a.defaults.scaler,'easu');assert.equal(a.normalize({}).scaler,'easu');assert.equal(a.normalize({scaler:'sgsr'}).scaler,'sgsr');
+ for(const bad of ['SGSR','fsr',1,null,true])assert.equal(a.normalize({scaler:bad}).scaler,'easu');
+ for(const p of Object.values(a.presets))assert.equal('scaler' in p.values,false,'presets keep the chosen scaler');});
+test('sharpness maps to the measured SGSR strength and threshold',()=>{const a=api();
+ assert.equal(a.sgsrParams(2).sharp,1);assert.equal(a.sgsrParams(2).threshold,20/255);
+ assert.ok(Math.abs(a.sgsrParams(3).sharp-1.4)<1e-9);assert.ok(Math.abs(a.sgsrParams(4.5).sharp-2)<1e-9);
+ for(let s=.5;s<10;s+=.5)assert.ok(a.sgsrParams(s+.5).sharp>a.sgsrParams(s).sharp);
+ assert.ok(a.sgsrParams(0).threshold>3,'sharpness 0 never takes the edge step (the vote is at most 3)');});
+test('SGSR source gets its precision right after #version and the engine compiles it with the GPU profile',()=>{const a=api();
+ const lines=a.sgsrSource('#version 300 es\nvoid main(){}','mediump').split('\n');assert.equal(lines[0],'#version 300 es');assert.equal(lines[1],'#define SGSR_PRECISION mediump');
+ const compiled=[],gl=fakeGl(10),wrap=new Proxy(gl,{get(t,k){return k==='shaderSource'?(_,code)=>compiled.push(code):t[k];}});
+ new a.Engine(wrap,{sgsr:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'});
+ assert.ok(compiled.some(c=>c.includes('#define SGSR_PRECISION mediump')));assert.equal(compiled.filter(c=>c.includes('SGSR_PRECISION')).length,1,'only the SGSR shader');
+ compiled.length=0;new a.Engine(new Proxy(fakeGl(23),{get(t,k){return k==='shaderSource'?(_,code)=>compiled.push(code):t[k];}}),{sgsr:'#version 300 es\nvoid main(){}'});
+ assert.ok(compiled.some(c=>c.includes('#define SGSR_PRECISION highp')));});
+test('GPU adaptation drops the SGSR pass like EASU: output reduced to native',()=>{const a=api();
+ for(const scaler of ['easu','sgsr']){const s=a.normalize({output:'1280',scaler,deband:0,chroma:0}),p=a.createBudget();p.configure(s,1080);
+  assert.equal(p.outputFor(s),'1280');for(let i=0;i<90;i++)p.sample(20);assert.equal(p.outputFor(s),'native',scaler);assert.match(p.reason,/nativa/);}});

@@ -115,6 +115,34 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  engine.render(input,128,96,{...rcasOnly,mode:'original'},3);const plain=pixels();
  engine.render(input,128,96,{...rcasOnly,mode:'original',sharpening:'cas'},3);const plainCas=pixels();
  check(plain.every((v,i)=>v===plainCas[i]),'Original stays unsharpened with RCAS selected');
+ // Spec 3 item 5: SGSR 1 as the one last pass when scaling up; the EASU path stays as it was and is the default.
+ {const OW=192,OH=144,off={gpuBudget:0,cleanup:0,deband:0,chroma:0,detail:0,output:'144',sharpness:2};
+  const up=(s,diag=false)=>{passes=[];const nat=s.output==='native';engine.render(input,nat?128:OW,nat?96:OH,{...off,...s},5,diag,'pacedS');const t=engine.targets.pacedS;gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);const p=new Uint8Array(t.w*t.h*4);gl.readPixels(0,0,t.w,t.h,gl.RGBA,gl.UNSIGNED_BYTE,p);return {p,passes:passes.slice(),w:t.w,h:t.h};};
+  const same=(a,b)=>a.p.length===b.p.length&&a.p.every((v,i)=>v===b.p[i]);
+  const e0=up({}),e1=up({scaler:'easu'}),e2=up({scaler:'bogus'});
+  check(e0.passes.join()==='easu,casFiltered'&&same(e0,e1)&&same(e0,e2),'EASU + sharpening stays the default scaling path, byte for byte',e0.passes);
+  const g=up({scaler:'sgsr'});check(g.passes.join()==='sgsr'&&g.w===OW&&g.h===OH,'SGSR replaces EASU and sharpening with one pass at output size',{passes:g.passes,w:g.w,h:g.h});
+  check(!same(g,e0),'SGSR output differs from EASU');
+  const gf=up({scaler:'sgsr',deband:.6,chroma:.75});check(gf.passes.length===2&&gf.passes[1]==='sgsr'&&gf.passes[0].startsWith('spatial'),'SGSR follows the spatial pass',gf.passes);
+  const n0=up({output:'native'}),n1=up({output:'native',scaler:'sgsr'});check(n1.passes.join()==='casFiltered'&&same(n0,n1),'At native output SGSR keeps the current sharpening pass',n1.passes);
+  // Finite output: SGSR straight into a float target on a noisy frame with flat areas.
+  if(engine.floatTargets){const f={texture:gl.createTexture(),fbo:gl.createFramebuffer()};gl.bindTexture(gl.TEXTURE_2D,f.texture);gl.texStorage2D(gl.TEXTURE_2D,1,gl.RGBA32F,OW,OH);gl.bindFramebuffer(gl.FRAMEBUFFER,f.fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,f.texture,0);engine.draw('sgsr',f,OW,OH,{source:engine.input},{...BxRestoration.sgsrParams(2),brightness:1,contrast:1,saturation:1,shadows:0,deband:0,diagnostic:false});
+   gl.bindFramebuffer(gl.FRAMEBUFFER,f.fbo);const v=new Float32Array(OW*OH*4);gl.readPixels(0,0,OW,OH,gl.RGBA,gl.FLOAT,v);
+   gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.deleteFramebuffer(f.fbo);gl.deleteTexture(f.texture);check(v.every(x=>Number.isFinite(x)&&x>=0&&x<=1),'SGSR output is finite and within 0..1 (no NaN)');}
+  for(const level of [0,100,255]){ctx.fillStyle=`rgb(${level},${level},${level})`;ctx.fillRect(0,0,128,96);
+   const f=up({scaler:'sgsr',sharpness:10});check(f.p.every((v,i)=>i%4===3||Math.abs(v-level)<=1),'SGSR uniform '+level);}
+  step(100,120);{const s=up({scaler:'sgsr',sharpness:10}),row=Array.from({length:OW},(_,x)=>s.p[(60*OW+x)*4]);
+   check(Math.min(...row)>=99&&Math.max(...row)<=121,'SGSR never overshoots the local range at a step',[Math.min(...row),Math.max(...row)]);}
+  // It takes over the finishing of the sharpening pass: dither of fractional levels and the diagnostic tint.
+  step(50,62);{const d=up({scaler:'sgsr',cleanup:1,deband:.3}),col=new Set(Array.from({length:120},(_,y)=>d.p[((y+12)*OW+96)*4]));
+   check(col.size>1,'SGSR dithers fractional levels at presentation',[...col]);}
+  ctx.fillStyle='rgb(100,100,100)';ctx.fillRect(0,0,128,96);{const t=up({scaler:'sgsr'},true),i=(70*OW+96)*4;check(t.p[i]>t.p[i+1]+60,'SGSR applies the diagnostic tint',[t.p[i],t.p[i+1],t.p[i+2]]);}
+  // The Nitidez slider still acts: more sharpness, more high-frequency gain against plain scaling.
+  {let seed=11;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;
+   for(let y=0;y<96;y+=2)for(let x=0;x<128;x+=2){const v=Math.round(110+(rnd()*2-1)*30);ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect(x,y,2,2);}
+   const hp=b=>{let s=0;for(let y=4;y<OH-4;y++)for(let x=4;x<OW-4;x++){const i=(y*OW+x)*4;s+=Math.abs(4*b[i]-b[i-4]-b[i+4]-b[i-OW*4]-b[i+OW*4]);}return s;};
+   const s0=hp(up({scaler:'sgsr',sharpness:0}).p),s2=hp(up({scaler:'sgsr',sharpness:2}).p),s6=hp(up({scaler:'sgsr',sharpness:6}).p);
+   check(s6>s2&&s2>s0*.9,'SGSR strength follows the Nitidez slider',{s0,s2,s6});}}
  // Compiled spatial variants (Spec 3): the highp profile must give the generic shader's bytes exactly,
  // on a frame with smooth ramps, colored edges, thin lines and noise, for several filter sets.
  {const img=ctx.createImageData(128,96);let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
