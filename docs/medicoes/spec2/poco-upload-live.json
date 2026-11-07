@@ -1,0 +1,281 @@
+{
+ "name": "upload-live",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T00:21:44.903Z",
+  "level": 25,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 54.4,
+  "gpu": 45.8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T00:24:12.044Z",
+  "level": 25,
+  "tempC": 35,
+  "thermal": 0,
+  "cpu0": 54.4,
+  "gpu": 45.8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "none": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 0.1,
+    "p95": 0.5,
+    "p99": 0.7,
+    "max": 1.3,
+    "mean": 0.188
+   },
+   "total": {
+    "n": 351,
+    "p50": 2.7,
+    "p95": 3.5,
+    "p99": 4.2,
+    "max": 4.6,
+    "mean": 2.764
+   }
+  },
+  "tex": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 1.3,
+    "p95": 2,
+    "p99": 2.7,
+    "max": 5.5,
+    "mean": 1.351
+   },
+   "total": {
+    "n": 351,
+    "p50": 5.2,
+    "p95": 6.3,
+    "p99": 7.5,
+    "max": 9.2,
+    "mean": 5.275
+   }
+  },
+  "texNoFlip": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 1.3,
+    "p95": 2,
+    "p99": 2.3,
+    "max": 3.1,
+    "mean": 1.372
+   },
+   "total": {
+    "n": 351,
+    "p50": 5.4,
+    "p95": 6.5,
+    "p99": 7.2,
+    "max": 8.6,
+    "mean": 5.405
+   }
+  },
+  "sub": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 1.6,
+    "p95": 2.8,
+    "p99": 3.6,
+    "max": 3.8,
+    "mean": 1.723
+   },
+   "total": {
+    "n": 351,
+    "p50": 15.2,
+    "p95": 17.9,
+    "p99": 18.6,
+    "max": 19.5,
+    "mean": 15.151
+   }
+  },
+  "subNoFlip": {
+   "frames": 358,
+   "cpu": {
+    "n": 349,
+    "p50": 1.5,
+    "p95": 2.4,
+    "p99": 3.1,
+    "max": 3.7,
+    "mean": 1.634
+   },
+   "total": {
+    "n": 349,
+    "p50": 14.4,
+    "p95": 17.6,
+    "p99": 18.6,
+    "max": 20.3,
+    "mean": 14.594
+   }
+  },
+  "texNoConv": {
+   "frames": 354,
+   "cpu": {
+    "n": 345,
+    "p50": 1.3,
+    "p95": 1.9,
+    "p99": 2.5,
+    "max": 3.5,
+    "mean": 1.311
+   },
+   "total": {
+    "n": 345,
+    "p50": 5.1,
+    "p95": 6.6,
+    "p99": 7.7,
+    "max": 8.6,
+    "mean": 5.203
+   }
+  },
+  "rgb": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 1.3,
+    "p95": 2,
+    "p99": 3.1,
+    "max": 3.5,
+    "mean": 1.403
+   },
+   "total": {
+    "n": 351,
+    "p50": 5.4,
+    "p95": 6.5,
+    "p99": 7.9,
+    "max": 8.9,
+    "mean": 5.415
+   }
+  },
+  "frame": {
+   "frames": 360,
+   "cpu": {
+    "n": 351,
+    "p50": 1.4,
+    "p95": 2.3,
+    "p99": 2.8,
+    "max": 3.2,
+    "mean": 1.452
+   },
+   "total": {
+    "n": 351,
+    "p50": 5.4,
+    "p95": 6.7,
+    "p99": 7.6,
+    "max": 9.8,
+    "mean": 5.473
+   }
+  },
+  "p1280": {
+   "frames": 357,
+   "cpu": {
+    "n": 348,
+    "p50": 1.6,
+    "p95": 2.6,
+    "p99": 3.2,
+    "max": 3.8,
+    "mean": 1.706
+   },
+   "total": {
+    "n": 348,
+    "p50": 20.4,
+    "p95": 21.4,
+    "p99": 22.3,
+    "max": 25.5,
+    "mean": 20.419
+   }
+  },
+  "p1280NoUpload": {
+   "frames": 359,
+   "cpu": {
+    "n": 350,
+    "p50": 0.3,
+    "p95": 0.7,
+    "p99": 1,
+    "max": 1.1,
+    "mean": 0.356
+   },
+   "total": {
+    "n": 350,
+    "p50": 17.8,
+    "p95": 18.6,
+    "p99": 18.9,
+    "max": 19.4,
+    "mean": 17.813
+   }
+  },
+  "p1080": {
+   "frames": 359,
+   "cpu": {
+    "n": 350,
+    "p50": 1.5,
+    "p95": 2.4,
+    "p99": 3.2,
+    "max": 3.5,
+    "mean": 1.608
+   },
+   "total": {
+    "n": 350,
+    "p50": 14.9,
+    "p95": 16.2,
+    "p99": 16.6,
+    "max": 18.2,
+    "mean": 14.908
+   }
+  },
+  "p1080NoUpload": {
+   "frames": 353,
+   "cpu": {
+    "n": 344,
+    "p50": 0.2,
+    "p95": 0.7,
+    "p99": 0.8,
+    "max": 1.1,
+    "mean": 0.293
+   },
+   "total": {
+    "n": 344,
+    "p50": 12,
+    "p95": 12.6,
+    "p99": 13.1,
+    "max": 13.6,
+    "mean": 12.053
+   }
+  }
+ }
+}

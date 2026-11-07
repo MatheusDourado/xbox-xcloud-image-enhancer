@@ -9,7 +9,8 @@ const raw=(gl.texImage2D).bind(gl);
 let e=new BxRestoration.Engine(gl,BxShaders);
 const px=new Uint8Array(4),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const stat=v=>{const q=[...v].sort((a,b)=>a-b),at=p=>q[Math.min(q.length-1,Math.floor(q.length*p))];return v.length?{n:v.length,p50:+at(.5).toFixed(3),p95:+at(.95).toFixed(3),p99:+at(.99).toFixed(3),max:+q[q.length-1].toFixed(3),mean:+(v.reduce((a,b)=>a+b,0)/v.length).toFixed(3)}:null;};
-const tiny=e.target('tiny',1,1);
+// render() deletes targets it did not use unless the name starts with 'paced'.
+const tiny=e.target('pacedTiny',1,1);
 function touch(tex){e.draw('copy',tiny,1,1,{source:tex});}
 function finish(fbo=tiny.fbo){gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);}
 // Upload variants. subTex is an immutable texture filled with texSubImage2D, the other way to avoid reallocating.
@@ -35,7 +36,7 @@ function live(seconds,step){return new Promise(res=>{const end=performance.now()
  const cb=(now,meta)=>{if(performance.now()>end){res({rows,gaps});return;}if(last!==null)gaps.push(meta.mediaTime-last>0?(meta.mediaTime-last)*1000:0);last=meta.mediaTime;rows.push(step(++id));video.requestVideoFrameCallback(cb);};
  video.requestVideoFrameCallback(cb);});}
 const settings=o=>({...BxRestoration.defaults,mode:'filtered',output:'native',gpuBudget:0,...o});
-function withoutUpload(fn){gl.texImage2D=()=>{};try{return fn();}finally{delete gl.texImage2D;}}
+function withoutUpload(fn){gl.texImage2D=(...a)=>a.length===6?undefined:raw(...a);try{return fn();}finally{delete gl.texImage2D;}}
 const dest=()=>e.targets.paced0||e.target('paced0',OW,OH);
 const pipe={
  p1280:{w:OW,h:OH,s:settings({output:String(OH)})},
@@ -69,10 +70,10 @@ async function uploadBurst(N=30,rounds=5){
  const vf=new VideoFrame(video);
  const src={video,videoFrame:vf,canvas2d:c2,imageBitmap:bmp},out={};
  const kinds={tex:'tex',texNoFlip:'texNoFlip',sub:'sub',subNoFlip:'subNoFlip'};
- const base=[];for(let r=0;r<rounds;r++){const a=performance.now();for(let i=0;i<N;i++)touch(e.input);finish();base.push((performance.now()-a)/N);await sleep(30);}
+ const base=[];for(let r=0;r<rounds;r++){B.warm();const a=performance.now();for(let i=0;i<N;i++)touch(e.input);finish();base.push((performance.now()-a)/N);await sleep(30);}
  out.baseTiny=stat(base);
  for(const [sn,s] of Object.entries(src))for(const k in kinds){const v=[],c=[];up(k,s);finish();
-  for(let r=0;r<rounds;r++){const a=performance.now();let cpu=0;for(let i=0;i<N;i++){const b=performance.now();const t=up(k,s);cpu+=performance.now()-b;touch(t);}finish();v.push((performance.now()-a)/N);c.push(cpu/N);await sleep(30);}
+  for(let r=0;r<rounds;r++){B.warm();const a=performance.now();let cpu=0;for(let i=0;i<N;i++){const b=performance.now();const t=up(k,s);cpu+=performance.now()-b;touch(t);}finish();v.push((performance.now()-a)/N);c.push(cpu/N);await sleep(30);}
   out[sn+'.'+k]={ms:stat(v),cpu:stat(c)};}
  vf.close();bmp.close();await video.play();return out;
 }

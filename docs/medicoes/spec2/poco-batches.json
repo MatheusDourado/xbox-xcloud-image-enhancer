@@ -1,0 +1,131 @@
+{
+ "name": "batches",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T01:10:42.963Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 36.2,
+  "thermal": 0,
+  "cpu0": 46,
+  "gpuMaxC": 42.5,
+  "skinC": 39.259,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T01:11:59.471Z",
+  "level": 24,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.843,
+  "tempC": 37,
+  "thermal": 0,
+  "cpu0": 56,
+  "gpuMaxC": 50.2,
+  "skinC": 42.012,
+  "socdPct": 76,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "render1280": {
+   "1": 16.8,
+   "2": 16.75,
+   "4": 7.425,
+   "8": 7.388,
+   "16": 4.931,
+   "40": 4.415
+  },
+  "render1080": {
+   "1": 11.7,
+   "2": 11.1,
+   "4": 7.55,
+   "8": 4.425,
+   "16": 3.456,
+   "40": 2.962
+  },
+  "encadeado": {
+   "1": 10.9,
+   "2": 9.2,
+   "4": 9.025,
+   "8": 5.287,
+   "16": 4.825,
+   "40": 4.422
+  },
+  "independente": {
+   "1": 10.6,
+   "2": 9.4,
+   "4": 8.3,
+   "8": 5.1,
+   "16": 4.581,
+   "40": 4.335
+  },
+  "spatial": {
+   "1": 9.9,
+   "2": 8.85,
+   "4": 8.25,
+   "8": 3.075,
+   "16": 3.294,
+   "40": 2.14
+  },
+  "easu": {
+   "1": 6,
+   "2": 5.95,
+   "4": 5.725,
+   "8": 3.988,
+   "16": 1.694,
+   "40": 1.535
+  },
+  "nitidez": {
+   "1": 4.8,
+   "2": 4.1,
+   "4": 3.3,
+   "8": 2.887,
+   "16": 1.594,
+   "40": 0.823
+  },
+  "copy1080": {
+   "1": 1.8,
+   "2": 1.45,
+   "4": 0.925,
+   "8": 0.537,
+   "16": 0.5,
+   "40": 0.37
+  }
+ }
+}

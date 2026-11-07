@@ -23,7 +23,7 @@ const mid=v=>{const c=v.slice(2,-2),s=[...c].sort((a,b)=>a-b);return c.length?s[
   if(query!==page){await navigate(c,`${base}/tools/device/spec2/bench.html?${query}`);env=JSON.parse(await evaluate(c,'B.ready().then(JSON.stringify)',60000));page=query;await sleep(1500);}
   const before=state();if(poco&&!before.focus.includes('imagefilter'))throw new Error('app not in front');
   const T=k.seconds||12,t=trace(T);await sleep(poco?300:800);
-  const r=JSON.parse(await evaluate(c,`B.session(${JSON.stringify({...k.cfg,seconds:T-1.5})}).then(JSON.stringify)`,(T+20)*1000));
+  const r=JSON.parse(await evaluate(c,`${k.expr?k.expr.replace('__S__',T-1.5):`B.session(${JSON.stringify({...k.cfg,seconds:T-1.5})})`}.then(JSON.stringify)`,(T+20)*1000));
   const g=await t,after=state();
   // GPU ms per frame: active share of the stable seconds over the frames actually drawn.
   const share=poco?mid(g.periods.map(p=>p.share)):mid(g.utilPct)/100,fps=r.fps,row={name:k.name,query,cfg:k.cfg,gpuBusyPct:+(share*100).toFixed(1),gpuMsPerFrame:fps>0?+(share*1000/fps).toFixed(2):null,fps,cpu:r.cpu,gaps:r.gaps,raf:r.raf,dropped:r.dropped,decoded:r.decoded,fence:r.fence,trace:g,before,after,attrs:env.attrs,samples:env.samples};

@@ -1,0 +1,113 @@
+{
+ "name": "webgpu-video",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T01:04:38.657Z"
+ },
+ "after": {
+  "at": "2026-11-07T01:04:57.482Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1034,
+   623
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "adapter": "gen-12lp",
+  "liveExterno": {
+   "gpu": {
+    "n": 177,
+    "p50": 0.197,
+    "p95": 0.328,
+    "p99": 0.328,
+    "max": 0.983,
+    "mean": 0.237
+   },
+   "cpu": {
+    "n": 177,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 1.7,
+    "max": 1.9,
+    "mean": 0.33
+   }
+  },
+  "liveTextura": {
+   "gpu": {
+    "n": 180,
+    "p50": 0.131,
+    "p95": 0.131,
+    "p99": 0.197,
+    "max": 0.197,
+    "mean": 0.123
+   },
+   "cpu": {
+    "n": 180,
+    "p50": 0.1,
+    "p95": 0.2,
+    "p99": 0.5,
+    "max": 0.5,
+    "mean": 0.099
+   }
+  },
+  "liveCopiaExterna": {
+   "gpu": {
+    "n": 179,
+    "p50": 0.262,
+    "p95": 0.328,
+    "p99": 0.328,
+    "max": 0.328,
+    "mean": 0.264
+   },
+   "cpu": {
+    "n": 179,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 1.6,
+    "max": 1.8,
+    "mean": 0.281
+   }
+  },
+  "burstExterno": {
+   "n": 30,
+   "p50": 0.328,
+   "p95": 0.328,
+   "p99": 0.393,
+   "max": 0.393,
+   "mean": 0.317
+  },
+  "burstTextura": {
+   "n": 30,
+   "p50": 0.262,
+   "p95": 0.262,
+   "p99": 0.328,
+   "max": 0.328,
+   "mean": 0.242
+  }
+ }
+}
