@@ -80,7 +80,8 @@ async function uploadBurst(N=30,rounds=5){
 }
 // Production-like session: nothing waits for the GPU. Draws from rVFC (direct to the canvas, or through a
 // Fluidez slot presented on rAF). repeat multiplies the GPU load to see how the clock answers.
-function session({seconds=10,mode='render',output=OH,fluid=false,repeat=1,overrides={},upload=true,hideCanvas=false,hideVideo=false,uploadOnly=false,fast=null}={}){return new Promise(res=>{
+// defer (Spec 3 item 8): the slot keeps the input of the last pass, which present() draws on the canvas.
+function session({seconds=10,mode='render',output=OH,fluid=false,repeat=1,overrides={},upload=true,hideCanvas=false,hideVideo=false,uploadOnly=false,fast=null,defer=false}={}){return new Promise(res=>{
  canvas.style.visibility=hideCanvas?'hidden':'';video.style.visibility=hideVideo?'hidden':'';
  const ow=output===H?W:OW,oh=output===H?H:OH,s=settings({output:output===H?'native':String(output),...overrides}),q0=video.getVideoPlaybackQuality();
  const cpu=[],gaps=[],rafGaps=[];let frames=0,done=false,lastAt=null,lastRaf=null,slot=0,pending=null,raf=0;const end=performance.now()+seconds*1000;
@@ -94,7 +95,7 @@ function session({seconds=10,mode='render',output=OH,fluid=false,repeat=1,overri
   if(uploadOnly){touch(up('tex',video));cpu.push(performance.now()-a);return;}
   // Candidate path: mediump specialized spatial, then SGSR straight to the canvas (two passes).
   if(fast){up('tex',video);const t=e.targets.pacedFast||e.target('pacedFast',W,H);e.draw(fast.spatial,t,W,H,{source:e.input},fast.spatial==='spatial'?{cleanup:.5,deband:.3,chroma:.75,detail:.2,antialias:0,debandTaps:4,quantize:true,selective:true}:{});if(fast.sharp){const m=e.targets.pacedFast2||e.target('pacedFast2',ow,oh),p=e.programs.casFiltered;e.draw(fast.scale,m,ow,oh,{source:t.texture});gl.useProgram(p.program);gl.uniform1i(gl.getUniformLocation(p.program,'filterId'),1);e.draw('casFiltered',null,ow,oh,{data:m.texture},{iResolution:[ow,oh],qualityMode:false,haloMargin:4/255,noiseFloor:4/255,lumaSharpen:true,sharpenFactor:fast.sharp/1.2,brightness:1,contrast:1,saturation:1,shadows:0,deband:.3,diagnostic:false});}else e.draw(fast.scale,null,ow,oh,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);if(e.fenceTiming&&!e.fence&&a-e.fenceAt>=500)e.startFence(a,'filtered',null);cpu.push(performance.now()-a);return;}
-  for(let k=0;k<repeat;k++){const target=fluid?'paced'+(slot=(slot+1)%5):null,go=()=>e.render(video,ow,oh,s,performance.now()/1000,false,target);
+  for(let k=0;k<repeat;k++){const target=fluid?'paced'+(slot=(slot+1)%5):null,go=()=>e.render(video,ow,oh,s,performance.now()/1000,false,target,fluid&&defer);
    if(upload&&k===0)go();else withoutUpload(go);if(fluid)pending=target;}
   cpu.push(performance.now()-a);};
  video.requestVideoFrameCallback(cb);});}
