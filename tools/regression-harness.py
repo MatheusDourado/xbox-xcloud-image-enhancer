@@ -143,6 +143,33 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
    const hp=b=>{let s=0;for(let y=4;y<OH-4;y++)for(let x=4;x<OW-4;x++){const i=(y*OW+x)*4;s+=Math.abs(4*b[i]-b[i-4]-b[i+4]-b[i-OW*4]-b[i+OW*4]);}return s;};
    const s0=hp(up({scaler:'sgsr',sharpness:0}).p),s2=hp(up({scaler:'sgsr',sharpness:2}).p),s6=hp(up({scaler:'sgsr',sharpness:6}).p);
    check(s6>s2&&s2>s0*.9,'SGSR strength follows the Nitidez slider',{s0,s2,s6});}}
+ // Spec 3 item 8: with Fluidez the last pass runs in present(), straight to the canvas. Same bytes as
+ // drawing it at render time, one full-screen pass less, on every path that feeds the last pass.
+ {const c2=document.createElement('canvas'),g2=c2.getContext('webgl2',{preserveDrawingBuffer:true,antialias:false});
+  const direct=new BxRestoration.Engine(g2,BxShaders),deferred=new BxRestoration.Engine(g2,BxShaders);
+  let count=0;const d0=deferred.draw.bind(deferred);deferred.draw=(...a)=>{count++;return d0(...a);};
+  const read=()=>{const p=new Uint8Array(c2.width*c2.height*4);g2.readPixels(0,0,c2.width,c2.height,g2.RGBA,g2.UNSIGNED_BYTE,p);return p;};
+  {const img=ctx.createImageData(128,96);let seed=5;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;
+   for(let i=0;i<img.data.length;i+=4){const x=(i/4)%128,y=Math.floor(i/512),v=x<64?40+x+y*.3:100+rnd()*60;img.data[i]=v;img.data[i+1]=v*.9+10;img.data[i+2]=x%7<3?200:v;img.data[i+3]=255;}ctx.putImageData(img,0,0);}
+  const base={gpuBudget:0,cleanup:0,deband:0,chroma:0,detail:0,sharpness:2};
+  const cases=[['filters native',{deband:.6,chroma:.75},'native'],['nothing to do',{},'native'],['temporal history',{temporal:.5,deband:.3},'native'],['temporal + AA',{temporal:.5,antialias:.5},'native'],
+   ['EASU upscale',{deband:.6,chroma:.75},'144'],['SGSR upscale',{deband:.6,chroma:.75,scaler:'sgsr'},'144'],['SGSR from the upload',{scaler:'sgsr'},'144'],['quality targets',{deband:.6,processingMode:'quality'},'144'],
+   ['only sharpening',{mode:'cas'},'native'],['original',{mode:'original'},'native'],['rcas',{sharpening:'rcas',sharpness:5,deband:.3},'144'],['diagnostic',{deband:.3},'144',true]];
+  const bad=[],passes={};
+  for(const [name,s,output,diag] of cases){const o=BxRestoration.outputSize(128,96,output);c2.width=o.width;c2.height=o.height;direct.resetHistory();deferred.resetHistory();
+   for(let f=0;f<3;f++){const st={...base,...s,output},t=1+f/30;
+    count=0;deferred.render(input,o.width,o.height,st,t,!!diag,'pacedD'+(f%2),true);deferred.present('pacedD'+(f%2));const n=count;
+    const b=read();direct.render(input,o.width,o.height,st,t,!!diag);const a=read();
+    let diff=0;for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff++;if(diff)bad.push({name,f,diff});if(f===2)passes[name]=n;}}
+  check(!bad.length,'Deferred last pass in present() gives the same bytes as drawing it in render()',{bad,passes});
+  // Draws per frame: the slot copy is gone where an intermediate target exists (copy kept for upload/history).
+  check(passes['filters native']===2&&passes['EASU upscale']===3&&passes['SGSR upscale']===2&&passes['SGSR from the upload']===2,'Deferred last pass saves the present copy',passes);
+  // A slot rendered again before it was shown (pacer drop) and the reuse of swapped targets stay consistent.
+  {const o=BxRestoration.outputSize(128,96,'144');c2.width=o.width;c2.height=o.height;const st={...base,deband:.6,output:'144'};
+   for(let f=0;f<12;f++)deferred.render(input,o.width,o.height,st,2+f/30,false,'pacedD'+(f%3),true);deferred.present('pacedD2');const b=read();direct.render(input,o.width,o.height,st,2);const a=read();
+   check(a.every((v,i)=>v===b[i])&&Object.keys(deferred.targets).filter(k=>k.startsWith('paced')).length===3,'Deferred slots survive drops and reuse',Object.keys(deferred.targets));}
+  check(g2.getError()===g2.NO_ERROR,'No GL errors with deferred slots');
+  deferred.releasePaced();direct.destroy();deferred.destroy();}
  // Compiled spatial variants (Spec 3): the highp profile must give the generic shader's bytes exactly,
  // on a frame with smooth ramps, colored edges, thin lines and noise, for several filter sets.
  {const img=ctx.createImageData(128,96);let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)&0x7fffffff)/0x7fffffff;

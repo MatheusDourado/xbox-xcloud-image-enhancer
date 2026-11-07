@@ -320,7 +320,7 @@
    // boot): the pacer's 'frame' clock and the temporal time base.
    const pacer=ensurePacer(player,settings.fluidity),slot=freeSlot(timing),check=d.rendered<3;
    if(check)player.gl.getError();
-   if(!player.bxEngine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot))return;
+   if(!player.bxEngine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
    // Some drivers may not take a decoder frame as a texture: check the first frames once and fall back.
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
@@ -360,8 +360,9 @@
    const timing=this.bxTiming||(startTiming(this),this.bxTiming);
    if(settings.fluidity!=='off'){
     // Process now, show on the pacer's clock. A settings change on the same frame redraws it at once.
+    // The last pass (sharpening or SGSR) runs at present(), straight to the canvas (Spec 3 item 8).
     const pacer=ensurePacer(this,settings.fluidity),slot=newFrame||!timing.shown?freeSlot(timing):timing.shown;
-    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot))return;
+    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot,true))return;
     timing.lastSlot=slot;
     if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;pacer.add({slot,arrival:performance.now(),rtp});}
     else if(this.bxEngine.present(slot))this.gl.useProgram(this.program);
