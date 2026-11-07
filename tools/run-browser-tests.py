@@ -21,6 +21,10 @@ SUITES = [
     ('quality-harness.py', 'motion-quality.html'),
     ('capture-harness.py', 'capture-harness.html'),
 ]
+# Spec 4: WebGPU against WebGL2. Its own browser: headless Chromium exposes WebGPU only with these flags,
+# first the real GPU, then the SwiftShader adapter. Without any adapter the page reports itself skipped.
+WEBGPU = ('webgpu-harness.py', 'webgpu-equivalence.html')
+WEBGPU_FLAGS = [['--enable-gpu', '--enable-unsafe-webgpu'], ['--enable-gpu', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader']]
 
 
 class Handler(SimpleHTTPRequestHandler):
@@ -28,12 +32,36 @@ class Handler(SimpleHTTPRequestHandler):
         pass
 
 
+def run_page(browser, port, page_name):
+    page = browser.new_page()
+    errors = []
+    page.on('pageerror', lambda error: errors.append(str(error)))
+    try:
+        page.goto(f'http://127.0.0.1:{port}/output/playwright/{page_name}')
+        page.wait_for_function("""() => {
+            try { return !!JSON.parse(document.querySelector('#result').textContent); }
+            catch { return false; }
+        }""", timeout=120000)
+        result = json.loads(page.locator('#result').inner_text())
+        passed = result.get('passed')
+        ok = bool(passed) and not result.get('error') and not result.get('failures') and not errors
+        count = len(passed) if isinstance(passed, list) else len(result.get('cases', []))
+        row = dict(suite=page_name, ok=ok, checks=count, result=result, errors=errors)
+    except Exception as error:
+        row = dict(suite=page_name, ok=False, error=str(error), errors=errors)
+    finally:
+        page.close()
+    state = 'SKIP' if row['ok'] and (row.get('result') or {}).get('skipped') else 'PASS' if row['ok'] else 'FAIL'
+    print(f"{page_name}: {state} ({row.get('checks', 0)} checks)")
+    return row
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--channel', help='Use an installed browser, e.g. chrome')
     parser.add_argument('--executable', help="Browser binary, e.g. the CI's Chromium from another Playwright version")
     args = parser.parse_args()
-    for script, _ in SUITES:
+    for script, _ in SUITES + [WEBGPU]:
         subprocess.run([sys.executable, str(ROOT / 'tools' / script)], cwd=ROOT, check=True)
     server = ThreadingHTTPServer(('127.0.0.1', 0), partial(Handler, directory=str(ROOT)))
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -43,27 +71,18 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(channel=args.channel, executable_path=args.executable)
             for _, page_name in SUITES:
-                page = browser.new_page()
-                errors = []
-                page.on('pageerror', lambda error: errors.append(str(error)))
-                try:
-                    page.goto(f'http://127.0.0.1:{server.server_port}/output/playwright/{page_name}')
-                    page.wait_for_function("""() => {
-                        try { return !!JSON.parse(document.querySelector('#result').textContent); }
-                        catch { return false; }
-                    }""", timeout=60000)
-                    result = json.loads(page.locator('#result').inner_text())
-                    passed = result.get('passed')
-                    ok = bool(passed) and not result.get('error') and not result.get('failures') and not errors
-                    count = len(passed) if isinstance(passed, list) else len(result.get('cases', []))
-                    results.append(dict(suite=page_name, ok=ok, checks=count, result=result, errors=errors))
-                except Exception as error:
-                    results.append(dict(suite=page_name, ok=False, error=str(error), errors=errors))
-                finally:
-                    page.close()
-                row = results[-1]
-                print(f"{page_name}: {'PASS' if row['ok'] else 'FAIL'} ({row.get('checks', 0)} checks)")
+                results.append(run_page(browser, server.server_port, page_name))
             browser.close()
+            for flags in WEBGPU_FLAGS:
+                browser = p.chromium.launch(channel=args.channel, executable_path=args.executable, args=flags)
+                row = run_page(browser, server.server_port, WEBGPU[1])
+                browser.close()
+                if not (row.get('result') or {}).get('skipped'):
+                    break
+                print(f"  WebGPU flags {' '.join(flags)}: {(row.get('result') or {}).get('reason')}")
+            results.append(row)
+            report = (row.get('result') or {}).get('report') or {}
+            print(f"  WebGPU flags {' '.join(flags)}: adapter {report.get('adapter')}, WebGL2 {report.get('gl')}, same device {report.get('sameDevice')}")
     finally:
         server.shutdown()
         server.server_close()

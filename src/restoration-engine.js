@@ -371,11 +371,17 @@
     else{const method=s.sharpening==='native'?s.processing:s.sharpening;
       const name=s.mode!=='original'&&method==='rcas'?'rcas':filtered?'casFiltered':'cas';
       plan.final={name,key:'data',filterId:method==='usm'?1:2,uniforms:{iResolution:[outW,outH],qualityMode:filtered&&quality,rcasStrength:s.sharpness/10,haloMargin:(2+s.sharpness)/255,noiseFloor:s.noiseFloor/255,lumaSharpen:s.lumaSharpen,sharpenFactor:s.mode==='original'?0:s.mode==='cas'?s.sharpness/1.2:s.sharpness/(quality?1:1.2),brightness:1,contrast:filtered?s.contrast:1,saturation:filtered?s.saturation:1,shadows:filtered?s.shadows:0,deband:filtered?s.deband*budget.debandScale:0,diagnostic}};}
-    plan.gl=plan.neural>0||plan.temporal>0||plan.final.name==='rcas';
+    plan.gl=plan.neural>0||plan.temporal>0;
     return plan;
   }
   // Whether the WebGPU renderer draws this plan; otherwise the frame goes to WebGL2 (same image).
   function rendererSupports(plan){return !plan.gl;}
+  // Configuration of one frame in the measurement (diagnostics segment), shared by both renderers.
+  function segmentConfig(s,budget,w,h,outW,outH,revision,diagnostic,floatTargets,renderer){
+    const filtered=s.mode==='filtered',{hud:_hud,hudPosition:_position,...measured}=s;
+    const config={settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&floatTargets&&budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&budget.temporalAllowed,cleanup:filtered&&budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&budget.enhanceAllowed?s.chroma:0,detail:filtered&&budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*budget.debandScale:0,debandTaps:filtered&&s.deband>0?budget.debandTaps:0,antialias:filtered&&budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}};
+    if(renderer)config.renderer=renderer;return config;
+  }
   class Engine {
     // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
     // false keeps the generic uniform-driven spatial shader (benches, comparisons).
@@ -504,9 +510,7 @@
       this.budget.configure(s,h);
       this.poll();let q=null;
       const revision=this.budget.revision;
-      const filtered=s.mode==='filtered';
-      const {hud:_hud,hudPosition:_position,...measured}=s;
-      const segment=this.diagnostics.active?this.diagnostics.frame({settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&this.floatTargets&&this.budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&this.budget.temporalAllowed,cleanup:filtered&&this.budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&this.budget.enhanceAllowed?s.chroma:0,detail:filtered&&this.budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*this.budget.debandScale:0,debandTaps:filtered&&s.deband>0?this.budget.debandTaps:0,antialias:filtered&&this.budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}},performance.now()):null;
+      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets),performance.now()):null;
       this.usedTargets=new Set();
       if(this.ext&&this.queries.length<4){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
       try{
@@ -585,5 +589,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={framePlan,rendererSupports,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={framePlan,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

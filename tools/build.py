@@ -49,7 +49,9 @@ shaders['casFiltered']=filtered
 inputs=[Path('script.js'),Path('tools/build.py'),Path('tools/nn_glsl.py'),*sorted(Path('src').rglob('*.*'))]
 fingerprint=hashlib.sha256(b''.join(p.as_posix().encode()+b'\0'+p.read_bytes() for p in inputs if p.is_file())).hexdigest()
 build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.9.7.1','sourceSha256':fingerprint})+';\n'
-bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+Path('src/restoration-engine.js').read_text(encoding='utf-8')
+# WebGPU renderer (Spec 4): the WGSL ports, prelude included, and the engine that draws them.
+wgsl={p.stem:p.read_text(encoding='utf-8') for p in sorted(Path('src/webgpu').glob('*.wgsl'))}
+bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+'globalThis.BxWgsl='+json.dumps(wgsl)+';\n'+Path('src/restoration-engine.js').read_text(encoding='utf-8')+'\n'+Path('src/webgpu-engine.js').read_text(encoding='utf-8')
 Path('output/restoration.bundle.js').parent.mkdir(parents=True,exist_ok=True)
 Path('output/restoration.bundle.js').write_text(bundle,encoding='utf-8',newline='\n')
 # Repair upstream singleton lifecycle: a destroyed canvas must be recreated next session.
