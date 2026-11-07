@@ -1040,7 +1040,7 @@
   const parts = [];
   setA(els.meta, 'data-idle', !on && status.mode !== 'error' || null);
   if (status.mode === 'error') parts.push(['Erro: ' + (status.error || 'falha no tratamento'), 'bad']);
-  else if (!on) { parts.push(['Sem quadros recentes do tratamento. Selecione WebGL2 durante o jogo para filtrar a imagem.', 'lab']); netParts(s, parts); if (parts[1]) parts.splice(1, 1); }
+  else if (!on) { parts.push([api.playHost ? 'Sem quadros recentes do tratamento. Entre num jogo: a imagem é filtrada assim que o stream começa.' : 'Sem quadros recentes do tratamento. Selecione WebGL2 durante o jogo para filtrar a imagem.', 'lab']); netParts(s, parts); if (parts[1]) parts.splice(1, 1); }
   else {
    const r = parseRes();
    if (r) parts.push([r.h + 'p', s.net?.height ? G('height', s.gHeight) : null], [' → ', 'dim'], [r.oh + 'p', null]);

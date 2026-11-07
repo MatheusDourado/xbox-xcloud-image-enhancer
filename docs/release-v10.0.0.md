@@ -6,7 +6,17 @@ Userscript `6.7.12-imagefilter.10.0.0` e app Android **10.0.0**. Pré-lançament
 
 Spec 4 da rodada autônoma de 6 e 7 de novembro de 2026: [Spec 4 — renderizador WebGPU opcional](spec4-webgpu.md). As Specs 1 a 3 entraram na v9.8.0.
 
-## O que mudou
+## beta.2: suporte experimental ao play.xbox.com
+
+A Microsoft passou a levar contas para o site novo `play.xbox.com`, onde o Better xCloud 6.7.x não roda, e o "Exit preview" redireciona de volta para algumas contas. A beta.2 adiciona:
+
+- **Userscript novo `xcloud-image-filter-play.user.js`** (@match `https://play.xbox.com/*`). Ele liga o mesmo tratamento direto ao `<video>` do stream, sem os recursos do Better xCloud. Instale junto com o script atual, que continua valendo para `www.xbox.com/<locale>/play`.
+- **Botão IF** em todas as páginas do site novo (canto inferior direito; no jogo, superior esquerdo) e **Alt+Shift+F** abrem o painel. O topo do painel diz o que o script vê: sem jogo, stream encontrado ou tratamento ligado ao vídeo.
+- **App Android**: injeta o script novo sozinho em `play.xbox.com`.
+- **Testado só sem login**: 24 verificações numa página que imita o site novo com WebRTC real, e carga no site real sem conta. Com login e jogando, nada foi visto. Roteiro de teste em [play-xbox-com.md](play-xbox-com.md#roteiro-de-teste-para-o-matheus-windowschrome--tampermonkey).
+- No site novo não há resolução/bitrate forçados, MKB, controles de toque nem navegação do painel por controle. O renderizador WebGPU não foi testado lá.
+
+## O que mudou na beta.1
 
 - **Renderizador WebGPU opcional.** Nova linha *Renderizador* no painel (Auto, WebGL2, WebGPU, marcada EXP).
   - Ports WGSL de todo o caminho espacial: Compressão, Degradês, Cor nas bordas, Detalhe, AA fundido, EASU, nitidez (USM/CAS), RCAS e SGSR.

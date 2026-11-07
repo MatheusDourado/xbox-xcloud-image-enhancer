@@ -2,6 +2,7 @@ from pathlib import Path
 import json,re,hashlib
 source=Path('script.js').read_text(encoding='utf-8')
 assert '// @version      6.7.12' in source
+upstream=source
 marker='class VideoPlayer extends BaseStreamPlayer'
 assert source.count(marker)==1
 # Embed shader assets once for both userscript and standalone test player.
@@ -66,4 +67,29 @@ source=source.replace('// @name         Better xCloud','// @name         Better 
 source='\n'.join(line for line in source.split('\n') if not line.startswith(('// @updateURL','// @downloadURL')))
 source=source.replace('// @grant        none','// @grant        none\n// @updateURL    none\n// @downloadURL  none').replace('CheckForUpdate: !0','CheckForUpdate: !1',1)
 Path('better-xcloud-image-filter.user.js').write_text(source,encoding='utf-8',newline='\n')
-print('Built userscript v10.0.0 and shared player bundle')
+# play.xbox.com: Better xCloud 6.7.x does not run on the new site. A separate userscript binds the same
+# treatment straight to the stream's <video> (docs/play-xbox-com.md), reusing upstream's canvas player
+# classes unchanged (MIT) so the adapter patches the same WebGL2Player.
+def between(start,end):
+    assert upstream.count(start)==1 and upstream.count(end)==1
+    a=upstream.index(start);b=upstream.index(end,a)
+    return upstream[a:b].rstrip()+'\n'
+players=between('class BaseStreamPlayer {','class WebGPUPlayer extends BaseCanvasPlayer')+between('class WebGL2Player extends BaseCanvasPlayer',marker)
+play_header='''// ==UserScript==
+// @name         xCloud Image Filter — play.xbox.com (experimental)
+// @namespace    xcloud-image-filter
+// @version      10.0.0-play
+// @description  Image treatment (WebGL2) for Xbox Cloud Gaming on play.xbox.com, bound directly to the stream video. Includes Better xCloud's canvas player by redphx (MIT).
+// @license      MIT
+// @match        https://play.xbox.com/*
+// @run-at       document-start
+// @noframes
+// @grant        none
+// @updateURL    none
+// @downloadURL  none
+// ==/UserScript==
+"use strict";
+'''
+play=play_header+Path('src/play/prelude.js').read_text(encoding='utf-8')+players+bundle+'\n'+Path('src/frame-pacing.js').read_text(encoding='utf-8')+'\n'+'\n'.join(Path('src/'+n).read_text(encoding='utf-8') for n in ('image-filter.js','panel.js','hud.js','play/host.js'))
+Path('xcloud-image-filter-play.user.js').write_text(play,encoding='utf-8',newline='\n')
+print('Built userscript v10.0.0, play.xbox.com userscript and shared player bundle')

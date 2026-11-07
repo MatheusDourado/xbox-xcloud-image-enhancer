@@ -20,6 +20,7 @@ SUITES = [
     ('regression-harness.py', 'regressions-v7.html'),
     ('quality-harness.py', 'motion-quality.html'),
     ('capture-harness.py', 'capture-harness.html'),
+    ('play-harness.py', 'play-harness.html'),
 ]
 # Spec 4: WebGPU against WebGL2. Its own browser: headless Chromium exposes WebGPU only with these flags,
 # first the real GPU, then the SwiftShader adapter. Without any adapter the page reports itself skipped.
