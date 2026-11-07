@@ -94,9 +94,22 @@ Nada abaixo dá para verificar sem conta:
    - a resolução recebida não cai para 720p. O ajuste `1080p-hq` do wrapper antigo depende do Better xCloud e **não existe no site novo**.
 8. **Medição**: salvar uma medição no Poco e no Dell para comparar o custo com o site antigo.
 
+### Roteiro de teste para o Matheus (Windows/Chrome + Tampermonkey)
+
+1. No Tampermonkey, crie um script novo e cole todo o conteúdo de `xcloud-image-filter-play.user.js`. Salve. O script do site antigo pode continuar instalado: ele não roda em `play.xbox.com`.
+2. Abra `https://play.xbox.com`, entre num jogo na nuvem e espere a imagem aparecer.
+3. No console (F12), confira:
+   - `BxImageFilter.playHost.player()` não é `null`;
+   - `BxImageFilter.status.mode` é `filtered`;
+   - `BxImageFilter.status.resolution` mostra a entrada e a saída, por exemplo `1920×1080 → …`.
+4. Clique no botão **IF**, no canto superior esquerdo, ou use **Alt+Shift+F**. Compare **Vídeo original** com **Novo tratamento** na mesma cena. O painel deve mostrar codec, FPS recebido e bitrate.
+5. Confira se o controle e o teclado continuam funcionando, inclusive em tela cheia.
+6. Saia do jogo e entre em outro: o botão some e volta, com uma única imagem.
+7. Se algo falhar, envie o resultado de `BxImageFilter.status` e um print da tela.
+
 ## 6. Limites conhecidos no site novo
 
 - **Sem os recursos do Better xCloud**: resolução e bitrate forçados, região, limite de FPS, MKB, controles de toque, barra de estatísticas e o renderizador/nitidez nativos. Os avisos do painel que leem preferências do Better xCloud ficam calados.
 - **Sem navegação por controle**: o painel abre por botão (ponteiro/toque) ou teclado. Num Android TV só com controle, não há como abrir o painel até integrar com o menu do site novo.
 - **Fragilidade**: a detecção depende de `srcObject` com trilha WebRTC e do `data-testid` do container. É o que há no build `hotfix-1.0.2611.0612`, e um build futuro pode mudar isso.
-- **Alternativa**: quem precisa dos recursos do Better xCloud pode usar o opt-out (Exit preview ou o script do autor) e continuar no site antigo, onde nada mudou.
+- **Opt-out não resolve para todos**: para o Matheus, "Exit preview" redireciona de volta para `play.xbox.com` (relato de 2026-11-07). Para a conta dele, este userscript é o único caminho para ter o tratamento. Quem ainda consegue sair do preview continua no site antigo, onde nada mudou.
