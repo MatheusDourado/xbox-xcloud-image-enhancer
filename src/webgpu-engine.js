@@ -34,8 +34,10 @@
       this.device=device;this.context=context;this.format=format;this.options=options;this.budget=R.createBudget();this.diagnostics=R.createDiagnostics();
       this.frames=0;this.previous=null;this.floatTargets=true;this.fenceTiming=false;this.gpuEstimate=null;this.targets={};this.pipelines=new Map();this.jobs=new Map();this.failedVariants=new Set();
       this.modules={};this.uniforms=new Map();this.failed=null;this.onfail=null;this.renderer='webgpu';
-      // Fused compute spatial pass for decoded frames (task 5); false keeps the copy + fragment path.
-      this.computeSpatial=options.compute!==false;
+      // Fused compute spatial pass for decoded frames (task 5), off unless options.compute: measured slower than
+      // the copy pass + fragment spatial pass on the Adreno 825 (4.1 against 3.2 ms per 1280p frame in a burst)
+      // and on the Iris Xe (2.55 against 2.15 ms), docs/spec4-webgpu.md.
+      this.computeSpatial=options.compute===true;
       this.timestamps=device.features.has('timestamp-query');this.ext=this.timestamps?{}:null;this.pending=[];this.free=[];this.nextQuery=0;
       if(this.timestamps){this.querySet=device.createQuerySet({type:'timestamp',count:SLOTS*4});this.resolve=device.createBuffer({size:SLOTS*256,usage:GPUBufferUsage.QUERY_RESOLVE|GPUBufferUsage.COPY_SRC});}
       const entry=(binding,resource)=>({binding,visibility:GPUShaderStage.FRAGMENT|GPUShaderStage.COMPUTE,...resource});
@@ -82,9 +84,12 @@
       // The default frame: Spec 3 spatial variant, EASU, then casFiltered or SGSR on the canvas or a slot.
       const profile=spatialConstants(R.spatialProfile({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},'highp'));
       jobs.push(this.build('spatial','tex','rgba8unorm',profile));
-      if(this.computeSpatial)for(const t of f)jobs.push(this.buildCompute(t,{FIXED:0}),...(t==='rgba8unorm'?[this.buildCompute(t,profile)]:[]));
+      if(this.computeSpatial)jobs.push(this.warmCompute());
       for(const t of new Set([out,'rgba8unorm']))for(const n of ['casFiltered','cas','sgsr','rcas'])jobs.push(this.build(n,'tex',t,CONSTANTS[n]));
       await Promise.all(jobs);}
+    // Compute pipelines of the fused spatial pass: the generic ones and the default variant.
+    warmCompute(){const d=R.defaults,profile=spatialConstants(R.spatialProfile({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},'highp'));
+      return Promise.all([this.buildCompute('rgba8unorm',{FIXED:0}),this.buildCompute('rgba16float',{FIXED:0}),this.buildCompute('rgba8unorm',profile)]);}
     texture(w,h,fp){return this.device.createTexture({size:[w,h],format:fp?'rgba16float':'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING|GPUTextureUsage.COPY_SRC|GPUTextureUsage.COPY_DST});}
     target(name,w,h,fp=false){this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h&&t.fp===fp)return t;
       t?.texture.destroy();t={w,h,fp,format:fp?'rgba16float':'rgba8unorm'};t.texture=this.texture(w,h,fp);t.view=t.texture.createView();this.targets[name]=t;return t;}

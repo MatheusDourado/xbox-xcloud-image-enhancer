@@ -345,3 +345,22 @@ test('SGSR source gets its precision right after #version and the engine compile
 test('GPU adaptation drops the SGSR pass like EASU: output reduced to native',()=>{const a=api();
  for(const scaler of ['easu','sgsr']){const s=a.normalize({output:'1280',scaler,deband:0,chroma:0}),p=a.createBudget();p.configure(s,1080);
   assert.equal(p.outputFor(s),'1280');for(let i=0;i<90;i++)p.sample(20);assert.equal(p.outputFor(s),'native',scaler);assert.match(p.reason,/nativa/);}});
+// Spec 4: one frame plan for both renderers; WebGPU draws everything but neural restoration and temporal.
+test('renderer setting defaults to auto and accepts only auto, webgl2 and webgpu',()=>{const a=api();
+ assert.equal(a.defaults.renderer,'auto');for(const r of ['auto','webgl2','webgpu'])assert.equal(a.normalize({renderer:r}).renderer,r);
+ for(const bad of ['WebGPU','gpu',1,null,true])assert.equal(a.normalize({renderer:bad}).renderer,'auto');
+ for(const p of Object.values(a.presets))assert.equal('renderer' in p.values,false,'presets keep the chosen renderer');});
+test('auto keeps WebGL2 on every GPU until one meets both Spec 4 acceptance criteria',()=>{const a=api();
+ assert.equal(a.AUTO_WEBGPU.length,0);for(const ad of [null,undefined,{vendor:'qualcomm',architecture:'adreno-8xx'},{vendor:'intel',architecture:'gen-12lp'}])assert.equal(a.autoRenderer(ad),'webgl2');});
+test('frame plan: budget-filtered strengths, scaler, last pass and the WebGL2-only passes',()=>{const a=api(),b=a.createBudget(),s=a.normalize({deband:.6,chroma:.75,output:'1280'});
+ let p=a.framePlan(s,b,1920,1080,2276,1280,false);assert.equal(p.scaler,'easu');assert.equal(p.final.name,'casFiltered');assert.equal(p.final.key,'data');assert.equal(p.spatial.deband,.6);assert.equal(p.spatial.quantize,true);assert.equal(p.gl,false);assert.ok(a.rendererSupports(p));
+ p=a.framePlan({...s,scaler:'sgsr'},b,1920,1080,2276,1280,false);assert.equal(p.scaler,'sgsr');assert.equal(p.final.name,'sgsr');assert.equal(p.final.key,'source');
+ p=a.framePlan({...s,scaler:'sgsr'},b,1920,1080,1920,1080,false);assert.equal(p.scaler,null,'no SGSR at native output');assert.equal(p.final.name,'casFiltered');
+ p=a.framePlan(a.normalize({...s,processingMode:'quality'}),b,1920,1080,1920,1080,true);assert.equal(p.spatial.quantize,false,'float targets do not dither in the spatial pass');
+ p=a.framePlan(a.normalize({...s,mode:'cas'}),b,1920,1080,2276,1280,true);assert.equal(p.spatial,null);assert.equal(p.scaler,null);assert.equal(p.final.name,'cas');
+ p=a.framePlan(a.normalize({...s,sharpening:'rcas'}),b,1920,1080,1920,1080,true);assert.equal(p.final.name,'rcas');assert.ok(a.rendererSupports(p),'RCAS is ported');
+ for(const extra of [{temporal:.5},{neural:1}]){p=a.framePlan(a.normalize({...s,...extra}),b,1920,1080,1920,1080,true);assert.equal(p.gl,true);assert.equal(a.rendererSupports(p),false);}
+ p=a.framePlan(a.normalize({...s,neural:1}),b,1920,1080,1920,1080,false);assert.equal(p.neural,0,'neural needs float targets');
+ p=a.framePlan(a.normalize({...s,temporal:.5,antialias:.5}),b,1920,1080,1920,1080,true);assert.equal(p.spatial.antialias,0);assert.equal(p.antialias,.5,'AA after temporal');
+ const cut=a.createBudget();cut.configure(s,1080);cut.debandScale=.5;cut.debandTaps=2;cut.enhanceAllowed=false;
+ p=a.framePlan(s,cut,1920,1080,1920,1080,false);assert.equal(p.spatial.deband,.3);assert.equal(p.spatial.debandTaps,2);assert.equal(p.spatial.chroma,0);assert.equal(p.final.uniforms.deband,.3);});

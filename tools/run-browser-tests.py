@@ -23,7 +23,7 @@ SUITES = [
 ]
 # Spec 4: WebGPU against WebGL2. Its own browser: headless Chromium exposes WebGPU only with these flags,
 # first the real GPU, then the SwiftShader adapter. Without any adapter the page reports itself skipped.
-WEBGPU = ('webgpu-harness.py', 'webgpu-equivalence.html')
+WEBGPU = [('webgpu-harness.py', 'webgpu-equivalence.html'), ('renderer-harness.py', 'renderer-harness.html')]
 WEBGPU_FLAGS = [['--enable-gpu', '--enable-unsafe-webgpu'], ['--enable-gpu', '--enable-unsafe-webgpu', '--use-webgpu-adapter=swiftshader']]
 
 
@@ -61,7 +61,7 @@ def main():
     parser.add_argument('--channel', help='Use an installed browser, e.g. chrome')
     parser.add_argument('--executable', help="Browser binary, e.g. the CI's Chromium from another Playwright version")
     args = parser.parse_args()
-    for script, _ in SUITES + [WEBGPU]:
+    for script, _ in SUITES + WEBGPU:
         subprocess.run([sys.executable, str(ROOT / 'tools' / script)], cwd=ROOT, check=True)
     server = ThreadingHTTPServer(('127.0.0.1', 0), partial(Handler, directory=str(ROOT)))
     thread = Thread(target=server.serve_forever, daemon=True)
@@ -75,13 +75,16 @@ def main():
             browser.close()
             for flags in WEBGPU_FLAGS:
                 browser = p.chromium.launch(channel=args.channel, executable_path=args.executable, args=flags)
-                row = run_page(browser, server.server_port, WEBGPU[1])
+                rows = [run_page(browser, server.server_port, WEBGPU[0][1])]
+                skipped = (rows[0].get('result') or {}).get('skipped')
+                if not skipped:
+                    rows += [run_page(browser, server.server_port, page) for _, page in WEBGPU[1:]]
                 browser.close()
-                if not (row.get('result') or {}).get('skipped'):
+                if not skipped:
                     break
-                print(f"  WebGPU flags {' '.join(flags)}: {(row.get('result') or {}).get('reason')}")
-            results.append(row)
-            report = (row.get('result') or {}).get('report') or {}
+                print(f"  WebGPU flags {' '.join(flags)}: {(rows[0].get('result') or {}).get('reason')}")
+            results.extend(rows)
+            report = (rows[0].get('result') or {}).get('report') or {}
             print(f"  WebGPU flags {' '.join(flags)}: adapter {report.get('adapter')}, WebGL2 {report.get('gl')}, same device {report.get('sameDevice')}")
     finally:
         server.shutdown()

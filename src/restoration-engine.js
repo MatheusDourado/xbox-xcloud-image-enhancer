@@ -2,7 +2,7 @@
 (() => {
   // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
-  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false});
+  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false,renderer:'auto'});
   function normalize(value={}) {
     if(!value || typeof value!=='object')value={};
     const result={...defaults};
@@ -11,6 +11,7 @@
     if(['original','cas','filtered'].includes(value.mode))result.mode=value.mode;
     if(['usm','cas','rcas','native'].includes(value.sharpening))result.sharpening=value.sharpening;
     if(['easu','sgsr'].includes(value.scaler))result.scaler=value.scaler;
+    if(['auto','webgl2','webgpu'].includes(value.renderer))result.renderer=value.renderer;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
     if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;
     if(['video','direct'].includes(value.capture))result.capture=value.capture;
@@ -376,6 +377,11 @@
   }
   // Whether the WebGPU renderer draws this plan; otherwise the frame goes to WebGL2 (same image).
   function rendererSupports(plan){return !plan.gl;}
+  // Renderer for the 'auto' setting (Spec 4). WebGPU only on a GPU where both acceptance criteria of
+  // docs/spec4-webgpu.md were met: an image equivalent to WebGL2 and a GPU cost equal or lower than WebGL2
+  // in a 30 FPS session. Entries are adapter {vendor, architecture} pairs; none qualified so far.
+  const AUTO_WEBGPU=Object.freeze([]);
+  function autoRenderer(adapter){return adapter&&AUTO_WEBGPU.some(a=>a.vendor===adapter.vendor&&a.architecture===adapter.architecture)?'webgpu':'webgl2';}
   // Configuration of one frame in the measurement (diagnostics segment), shared by both renderers.
   function segmentConfig(s,budget,w,h,outW,outH,revision,diagnostic,floatTargets,renderer){
     const filtered=s.mode==='filtered',{hud:_hud,hudPosition:_position,...measured}=s;
@@ -589,5 +595,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={framePlan,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={autoRenderer,AUTO_WEBGPU,framePlan,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

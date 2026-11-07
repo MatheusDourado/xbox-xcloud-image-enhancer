@@ -457,7 +457,7 @@
  /* =============================== Panel model =============================== */
  // Heavy settings rebuild textures or restart the capture/pacer: leading edge plus one trailing update.
  const HEAVY = new Set(['fluidity', 'capture', 'output', 'gpuBudget', 'spatialMode']);
- const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'scaler', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural', 'desynchronized'];
+ const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'scaler', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural', 'desynchronized', 'renderer'];
  const TREAT = ['cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural'];
  const UI_KEY = 'BxImageFilter.ui.v1';
  const phoneTier = (() => { try { return matchMedia('(max-height:500px)').matches; } catch { return false; } })();
@@ -519,7 +519,7 @@
   verdict.dirty = true;
   if (lastSnap) updateSummaries(lastSnap);
  }
- const sigOf = () => SYNC_KEYS.map(k => settings[k]).join('|') + '|' + api.diagnostic + '|' + status.desynchronized;
+ const sigOf = () => SYNC_KEYS.map(k => settings[k]).join('|') + '|' + api.diagnostic + '|' + status.desynchronized + '|' + (status.renderer ? status.renderer.active + status.renderer.state + status.renderer.reason : '');
  function syncAll(periodic) {
   const a = doc.activeElement;
   let skipped = false;
@@ -844,7 +844,13 @@
   els.desync = toggle({key: 'desynchronized', label: 'Baixa latência (desynchronized)', tag: 'EXP', get: () => valueOf('desynchronized'), set: (v, e) => commit('desynchronized', v, e),
    hint: 'Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.'});
   els.desyncOut = out('desynchronized'); els.desync.row.append(els.desyncOut);
-  s4.body.append(budget.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
+  // Spec 4 (docs/spec4-webgpu.md): WebGPU renderer with the same filters; Auto stays on WebGL2 until WebGPU
+  // has met both acceptance criteria on that GPU. A failure falls back to WebGL2 without a reload.
+  els.renderer = choice({key: 'renderer', label: 'Renderizador', tag: 'EXP', opts: [['auto', 'Auto'], ['webgl2', 'WebGL2'], ['webgpu', 'WebGPU']], hint: v => (({
+   auto: 'Escolhe o WebGL2, salvo numa GPU em que o WebGPU já foi medido com imagem igual e custo igual ou menor.', webgl2: 'O renderizador de sempre.',
+   webgpu: 'Mesmos filtros em WebGPU: lê o quadro sem cópia e mede a GPU com timestamp. Temporal e Reconstrução neural continuam no WebGL2. Se falhar, volta ao WebGL2 sem recarregar.'})[v] || '')});
+  els.rendererOut = out('renderer'); els.renderer.row.append(els.rendererOut);
+  s4.body.append(budget.row, els.renderer.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
   s4.update = updateDesempenho;
   // [H] 05 Ferramentas
   const s5 = section('ferramentas', '05', 'Indicadores e ferramentas');
@@ -942,7 +948,17 @@
   setT(els.output.lab.tx, 'Resolução de saída' + (['auto', 'native', '1440', '2160'].includes(o) ? '' : ` (${o}p)`));
   setA(els.qp, 'data-hide', valueOf('adaptive') ? null : '');
   updateDesync();
+  updateRenderer();
   updatePreset();
+ }
+ // Which renderer draws now, and why when it is not the one chosen.
+ function updateRenderer() {
+  const r = status.renderer; if (!r) return;
+  const name = r.active === 'webgpu' ? 'WebGPU' : 'WebGL2', parts = [];
+  if (r.state === 'starting') parts.push(['Preparando o WebGPU…', 'lab']);
+  else if (status.mode !== 'waiting') parts.push(['Ativo: ' + name + (r.active === 'webgpu' && r.adapter ? ' (' + [r.adapter.vendor, r.adapter.architecture].filter(Boolean).join(' ') + ')' : ''), r.state === 'fallback' ? 'ok' : 'good']);
+  if (r.reason && r.state !== 'starting') parts.push([r.reason, r.state === 'fallback' ? 'ok' : 'lab']);
+  setParts(els.rendererOut, parts);
  }
  // The canvas keeps the attribute it was created with: a change shows as pending until the next session.
  function updateDesync() {

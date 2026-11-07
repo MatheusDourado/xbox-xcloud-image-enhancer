@@ -56,3 +56,9 @@ test('low-latency canvas (desynchronized) is off by default, only an explicit tr
  for(const file of ['script.js','better-xcloud-image-filter.user.js']){const attrs=[...fs.readFileSync(file,'utf8').matchAll(/getContext\(["']webgl2["'],\s*\{([^}]*)\}/g)].map(m=>m[1]);
   assert.ok(attrs.length>0,file);for(const x of attrs)assert.match(x,/desynchronized:\s*globalThis\.BxImageFilter\?\.settings\?\.desynchronized\s*===\s*!0/,file);}
 });
+test('the renderer choice is saved and validated, Restaurar returns to auto, and it is a live key (no GPU adaptation reset)',()=>{
+ assert.equal(load('{"renderer":"webgpu"}').context.window.BxImageFilter.settings.renderer,'webgpu');
+ assert.equal(load('{"renderer":"vulkan"}').context.window.BxImageFilter.settings.renderer,'auto');
+ const {context}=load(null),a=context.window.BxImageFilter;assert.equal(a.settings.renderer,'auto');assert.equal(a.status.renderer.active,'webgl2');
+ const src=fs.readFileSync('src/image-filter.js','utf8');assert.match(src,/LIVE_KEYS=new Set\(\[[^\]]*'renderer'/);
+ a.update({renderer:'webgpu'});assert.equal(a.settings.renderer,'webgpu');a.reset();assert.equal(a.settings.renderer,'auto');});
