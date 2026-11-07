@@ -1,4 +1,6 @@
-# Better xCloud — tratamento experimental v9.7.1
+# Better xCloud — tratamento experimental v9.8.0
+
+A **v9.8.0** (beta de teste) reduz o custo de GPU no Poco F7: padrões novos, `mediump`, canvas sem MSAA, última passada sem cópia e SGSR como opção de escalador. Nada foi validado em partida real; o padrão antigo continua como preset **Padrão v9**. Veja [notas v9.8.0](docs/release-v9.8.0.md).
 
 A **v9.7.1** corrige o que a primeira medição num aparelho real (Poco F7, Gears of War: E-Day) mostrou:
 - **Adaptar à compressão** funciona sem o QP: o WebView do Android não informa o QP, e a adaptação ficava parada. Agora a compressão é estimada pela taxa de bits por pixel.
@@ -48,9 +50,9 @@ A v7.1 corrige as pendências de degradês, halos e movimento da v7. O caminho p
 
 Para o Vostro 3400 ligado à TV por HDMI 1080p, comece em **saída Automática (resolve para nativa), Nitidez 3–5 no painel, orçamento 6 ms, Cor nas bordas 50%, Detalhe 35%, Degradês 30–50%, temporal e AA desligados**. A TV continua responsável por ampliar o sinal recebido para seu painel 4K. Forçar 4K no canvas não cria informação de uma renderização 4K do jogo, nem muda o sinal HDMI.
 
-## Android (v9.7.1)
+## Android (v9.8.0)
 
-Há um APK de teste em `android/dist/xcloud-imagefilter-9.7.1.apk`: um app WebView próprio que abre o xCloud com este userscript (v9.7.1). Veja [android/README.md](android/README.md).
+Há um APK de teste em `android/dist/xcloud-imagefilter-9.8.0.apk`: um app WebView próprio que abre o xCloud com este userscript (v9.8.0). Veja [android/README.md](android/README.md).
 
 ## Instalar
 

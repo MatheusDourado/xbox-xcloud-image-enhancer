@@ -48,7 +48,7 @@ for expression in ['e + (e - gaussianBlur) * sharpenFactor / 3.0','mix(e, outCol
 shaders['casFiltered']=filtered
 inputs=[Path('script.js'),Path('tools/build.py'),Path('tools/nn_glsl.py'),*sorted(Path('src').rglob('*.*'))]
 fingerprint=hashlib.sha256(b''.join(p.as_posix().encode()+b'\0'+p.read_bytes() for p in inputs if p.is_file())).hexdigest()
-build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.9.7.1','sourceSha256':fingerprint})+';\n'
+build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.9.8.0','sourceSha256':fingerprint})+';\n'
 bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+Path('src/restoration-engine.js').read_text(encoding='utf-8')
 Path('output/restoration.bundle.js').parent.mkdir(parents=True,exist_ok=True)
 Path('output/restoration.bundle.js').write_text(bundle,encoding='utf-8',newline='\n')
@@ -60,8 +60,8 @@ menu='\"video.processing.sharpness\",\"video.saturation\"'
 assert source.count(menu)==1
 source=source.replace(menu,'\"video.processing.sharpness\",($parent) => {window.BxImageFilter.mountControls($parent);},\"video.saturation\"')
 source=source.replace(marker,bundle+'\n'+Path('src/frame-pacing.js').read_text(encoding='utf-8')+'\n'+'\n'.join(Path('src/'+n).read_text(encoding='utf-8') for n in ('image-filter.js','panel.js','hud.js'))+'\n'+marker)
-source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.9.7.1')
+source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.9.8.0')
 source='\n'.join(line for line in source.split('\n') if not line.startswith(('// @updateURL','// @downloadURL')))
 source=source.replace('// @grant        none','// @grant        none\n// @updateURL    none\n// @downloadURL  none').replace('CheckForUpdate: !0','CheckForUpdate: !1',1)
 Path('better-xcloud-image-filter.user.js').write_text(source,encoding='utf-8',newline='\n')
-print('Built userscript v9.7.1 and shared player bundle')
+print('Built userscript v9.8.0 and shared player bundle')

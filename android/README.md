@@ -1,10 +1,10 @@
-# xCloud ImageFilter para Android — v9.7.1
+# xCloud ImageFilter para Android — v9.8.0
 
-App Android próprio (WebView) que abre o xCloud e injeta o userscript desta versão (Better xCloud 6.7.12 + tratamento de imagem **v9.7.1**). **Não é o app oficial do Better xCloud**: o app oficial é de código fechado (o repositório `redphx/better-xcloud-android` só tem o README), então não dá para modificá-lo.
+App Android próprio (WebView) que abre o xCloud e injeta o userscript desta versão (Better xCloud 6.7.12 + tratamento de imagem **v9.8.0**). **Não é o app oficial do Better xCloud**: o app oficial é de código fechado (o repositório `redphx/better-xcloud-android` só tem o README), então não dá para modificá-lo.
 
 ## Instalar
 
-1. Baixe `android/dist/xcloud-imagefilter-9.7.1.apk` deste repositório (no GitHub: abra o arquivo → **Download raw file**).
+1. Baixe `android/dist/xcloud-imagefilter-9.8.0.apk` deste repositório (no GitHub: abra o arquivo → **Download raw file**).
 2. No celular, permita instalar apps da fonte usada (navegador ou gerenciador de arquivos) e instale.
 3. Abra **xCloud ImageFilter**, faça login na conta Microsoft e entre num jogo.
 4. No menu do Better xCloud → **Vídeo**, mantenha o renderizador **WebGL2**. O painel **Tratamento de imagem** fica logo abaixo de Renderizador. Em **05 Indicadores e ferramentas**, ligue os indicadores no jogo: no celular eles ficam na faixa preta ao lado do vídeo.
@@ -42,4 +42,4 @@ android/build.sh
 
 O script gera o userscript (`tools/build.py`), baixa o `android.jar` da API 34 se faltar, compila, gera o dex e assina com `android/debug.keystore`. Essa chave é **de teste** (senha `android`) e é fixa para que novas versões instalem por cima; não é segredo nem serve para loja.
 
-Validação da v9.7.1: APK assinado com o mesmo certificado da série 9.x, `minSdk 28`, `targetSdk 34` e userscript embarcado conferido. Testes Node e Chrome/WebGL passaram, incluindo WebRTC real; veja [as notas](../docs/release-v9.7.1.md). A v9.7 rodou num Poco F7 (Android 16) com o xCloud real: captura direta, exportação da medição e rede confirmadas. As correções da v9.7.1 vêm dessa medição, mas ainda não rodaram no aparelho.
+Validação da v9.8.0: APK assinado com o mesmo certificado da série 9.x, `minSdk 28`, `targetSdk 34` e userscript embarcado conferido. Testes Node e Chrome/WebGL passaram, incluindo WebRTC real; veja [as notas](../docs/release-v9.8.0.md). A v9.7 rodou num Poco F7 (Android 16) com o xCloud real: captura direta, exportação da medição e rede confirmadas. As correções da v9.8.0 vêm dessa medição, mas ainda não rodaram no aparelho.
