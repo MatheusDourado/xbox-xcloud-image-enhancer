@@ -79,7 +79,7 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  passes=[];render({sharpening:'rcas',sharpness:2,cleanup:.35,deband:.3});check(passes.length===2,'RCAS retains two passes',passes);
  passes=[];render({cleanup:.35,deband:1,chroma:.5,detail:.35,antialias:1,sharpness:2});check(passes.length===2&&!passes.includes('antialias'),'AA is fused into the spatial pass without temporal',passes);
  passes=[];render({antialias:1,temporal:.3},2);check(passes.includes('antialias'),'Temporal keeps AA as a separate pass after history',passes);
- passes=[];render({neural:1,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpness:2});check(passes.join()==='nnFeatures,nnApply,spatial,casFiltered','Neural restoration adds two passes before the spatial pass',passes);
+ passes=[];render({neural:1,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpness:2});check(passes.map(p=>p.split('@')[0]).join()==='nnFeatures,nnApply,spatial,casFiltered','Neural restoration adds two passes before the spatial pass',passes);
  passes=[];render({});check(passes.length===1,'Disabled treatments bypass intermediate passes',passes);
  check(Object.keys(engine.targets).length===0,'Disabled treatments release unused intermediate textures',Object.keys(engine.targets));
  {let seed=7;const rnd=()=>(seed=(seed*1103515245+12345)%2147483648)/2147483648;

@@ -144,7 +144,7 @@ Só a passada `spatial`, em 1080p, em rajada, com o quadro importado (importaç�
 | `capture-harness` | 26 passam |
 | `filter-harness` | a falha conhecida `Cut rejects old dark history` (Specs 1 e 3), nenhuma nova |
 
-Rodados depois do commit do port, com `PYTHONUTF8=1 python tools/run-browser-tests.py --channel chrome`. As regressões rodam em WebGL2 e **não cobrem o WGSL**: a equivalência do port vem da bancada de comparação acima. Nenhum arquivo do motor, do painel ou do player mudou: o único efeito no userscript e no bundle é o hash `sourceSha256` do build, que inclui `src/`. A CI exige esse arquivo atualizado, por isso o rebuild foi commitado.
+Rodados depois do commit do port, com `PYTHONUTF8=1 python tools/run-browser-tests.py --channel chrome`. Depois, por aviso da orquestradora, `tools/regression-harness.py` passou a comparar o nome-base da passada (`p.split('@')[0]`) em `Neural restoration adds two passes before the spatial pass`, igual ao commit `5290ec9` da branch da release. No Chromium do CI (Playwright, SwiftShader), a checagem falhava quando a variante `spatial@…` já tinha compilado. Aqui ela passava, e as suítes repetem o mesmo resultado depois da mudança (62, 11, 26 e a falha conhecida). As regressões rodam em WebGL2 e **não cobrem o WGSL**: a equivalência do port vem da bancada de comparação acima. Nenhum arquivo do motor, do painel ou do player mudou: o único efeito no userscript e no bundle é o hash `sourceSha256` do build, que inclui `src/`. A CI exige esse arquivo atualizado, por isso o rebuild foi commitado.
 
 ## Pendências
 
