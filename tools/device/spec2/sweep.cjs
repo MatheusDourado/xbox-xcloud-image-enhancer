@@ -35,4 +35,6 @@ const mid=v=>{const c=v.slice(2,-2),s=[...c].sort((a,b)=>a-b);return c.length?s[
  }
  c.close();rows.forEach(r=>r.video=undefined);const file=path.resolve(__dirname,'../../../docs/medicoes',process.env.BX_MEAS_DIR||'spec2',`${device}-${name}.json`);fs.mkdirSync(path.dirname(file),{recursive:true});
  fs.writeFileSync(file,JSON.stringify({name,device,env,rows},null,1)+'\n');
+ // evaluate()'s timeout timers keep the event loop alive: exit once stdout is flushed.
+ process.stdout.write('',()=>process.exit(0));
 })().catch(e=>{console.error('ERR',e.message);process.exit(1);});

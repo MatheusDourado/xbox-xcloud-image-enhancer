@@ -14,4 +14,6 @@ function state(){return poco?pocoState():{at:new Date().toISOString()};}
  c.close();const after=state(),out={name,device,query,before,after,env,result:JSON.parse(value)};
  const file=path.resolve(__dirname,'../../../docs/medicoes',process.env.BX_MEAS_DIR||'spec2',`${device}-${name}.json`);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,JSON.stringify(out,null,1)+'\n');
  console.log(JSON.stringify({before,after,env:{renderer:env.unmasked,attrs:env.attrs,samples:env.samples,css:env.css,hidden:env.hidden}}));console.log(value.slice(0,6000));
+ // evaluate()'s timeout timers keep the event loop alive for up to the whole timeout: exit once stdout is flushed.
+ process.stdout.write('',()=>process.exit(0));
 })().catch(e=>{console.error('ERR',e.message);process.exit(1);});
