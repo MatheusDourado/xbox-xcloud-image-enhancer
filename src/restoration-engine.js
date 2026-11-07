@@ -2,7 +2,7 @@
 (() => {
   // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
-  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false});
+  const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false,renderer:'auto'});
   function normalize(value={}) {
     if(!value || typeof value!=='object')value={};
     const result={...defaults};
@@ -11,6 +11,7 @@
     if(['original','cas','filtered'].includes(value.mode))result.mode=value.mode;
     if(['usm','cas','rcas','native'].includes(value.sharpening))result.sharpening=value.sharpening;
     if(['easu','sgsr'].includes(value.scaler))result.scaler=value.scaler;
+    if(['auto','webgl2','webgpu'].includes(value.renderer))result.renderer=value.renderer;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
     if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;
     if(['video','direct'].includes(value.capture))result.capture=value.capture;
@@ -148,7 +149,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:2,version:'9.8.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:2,version:'10.0.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||segments.length>=256,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
           const sorted=[...gpu].sort((a,b)=>a-b);return {config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
@@ -315,7 +316,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v9.8.0-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.0.0-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -343,6 +344,50 @@
   }
   // SGSR precision as the spatial pass: mediump color math on half-precision GPUs, highp elsewhere.
   function sgsrSource(code,precision){const at=code.indexOf('\n');return code.slice(0,at+1)+'#define SGSR_PRECISION '+precision+'\n'+code.slice(at+1);}
+  // What one frame runs, shared by the WebGL2 and WebGPU renderers (Spec 4): the filters left on by the
+  // budget and their strengths, the scaler and the last pass with its uniforms. Each renderer only turns
+  // this into draws. Neural restoration, temporal and the separate AA pass after it are WebGL2-only
+  // (gl: true); the WebGPU renderer hands such a frame back to WebGL2 (rendererSupports).
+  // floatTargets: whether Qualidade gets 16-bit float targets (then the spatial pass does not dither).
+  function framePlan(s,budget,w,h,outW,outH,floatTargets,diagnostic=false){
+    const filtered=s.mode==='filtered',quality=s.processingMode==='quality',plan={filtered,quality,neural:0,spatial:null,temporal:0,antialias:0,scaler:null,final:null,gl:false};
+    if(filtered){
+      if(s.neural>0&&floatTargets&&budget.neuralAllowed)plan.neural=s.neural;
+      const cleanup=budget.cleanupAllowed?s.cleanup:0,deband=s.deband*budget.debandScale;
+      const chroma=budget.enhanceAllowed?s.chroma:0,detail=budget.enhanceAllowed?s.detail:0;
+      const temporalEnabled=s.temporal>0&&budget.temporalAllowed;
+      // Without temporal, AA runs inside the spatial pass (no extra full-frame pass).
+      const antialias=s.antialias>0&&budget.antialiasAllowed?s.antialias:0,fusedAntialias=temporalEnabled?0:antialias;
+      if(cleanup>0||deband>0||chroma>0||detail>0||fusedAntialias>0)
+        plan.spatial={cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:budget.debandTaps,quantize:!(quality&&floatTargets),selective:s.spatialMode==='selective'};
+      if(temporalEnabled){plan.temporal=s.temporal;plan.antialias=antialias;}
+      // Upscale: EASU then the sharpening pass, or SGSR alone as the last pass (item 5). At native
+      // output SGSR is never used: the sharpening pass stays (SGSR was measured only when scaling).
+      if(s.upscale&&outW>w&&outH>h)plan.scaler=s.scaler==='sgsr'?'sgsr':'easu';
+    }
+    // One last pass to the output: SGSR (scaling and sharpening, with the finishing of the sharpening
+    // pass), or one sharpening stage. 'native' follows the Better xCloud menu (CAS/USM). The
+    // reference applies the same method and strength with the unmodified upstream shader.
+    if(plan.scaler==='sgsr')plan.final={name:'sgsr',key:'source',uniforms:{...sgsrParams(s.sharpness),brightness:1,contrast:s.contrast,saturation:s.saturation,shadows:s.shadows,deband:s.deband*budget.debandScale,diagnostic}};
+    else{const method=s.sharpening==='native'?s.processing:s.sharpening;
+      const name=s.mode!=='original'&&method==='rcas'?'rcas':filtered?'casFiltered':'cas';
+      plan.final={name,key:'data',filterId:method==='usm'?1:2,uniforms:{iResolution:[outW,outH],qualityMode:filtered&&quality,rcasStrength:s.sharpness/10,haloMargin:(2+s.sharpness)/255,noiseFloor:s.noiseFloor/255,lumaSharpen:s.lumaSharpen,sharpenFactor:s.mode==='original'?0:s.mode==='cas'?s.sharpness/1.2:s.sharpness/(quality?1:1.2),brightness:1,contrast:filtered?s.contrast:1,saturation:filtered?s.saturation:1,shadows:filtered?s.shadows:0,deband:filtered?s.deband*budget.debandScale:0,diagnostic}};}
+    plan.gl=plan.neural>0||plan.temporal>0;
+    return plan;
+  }
+  // Whether the WebGPU renderer draws this plan; otherwise the frame goes to WebGL2 (same image).
+  function rendererSupports(plan){return !plan.gl;}
+  // Renderer for the 'auto' setting (Spec 4). WebGPU only on a GPU where both acceptance criteria of
+  // docs/spec4-webgpu.md were met: an image equivalent to WebGL2 and a GPU cost equal or lower than WebGL2
+  // in a 30 FPS session. Entries are adapter {vendor, architecture} pairs; none qualified so far.
+  const AUTO_WEBGPU=Object.freeze([]);
+  function autoRenderer(adapter){return adapter&&AUTO_WEBGPU.some(a=>a.vendor===adapter.vendor&&a.architecture===adapter.architecture)?'webgpu':'webgl2';}
+  // Configuration of one frame in the measurement (diagnostics segment), shared by both renderers.
+  function segmentConfig(s,budget,w,h,outW,outH,revision,diagnostic,floatTargets,renderer){
+    const filtered=s.mode==='filtered',{hud:_hud,hudPosition:_position,...measured}=s;
+    const config={settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&floatTargets&&budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&budget.temporalAllowed,cleanup:filtered&&budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&budget.enhanceAllowed?s.chroma:0,detail:filtered&&budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*budget.debandScale:0,debandTaps:filtered&&s.deband>0?budget.debandTaps:0,antialias:filtered&&budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}};
+    if(renderer)config.renderer=renderer;return config;
+  }
   class Engine {
     // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
     // false keeps the generic uniform-driven spatial shader (benches, comparisons).
@@ -471,32 +516,26 @@
       this.budget.configure(s,h);
       this.poll();let q=null;
       const revision=this.budget.revision;
-      const filtered=s.mode==='filtered';
-      const {hud:_hud,hudPosition:_position,...measured}=s;
-      const segment=this.diagnostics.active?this.diagnostics.frame({settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&this.floatTargets&&this.budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&this.budget.temporalAllowed,cleanup:filtered&&this.budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&this.budget.enhanceAllowed?s.chroma:0,detail:filtered&&this.budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*this.budget.debandScale:0,debandTaps:filtered&&s.deband>0?this.budget.debandTaps:0,antialias:filtered&&this.budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}},performance.now()):null;
+      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets),performance.now()):null;
       this.usedTargets=new Set();
       if(this.ext&&this.queries.length<4){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
       try{
         gl.activeTexture(gl.TEXTURE0);this.configure(this.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
-        let source=this.input,sgsr=false;
-        if(s.mode==='filtered'){
+        let source=this.input;
+        const plan=framePlan(s,this.budget,w,h,outW,outH,this.floatTargets,diagnostic);
+        if(plan.filtered){
           // Neural restoration first: trained on decoded stream luma (tools/nn), needs float targets.
-          if(s.neural>0&&this.floatTargets&&this.budget.neuralAllowed){
-            const features=this.targetPair('nnFeatures',w,h),restored=this.target('neural',w,h,s.processingMode==='quality');
+          if(plan.neural>0){
+            const features=this.targetPair('nnFeatures',w,h),restored=this.target('neural',w,h,plan.quality);
             this.draw('nnFeatures',features,w,h,{source});
-            this.draw('nnApply',restored,w,h,{source,featA:features.texture,featB:features.second},{strength:s.neural});source=restored.texture;
+            this.draw('nnApply',restored,w,h,{source,featA:features.texture,featB:features.second},{strength:plan.neural});source=restored.texture;
           }
-          const cleanup=this.budget.cleanupAllowed?s.cleanup:0,deband=s.deband*this.budget.debandScale;
-          const chroma=this.budget.enhanceAllowed?s.chroma:0,detail=this.budget.enhanceAllowed?s.detail:0;
-          const temporalEnabled=s.temporal>0&&this.budget.temporalAllowed;
-          // Without temporal, AA runs inside the spatial pass (no extra full-frame pass).
-          const antialias=s.antialias>0&&this.budget.antialiasAllowed?s.antialias:0,fusedAntialias=temporalEnabled?0:antialias;
-          if(cleanup>0||deband>0||chroma>0||detail>0||fusedAntialias>0){
-            const spatial=this.target('spatial',w,h,s.processingMode==='quality');
-            const u={cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:this.budget.debandTaps,quantize:!spatial.fp,selective:s.spatialMode==='selective'};
+          if(plan.spatial){
+            const spatial=this.target('spatial',w,h,plan.quality),u=plan.spatial;
             this.draw(this.spatialVariant(u),spatial,w,h,{source},u);source=spatial.texture;
           }
+          const temporalEnabled=plan.temporal>0;
           if(temporalEnabled){
             const qw=Math.max(1,Math.ceil(w/4)),qh=Math.max(1,Math.ceil(h/4));
             const index=(this.historyIndex||0)^1;
@@ -508,23 +547,14 @@
             gl.bindTexture(gl.TEXTURE_2D,motion.texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
             this.draw('motion',motion,motion.w,motion.h,{source:low.texture,previous:prevLow.texture,cut:cut.texture,fullSource:this.input,fullPrevious:history.texture},{validHistory:valid});
             const temporal=this.target('history'+index,w,h,true);
-            this.draw('temporal',temporal,w,h,{source,history:history.texture,motion:motion.texture},{temporal:valid?s.temporal:0});source=temporal.texture;
+            this.draw('temporal',temporal,w,h,{source,history:history.texture,motion:motion.texture},{temporal:valid?plan.temporal:0});source=temporal.texture;
             this.historyIndex=index; // Ping-pong retains both histories without two extra copies.
           }
           this.previous=temporalEnabled?{time,w,h}:null;
-          if(temporalEnabled&&antialias>0){const aa=this.target('aa',w,h,s.processingMode==='quality');this.draw('antialias',aa,w,h,{source},{amount:antialias});source=aa.texture;}
-          // Upscale: EASU then the sharpening pass, or SGSR alone as the last pass (item 5). At native
-          // output SGSR is never used: the sharpening pass stays (SGSR was measured only when scaling).
-          if(s.upscale&&outW>w&&outH>h){if(s.scaler==='sgsr')sgsr=true;else{const scaled=this.target('scaled',outW,outH,s.processingMode==='quality');this.draw('easu',scaled,outW,outH,{source});source=scaled.texture;}}
+          if(plan.antialias>0){const aa=this.target('aa',w,h,plan.quality);this.draw('antialias',aa,w,h,{source},{amount:plan.antialias});source=aa.texture;}
+          if(plan.scaler==='easu'){const scaled=this.target('scaled',outW,outH,plan.quality);this.draw('easu',scaled,outW,outH,{source});source=scaled.texture;}
         }else this.previous=null;
-        // One last pass to the output: SGSR (scaling and sharpening, with the finishing of the sharpening
-        // pass), or one sharpening stage. 'native' follows the Better xCloud menu (CAS/USM). The
-        // reference applies the same method and strength with the unmodified upstream shader.
-        let final;
-        if(sgsr)final={name:'sgsr',textures:{source},uniforms:{...sgsrParams(s.sharpness),brightness:1,contrast:s.contrast,saturation:s.saturation,shadows:s.shadows,deband:s.deband*this.budget.debandScale,diagnostic}};
-        else{const method=s.sharpening==='native'?s.processing:s.sharpening;
-          const casName=s.mode!=='original'&&method==='rcas'?'rcas':s.mode==='filtered'?'casFiltered':'cas';
-          final={name:casName,filterId:method==='usm'?1:2,textures:{data:source},uniforms:{iResolution:[outW,outH],qualityMode:s.mode==='filtered'&&s.processingMode==='quality',rcasStrength:s.sharpness/10,haloMargin:(2+s.sharpness)/255,noiseFloor:s.noiseFloor/255,lumaSharpen:s.lumaSharpen,sharpenFactor:s.mode==='original'?0:s.mode==='cas'?s.sharpness/1.2:s.sharpness/(s.processingMode==='quality'?1:1.2),brightness:1,contrast:s.mode==='filtered'?s.contrast:1,saturation:s.mode==='filtered'?s.saturation:1,shadows:s.mode==='filtered'?s.shadows:0,deband:s.mode==='filtered'?s.deband*this.budget.debandScale:0,diagnostic}};}
+        const final={...plan.final,textures:{[plan.final.key]:source}};
         if(outputTarget&&deferFinal){
           const old=this.targets[outputTarget];if(old)this.flushSlot(old);
           const owner=source===this.input?null:Object.keys(this.targets).find(k=>this.targets[k].texture===source&&!k.startsWith('history')&&!k.startsWith('paced'));
@@ -565,5 +595,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={autoRenderer,AUTO_WEBGPU,framePlan,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

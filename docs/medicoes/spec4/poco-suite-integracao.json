@@ -1,0 +1,66 @@
+{
+ "page": "renderer-harness.html",
+ "before": {
+  "at": "2026-11-07T10:26:28.364Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": 0.843,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 49.6,
+  "gpuMaxC": 44.5,
+  "skinC": 37.46,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T10:26:34.920Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.093,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 49.2,
+  "gpuMaxC": 44.9,
+  "skinC": 37.916,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36"
+ },
+ "result": {
+  "passed": [
+   "Auto draws with WebGL2 and creates no WebGPU canvas",
+   "WebGPU takes over once its pipelines are ready (webgpu )",
+   "WebGPU canvas sits under the transparent WebGL2 canvas",
+   "WebGPU canvas follows the WebGL2 canvas size and style, without input",
+   "WebGPU renders the video frames",
+   "The WebGPU canvas shows the picture (606192 lit pixels)",
+   "Direct capture renders VideoFrames with WebGPU",
+   "The pacer presents WebGPU slots",
+   "timestamp-query feeds the budget: measurement is GPU time, not cadence",
+   "Measurement starts with WebGPU",
+   "The measurement records the WebGPU renderer",
+   "Temporal hands the frames back to WebGL2",
+   "WebGL2 canvas is visible again",
+   "The panel status says why",
+   "WebGPU resumes when temporal is off",
+   "A WebGPU failure falls back to WebGL2 and removes its canvas",
+   "WebGL2 keeps rendering after the fallback",
+   "No reload, direct capture still on",
+   "A failed WebGPU is not retried by itself",
+   "Changing the setting retries WebGPU",
+   "A lost WebGPU device falls back to WebGL2",
+   "Still the same page",
+   "WebGPU comes back after a lost device when chosen again",
+   "Destroying the player removes the WebGPU canvas"
+  ]
+ }
+}

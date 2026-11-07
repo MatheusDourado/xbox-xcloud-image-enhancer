@@ -19,7 +19,9 @@
   // Fence trend above 1.5 frame intervals for 3 windows (Engine budget.fenceTrend): a warning only.
   gpuTrend:false,
   // desynchronized attribute of the current canvas context (null before the first player).
-  desynchronized:null};
+  desynchronized:null,
+  // Renderer (Spec 4): the setting, the one drawing now, its state (webgl2, starting, webgpu, fallback) and why.
+  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null}};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -30,15 +32,17 @@
   return Math.round((screen?.height||0)*dpr);
  }
  // Settings that do not change the processed image keep the GPU adaptation.
- const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized']);
+ const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized','renderer']);
  // Bumped by every capture/Fluidez change: a failed direct capture is retried after the user changes either.
  let captureEpoch=0;
+ // Bumped by every renderer change: a WebGPU renderer that failed is tried again only after it.
+ let rendererEpoch=0;
  const api=window.BxImageFilter={settings,status,diagnostic:false,panelOpen:false,presets:BxRestoration.presets,
   // Restores the treatment; the HUD choice is a display preference and stays.
   reset(){const {hud,hudPosition}=settings;Object.assign(settings,BxRestoration.defaults,{hud,hudPosition});persist();api.diagnostic=false;activeEngine?.resetBudget();if(activePlayer){activePlayer.bxReferenceFps=null;activePlayer.bxTimes=[];activePlayer.bxCadenceMark=performance.now();}},
   // Unchanged values are ignored: the gamepad repeats a held direction ~10 times a second, even at the ends.
   update(patch){const changed=Object.keys(patch).filter(k=>settings[k]!==patch[k]);if(!changed.length)return;
-   Object.assign(settings,patch);if(changed.includes('capture')||changed.includes('fluidity'))captureEpoch++;if(changed.some(k=>!LIVE_KEYS.has(k)))activeEngine?.resetBudget();persist(true);},
+   Object.assign(settings,patch);if(changed.includes('capture')||changed.includes('fluidity'))captureEpoch++;if(changed.includes('renderer'))rendererEpoch++;if(changed.some(k=>!LIVE_KEYS.has(k)))activeEngine?.resetBudget();persist(true);},
   applyPreset(name){const p=BxRestoration.presets[name];if(p)api.update({...p.values});},
   preset:()=>BxRestoration.presetOf(settings),
   // Better xCloud keeps stream.*, server.* and userAgent.* as global prefs; video.* per stream/game.
@@ -48,7 +52,8 @@
   async startMeasurement(){const engine=activeEngine,video=activePlayer?.$video;if(!engine)return false;
    const initial=await BxRestoration.captureVideoStats(video,peer());if(activeEngine!==engine)return false;
    const sc=globalThis.screen;
-   engine.diagnostics.start({userAgent:navigator.userAgent,renderer:engine.gl.getParameter(engine.gl.RENDERER),timer:!!engine.ext,gpuMethod:engine.ext?'timer':engine.fenceTiming?'fence':null,floatTargets:engine.floatTargets,
+   const gpu=engine.renderer==='webgpu';
+   engine.diagnostics.start({userAgent:navigator.userAgent,renderer:gpu?'WebGPU '+[engine.adapter?.vendor,engine.adapter?.architecture].filter(Boolean).join(' '):engine.gl.getParameter(engine.gl.RENDERER),api:gpu?'webgpu':'webgl2',timer:!!engine.ext,gpuMethod:engine.ext?(gpu?'timestamp':'timer'):engine.fenceTiming?'fence':null,floatTargets:engine.floatTargets,
     screen:{width:sc?.width??null,height:sc?.height??null,dpr:window.devicePixelRatio??null,refreshPref:androidCall('getRefreshRate')},app:androidCall('getAppInfo'),
     betterXcloud:nativePrefs(),capture:{...status.capture},smoothing:status.smoothing??null,initial});
    const id=engine.diagnostics.startedAt;measureRefresh().then(hz=>{if(engine.diagnostics.startedAt===id)engine.diagnostics.annotate({refreshMeasuredHz:hz});});
@@ -164,7 +169,9 @@
  let hiddenAt=-Infinity;
  document.addEventListener?.('visibilitychange',()=>{if(document.hidden)hiddenAt=performance.now();});
  // Records a frame shown on screen: 2 s window for the panel's pacing line, longer ring for the HUD graph.
- function shownAt(t,now,engine){keep(t.display,now,now);if(t.lastShown!=null&&t.lastShown>hiddenAt){status.intervals.push(now-t.lastShown);status.intervalsTotal++;if(status.intervals.length>240)status.intervals.shift();engine?.diagnostics.interval('display',now-t.lastShown);}t.lastShown=now;}
+ // A frame shown while the page is hidden (a callback already queued when it hid) starts no interval: the
+ // next one would span the hidden time.
+ function shownAt(t,now,engine){if(document.hidden){t.lastShown=null;return;}keep(t.display,now,now);if(t.lastShown!=null&&t.lastShown>hiddenAt){status.intervals.push(now-t.lastShown);status.intervalsTotal++;if(status.intervals.length>240)status.intervals.shift();engine?.diagnostics.interval('display',now-t.lastShown);}t.lastShown=now;}
  const statsOf=list=>BxRestoration.frameStats(list.map(e=>e[1]));
  function startTiming(player){
   if(player.bxTiming)return;
@@ -178,7 +185,7 @@
    if(player.bxDirect?.frames>0)return;
    const at=performance.now(),presented=meta?.presentedFrames;
    // Frames the browser presented between two callbacks never reached the treatment (nor the canvas).
-   if(Number.isFinite(presented)){if(presented>t.presented){keep(t.presentedLog,presented-t.presented,at);player.bxEngine?.diagnostics.skipped(presented-t.presented-1);}t.presented=presented;}
+   if(Number.isFinite(presented)){if(presented>t.presented){keep(t.presentedLog,presented-t.presented,at);player.bxRender?.diagnostics.skipped(presented-t.presented-1);}t.presented=presented;}
    const rtp=meta&&Number.isFinite(meta.rtpTimestamp)?t.clock(meta.rtpTimestamp):null,arrival=Number.isFinite(meta?.receiveTime)?meta.receiveTime:at;
    if(rtp!==null)keep(t.server,rtp,at);
    keep(t.arrival,arrival,at);origin(player,t,rtp,arrival);
@@ -187,12 +194,12 @@
   t.metaId=video.requestVideoFrameCallback(onMeta);
  }
  // Server and arrival intervals for the measurement, from the frames reaching the treatment.
- function origin(player,t,server,arrival){const diag=player.bxEngine?.diagnostics;
+ function origin(player,t,server,arrival){const diag=player.bxRender?.diagnostics;
   if(diag?.active&&t.lastArrival!=null&&t.lastArrival>hiddenAt){if(server!==null&&t.lastServer!=null)diag.interval('server',server-t.lastServer);diag.interval('arrival',arrival-t.lastArrival);}
   t.lastServer=server;t.lastArrival=arrival;}
  // Switching between video and direct capture changes the clocks: start the origin windows over.
  function clearOrigin(player){const t=player.bxTiming;if(!t)return;t.server.length=0;t.arrival.length=0;t.presentedLog.length=0;t.lastServer=t.lastArrival=null;t.presented=undefined;}
- function stopPacer(player){const t=player.bxTiming;if(!t?.pacer)return;if(t.raf!==null)cancelAnimationFrame(t.raf);t.raf=null;t.pacer=null;t.shown=null;player.bxEngine?.releasePaced();}
+ function stopPacer(player){const t=player.bxTiming;if(!t?.pacer)return;if(t.raf!==null)cancelAnimationFrame(t.raf);t.raf=null;t.pacer=null;t.shown=null;player.bxRender?.releasePaced();}
  function stopTiming(player){const t=player.bxTiming;if(!t)return;stopPacer(player);if(t.metaId!==null)player.$video?.cancelVideoFrameCallback?.(t.metaId);player.bxTiming=null;}
  function ensurePacer(player,mode){
   const t=player.bxTiming;if(t.pacer?.mode===mode)return t.pacer;
@@ -200,14 +207,62 @@
   const tick=()=>{
    if(!t.pacer||player.isStopped){t.raf=null;return;}
    t.raf=requestAnimationFrame(tick);
-   const now=performance.now(),f=t.pacer.tick(now),engine=player.bxEngine;t.lastTick=now;
+   const now=performance.now(),f=t.pacer.tick(now),engine=player.bxRender;t.lastTick=now;
    const dropped=t.pacer.dropped;if(dropped>t.pacerDropped){engine?.diagnostics.dropped(dropped-t.pacerDropped);t.pacerDropped=dropped;}
-   if(f&&engine&&player.gl&&!player.gl.isContextLost()&&engine.present(f.slot)){t.shown=f.slot;shownAt(t,now,engine);if(f.arrival>hiddenAt)engine.diagnostics.interval('wait',now-f.arrival);player.gl.useProgram(player.program);}
+   if(f&&engine&&renderable(player)&&engine.present(f.slot)){t.shown=f.slot;shownAt(t,now,engine);if(f.arrival>hiddenAt)engine.diagnostics.interval('wait',now-f.arrival);if(player.gl&&!player.gl.isContextLost())player.gl.useProgram(player.program);}
   };
   t.raf=requestAnimationFrame(tick);return t.pacer;
  }
  // Five persistent output textures: the one on screen, up to three queued, one being written.
  function freeSlot(t){const used=new Set([t.shown,...t.pacer.pending.map(f=>f.slot)]);for(let i=0;i<5;i++){const name='paced'+i;if(!used.has(name))return name;}return t.pacer.pending[0]?.slot||'paced0';}
+ // Renderer (Spec 4). The WebGL2 engine always exists. The WebGPU one draws on its own canvas, placed under
+ // Better xCloud's WebGL2 canvas, which then turns transparent (opacity 0) and keeps receiving input; the
+ // CSS of #game-stream canvas positions both. A WebGPU failure (creation, validation error, device lost) or
+ // a frame only WebGL2 draws (neural restoration, temporal) shows WebGL2 again from the next frame on,
+ // without a reload; after a failure WebGPU is retried only when the setting changes.
+ function wantsWebGPU(){return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
+ // Better xCloud still draws or reads the WebGL2 canvas when WebGPU is off: only the GL context matters then.
+ function renderable(player){return player.bxRender!==player.bxEngine||!!player.gl&&!player.gl.isContextLost();}
+ function setRenderer(player,engine){
+  if(player.bxRender===engine)return;
+  stopPacer(player);player.bxRender=engine;if(activePlayer===player)activeEngine=engine;
+  const gpu=engine!==player.bxEngine,g=player.bxGpu;
+  if(g)g.canvas.style.visibility=gpu?'visible':'hidden';
+  player.$canvas.style.opacity=gpu?'0':'';
+  // A new renderer starts its own budget and cadence comparison.
+  player.bxLastFrame=null;player.bxTimes=[];player.bxReferenceFps=null;player.bxCadenceMark=performance.now();
+  status.renderer.active=gpu?'webgpu':'webgl2';
+ }
+ function syncCanvas(player,g){const c=player.$canvas,css=c.style.cssText;
+  if(g.css!==css){g.css=css;g.canvas.style.cssText=css;g.canvas.style.opacity='';g.canvas.style.pointerEvents='none';g.canvas.style.visibility=player.bxRender===g.engine?'visible':'hidden';}
+  if(g.canvas.width!==c.width)g.canvas.width=c.width;if(g.canvas.height!==c.height)g.canvas.height=c.height;}
+ function stopGpu(player){const g=player.bxGpu;if(!g)return;
+  if(player.bxRender===g.engine&&g.engine)setRenderer(player,player.bxEngine);
+  player.bxGpu=null;try{g.engine?.destroy();}catch{}g.canvas.remove();
+  if(status.renderer.state!=='fallback'){status.renderer.state='webgl2';status.renderer.reason='';}}
+ function gpuFailed(player,reason){player.bxGpuFailed=true;console.warn('[Bx Restoration] WebGPU → WebGL2:',reason);stopGpu(player);
+  Object.assign(status.renderer,{state:'fallback',active:'webgl2',reason:'WebGPU falhou, usando WebGL2: '+reason});}
+ function startGpu(player){
+  const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null};
+  Object.assign(status.renderer,{state:'starting',reason:'Preparando o WebGPU (compilação dos shaders)'});
+  g.canvas.dataset.bxRenderer='webgpu';player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
+  let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}
+  BxWebGPU.create(g.canvas,{powerPreference:power==='low-power'?'low-power':'high-performance'}).then(engine=>{
+   if(player.bxGpu!==g||player.isStopped){engine.destroy();return;}
+   g.engine=engine;g.state='ready';engine.onfail=reason=>{if(player.bxGpu===g)gpuFailed(player,reason);};
+   Object.assign(status.renderer,{state:'webgpu',reason:'',adapter:engine.adapter,timestamps:engine.timestamps,warmMs:Math.round(engine.warmMs)});
+  },error=>{if(player.bxGpu===g)gpuFailed(player,String(error?.message||error));});
+ }
+ // Before each frame: the renderer the setting asks for, once ready, and WebGL2 otherwise.
+ function chooseRenderer(player,renderSettings,w,h){
+  status.renderer.setting=settings.renderer;
+  if(player.bxRendererEpoch!==rendererEpoch){player.bxRendererEpoch=rendererEpoch;player.bxGpuFailed=false;if(status.renderer.state==='fallback')Object.assign(status.renderer,{state:'webgl2',reason:''});}
+  if(!wantsWebGPU()){stopGpu(player);setRenderer(player,player.bxEngine);return;}
+  if(!player.bxGpu&&!player.bxGpuFailed){if(globalThis.BxWebGPU?.supported())startGpu(player);else{player.bxGpuFailed=true;Object.assign(status.renderer,{state:'fallback',reason:'WebGPU indisponível neste navegador: usando WebGL2'});}}
+  const g=player.bxGpu,ready=g?.state==='ready'&&!g.engine.failed,ok=ready&&g.engine.supports(renderSettings,w,h,w,h);
+  setRenderer(player,ok?g.engine:player.bxEngine);
+  if(ready)status.renderer.reason=ok?'':'Temporal e Reconstrução neural só rodam no WebGL2: usando WebGL2';
+ }
  const proto=WebGL2Player.prototype,setup=proto.setupShaders,frame=proto.updateFrame,destroy=proto.destroy;
  function fallback(player){const gl=player.gl;if(gl&&!gl.isContextLost()){gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,player.bxOriginalTexture);gl.useProgram(player.program);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,player.$canvas.width,player.$canvas.height);player.updateCanvas();frame.call(player);}}
  proto.setupShaders=async function(){
@@ -215,15 +270,15 @@
   // Context attributes are fixed when the canvas gets its context (one canvas per player): the panel
   // compares this with the setting to say when a change waits for the next session.
   try{status.desynchronized=!!this.gl.getContextAttributes()?.desynchronized;}catch{status.desynchronized=null;}
-  this.bxEngine?.destroy();this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
-  try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
+  stopGpu(this);this.bxEngine?.destroy();this.bxRender=null;this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
+  try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);this.bxRender=this.bxEngine;activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
   catch(error){status.mode='error';status.error=String(error.message||error);console.warn('[Bx Restoration]',error);}
   finally{this.gl.bindVertexArray(null);this.gl.activeTexture(this.gl.TEXTURE0);this.gl.bindTexture(this.gl.TEXTURE_2D,this.bxOriginalTexture);this.gl.useProgram(this.program);}
   this.bxLastFrame=null;this.bxLastSettings='';this.bxTimes=[];startTiming(this);
   if(!this.bxListeners){
-   const reset=()=>{this.bxEngine?.resetHistory();this.bxLastFrame=null;this.bxReferenceFps=null;this.bxTimes=[];this.bxCadenceMark=performance.now();};
+   const reset=()=>{this.bxEngine?.resetHistory();this.bxGpu?.engine?.resetHistory();this.bxLastFrame=null;this.bxReferenceFps=null;this.bxTimes=[];this.bxCadenceMark=performance.now();};
    const lost=e=>{e.preventDefault();reset();status.mode='error';status.error='Contexto GPU perdido; aguardando restauração';};
-   const restored=()=>{stopPacer(this);this.bxEngine?.destroy();this.bxEngine=null;this.setupShaders().catch(e=>{status.error=String(e.message);});};
+   const restored=()=>{stopPacer(this);stopGpu(this);this.bxEngine?.destroy();this.bxEngine=this.bxRender=null;this.setupShaders().catch(e=>{status.error=String(e.message);});};
    this.bxListeners={reset,lost,restored};
    for(const name of ['seeking','pause','emptied'])this.$video.addEventListener(name,reset);
    this.$canvas.addEventListener('webglcontextlost',lost);this.$canvas.addEventListener('webglcontextrestored',restored);
@@ -243,22 +298,25 @@
   if(settings.adaptive&&settings.mode==='filtered'&&status.adaptive){const k=status.adaptive.scales;
    renderSettings.cleanup=Math.min(1,settings.cleanup*k.cleanup);renderSettings.deband=Math.min(1,settings.deband*k.deband);renderSettings.detail=Math.min(1,settings.detail*k.detail);}
   const shown=displayHeight(player,w,h);renderSettings.output=BxRestoration.resolveOutput(settings.output,shown,h);
-  const size=player.bxEngine.outputSize(w,h,renderSettings),ow=size.width,oh=size.height;
+  chooseRenderer(player,renderSettings,w,h);
+  const size=player.bxRender.outputSize(w,h,renderSettings),ow=size.width,oh=size.height;
   if(player.bxMode!==settings.mode){player.bxTimes=[];player.bxCadenceMark=performance.now();player.bxMode=settings.mode;}
   // Keep the reference cadence when the budget reduces output automatically.
   // Only user-selected output/source/FPS changes invalidate the comparison.
   // The frame source too: direct capture counts every decoded frame, the video path only those it presents.
   const conditions=`${w}:${h}:${settings.output}:${player.targetFps}:${player.bxDirect?'direct':'video'}`;
   if(player.bxConditions!==conditions){player.bxReferenceFps=null;player.bxTimes=[];player.bxCadenceMark=performance.now();player.bxConditions=conditions;}
-  if(player.$canvas.width!==ow||player.$canvas.height!==oh){player.$canvas.width=ow;player.$canvas.height=oh;player.bxEngine.resetHistory();stopPacer(player);}
+  if(player.$canvas.width!==ow||player.$canvas.height!==oh){player.$canvas.width=ow;player.$canvas.height=oh;player.bxRender.resetHistory();stopPacer(player);}
+  if(player.bxGpu)syncCanvas(player,player.bxGpu);
   return {renderSettings,shown,ow,oh};
  }
  // Status after a rendered frame; newFrame feeds the FPS and the cadence-based GPU adaptation.
  function publish(player,{w,h,ow,oh,shown,newFrame,timing}){
   const direct=!!player.bxDirect;
-  status.mode=api.diagnostic?'diagnostic':settings.mode;status.frames=player.bxEngine.frames;status.lastFrame=Date.now();status.resolution=`${w}×${h} → ${ow}×${oh}`;
-  status.gpuP95=player.bxEngine.budget.p95;status.measurement=player.bxEngine.ext?'gpu':'cadence';status.adaptation=player.bxEngine.budget.reason;
-  status.gpuEstimate=player.bxEngine.ext?null:player.bxEngine.gpuEstimate;
+  const engine=player.bxRender;
+  status.mode=api.diagnostic?'diagnostic':settings.mode;status.frames=engine.frames;status.lastFrame=Date.now();status.resolution=`${w}×${h} → ${ow}×${oh}`;
+  status.gpuP95=engine.budget.p95;status.measurement=engine.ext?'gpu':'cadence';status.adaptation=engine.budget.reason;
+  status.gpuEstimate=engine.ext?null:engine.gpuEstimate;
   status.display=shown;
   const now=performance.now();if(newFrame)player.bxTimes.push(now);while(player.bxTimes.length>1&&now-player.bxTimes[0]>2000)player.bxTimes.shift();
   status.fps=player.bxTimes.length>1?(player.bxTimes.length-1)*1000/(player.bxTimes.at(-1)-player.bxTimes[0]):null;status.pacing=statsOf(timing.display)||BxRestoration.frameStats(player.bxTimes);
@@ -268,21 +326,24 @@
   if(direct)status.capture={active:true,frames:player.bxDirect.rendered,reason:''};
   if(newFrame&&now-(player.bxCadenceMark||0)>2000){
    if(settings.mode!=='filtered')player.bxReferenceFps=status.fps;
-   else if(!player.bxEngine.ext){
+   else if(!engine.ext){
     // Frames shown against frames decoded now. The <video> element also skips frames that arrive together
     // with no GPU overload, more at 60 FPS: the margin depends on the path and the rate (cadenceMargin).
     // A page that was just hidden leaves a gap in the window. Without a live figure, the reference
     // measured in CAS/original (same path) stays.
-    const budget=player.bxEngine.budget,live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
+    const budget=engine.budget,live=BxRestoration.liveCadence(status.net?.fpsReceived,player.targetFps),list=timing.display,span=list.length>1?list.at(-1)[0]-list[0][0]:0;
     if(live===null)budget.cadence(player.bxReferenceFps,status.fps);
     else if(span>0&&now-hiddenAt>4000)budget.cadence(live,(list.length-1)*1000/span,BxRestoration.cadenceMargin(direct,live));
     // Early warning from the fence trend: shown, never acted on.
-    status.gpuTrend=budget.fenceTrend(player.bxEngine.gpuEstimate?.p50,live??player.bxReferenceFps??status.fps);
+    status.gpuTrend=budget.fenceTrend(engine.gpuEstimate?.p50,live??player.bxReferenceFps??status.fps);
    }
    player.bxCadenceMark=now;
   }
  }
- function fail(player,error){status.mode='error';status.error=String(error.message||error);stopDirect(player,'Erro no tratamento');stopPacer(player);player.bxEngine.destroy();player.bxEngine=null;activeEngine=null;fallback(player);}
+ function fail(player,error){
+  // A WebGPU failure only hands the frames back to WebGL2.
+  if(player.bxRender&&player.bxRender!==player.bxEngine){gpuFailed(player,String(error?.message||error));return;}
+  status.mode='error';status.error=String(error.message||error);stopDirect(player,'Erro no tratamento');stopPacer(player);stopGpu(player);player.bxEngine.destroy();player.bxEngine=player.bxRender=null;activeEngine=null;fallback(player);}
  // Direct capture (Fluidez only): the <video> element shows at most one frame per display refresh, so
  // frames arriving together are skipped before the treatment sees them. Reading the WebRTC track with
  // MediaStreamTrackProcessor delivers every decoded frame; each VideoFrame is processed into a paced
@@ -328,9 +389,10 @@
    const {renderSettings,shown,ow,oh}=frameSettings(player,w,h),timing=player.bxTiming||(startTiming(player),player.bxTiming);
    // VideoFrame timestamps follow the capture cadence on a monotonic clock (in Chromium, time since
    // boot): the pacer's 'frame' clock and the temporal time base.
-   const pacer=ensurePacer(player,settings.fluidity),slot=freeSlot(timing),check=d.rendered<3;
+   // WebGPU imports the VideoFrame without a copy (importExternalTexture) and reports its own failures.
+   const engine=player.bxRender,gl=engine===player.bxEngine,pacer=ensurePacer(player,settings.fluidity),slot=freeSlot(timing),check=gl&&d.rendered<3;
    if(check)player.gl.getError();
-   if(!player.bxEngine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
+   if(!engine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
    // Some drivers may not take a decoder frame as a texture: check the first frames once and fall back.
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
@@ -364,22 +426,22 @@
   const token=count>0?`${id}${count}:${w}:${h}`:`${id}${time}:${w}:${h}`;
   const newFrame=this.bxLastFrame!==token;
   const {renderSettings,shown,ow,oh}=frameSettings(this,w,h);
-  const controls=JSON.stringify(renderSettings)+api.diagnostic+':'+this.bxEngine.budget.revision;
-  if(this.bxLastFrame===token&&this.bxLastSettings===controls){this.bxEngine.poll();return;}
+  const engine=this.bxRender,controls=JSON.stringify(renderSettings)+api.diagnostic+':'+engine.budget.revision+':'+engine.renderer;
+  if(this.bxLastFrame===token&&this.bxLastSettings===controls){engine.poll();return;}
   try{
    const timing=this.bxTiming||(startTiming(this),this.bxTiming);
    if(settings.fluidity!=='off'){
     // Process now, show on the pacer's clock. A settings change on the same frame redraws it at once.
     // The last pass (sharpening or SGSR) runs at present(), straight to the canvas (Spec 3 item 8).
     const pacer=ensurePacer(this,settings.fluidity),slot=newFrame||!timing.shown?freeSlot(timing):timing.shown;
-    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot,true))return;
+    if(!engine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot,true))return;
     timing.lastSlot=slot;
     if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;pacer.add({slot,arrival:performance.now(),rtp});}
-    else if(this.bxEngine.present(slot))this.gl.useProgram(this.program);
+    else if(engine.present(slot))this.gl.useProgram(this.program);
    }else{
     if(timing.pacer)stopPacer(this);
-    if(!this.bxEngine.render(video,ow,oh,renderSettings,time,api.diagnostic))return;
-    if(newFrame)shownAt(timing,performance.now(),this.bxEngine);
+    if(!engine.render(video,ow,oh,renderSettings,time,api.diagnostic))return;
+    if(newFrame)shownAt(timing,performance.now(),engine);
    }
    this.bxLastFrame=token;this.bxLastSettings=controls;
    publish(this,{w,h,ow,oh,shown,newFrame,timing});
@@ -388,7 +450,7 @@
  };
  proto.destroy=function(){
   stopDirect(this,'');stopTiming(this);
-  if(activePlayer===this)activePlayer=null;if(activeEngine===this.bxEngine)activeEngine=null;this.bxEngine?.destroy();this.bxEngine=null;
+  if(activePlayer===this)activePlayer=null;if(activeEngine===this.bxEngine||activeEngine===this.bxRender)activeEngine=null;stopGpu(this);this.bxEngine?.destroy();this.bxEngine=this.bxRender=null;
   if(this.bxListeners){const {reset,lost,restored}=this.bxListeners;for(const name of ['seeking','pause','emptied'])this.$video.removeEventListener(name,reset);this.$canvas.removeEventListener('webglcontextlost',lost);this.$canvas.removeEventListener('webglcontextrestored',restored);this.bxListeners=null;}
   status.mode='waiting';status.lastFrame=0;api.diagnostic=false;destroy.call(this);
  };

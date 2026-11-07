@@ -7,3 +7,4 @@ output/playwright/
 android/build/
 output/eval/
 output/nn/
+output/spec4-entrada-*.bin

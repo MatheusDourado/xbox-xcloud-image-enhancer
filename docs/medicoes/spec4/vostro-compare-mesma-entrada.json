@@ -1,0 +1,177 @@
+{
+ "name": "compare-mesma-entrada",
+ "device": "vostro",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:36:03.900Z"
+ },
+ "after": {
+  "at": "2026-11-07T09:36:04.915Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "timer": true,
+  "spatialPrecision": "highp",
+  "adapter": {
+   "vendor": "intel",
+   "architecture": "gen-12lp",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 0.3999999985098839,
+    "messages": []
+   },
+   "tex": {
+    "ms": 0.3999999985098839,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    14.300000004470348
+   ],
+   [
+    "texspec3",
+    1
+   ],
+   [
+    "extv9",
+    2.399999998509884
+   ],
+   [
+    "texv9",
+    0.7999999970197678
+   ],
+   [
+    "extall",
+    2.899999998509884
+   ],
+   [
+    "texall",
+    0.7000000029802322
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.0295
+ },
+ "result": {
+  "spatialPrecision": "highp",
+  "result": {
+   "spec3": {
+    "vsGlVariant": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220531,
+      266,
+      0,
+      2,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220531,
+      266,
+      0,
+      2,
+      0,
+      0,
+      0,
+      1
+     ]
+    }
+   },
+   "v9": {
+    "vsGlVariant": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220527,
+      271,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220527,
+      271,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ]
+    }
+   },
+   "all": {
+    "vsGlVariant": {
+     "max": 10,
+     "mean": 0.00009,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220252,
+      546,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 10,
+     "mean": 0.00009,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220252,
+      546,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ]
+    }
+   }
+  },
+  "errors": []
+ }
+}

@@ -1,0 +1,314 @@
+{
+ "name": "compare",
+ "device": "poco",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:33:57.290Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.093,
+  "tempC": 32.8,
+  "thermal": 0,
+  "cpu0": 42.8,
+  "gpuMaxC": 41.3,
+  "skinC": 35.884,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T09:34:03.718Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": -0.093,
+  "tempC": 33,
+  "thermal": 0,
+  "cpu0": 48,
+  "gpuMaxC": 43.3,
+  "skinC": 35.807,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 11.799999997019768,
+    "messages": []
+   },
+   "tex": {
+    "ms": 9.800000004470348,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    764.1000000014901
+   ],
+   [
+    "texspec3",
+    64.29999999701977
+   ],
+   [
+    "extv9",
+    766.8999999985099
+   ],
+   [
+    "texv9",
+    86.30000000447035
+   ],
+   [
+    "extall",
+    930.8999999985099
+   ],
+   [
+    "texall",
+    92.89999999850988
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.0112
+ },
+ "result": {
+  "result": {
+   "input": {
+    "max": 84,
+    "mean": 0.33722,
+    "over1Pct": 4.5483,
+    "over2Pct": 2.6548,
+    "hist": [
+     5229805,
+     708053,
+     117795,
+     54219,
+     32804,
+     18293,
+     12098,
+     47733
+    ]
+   },
+   "spec3": {
+    "ext": {
+     "max": 93,
+     "mean": 0.31601,
+     "over1Pct": 3.9447,
+     "over2Pct": 2.0379,
+     "hist": [
+      5114849,
+      860562,
+      118615,
+      47396,
+      25115,
+      14058,
+      8515,
+      31690
+     ]
+    },
+    "tex": {
+     "max": 93,
+     "mean": 0.31601,
+     "over1Pct": 3.9447,
+     "over2Pct": 2.0379,
+     "hist": [
+      5114849,
+      860562,
+      118615,
+      47396,
+      25115,
+      14058,
+      8515,
+      31690
+     ]
+    },
+    "texVsGlGenericHighp": {
+     "max": 93,
+     "mean": 0.29902,
+     "over1Pct": 3.8783,
+     "over2Pct": 2.0336,
+     "hist": [
+      5216366,
+      763174,
+      114753,
+      47155,
+      25087,
+      14013,
+      8561,
+      31691
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 52,
+     "mean": 0.0359,
+     "over1Pct": 0.0188,
+     "over2Pct": 0.009,
+     "hist": [
+      6000665,
+      218968,
+      609,
+      215,
+      113,
+      80,
+      27,
+      123
+     ]
+    }
+   },
+   "v9": {
+    "ext": {
+     "max": 93,
+     "mean": 0.31416,
+     "over1Pct": 3.8845,
+     "over2Pct": 2.0294,
+     "hist": [
+      5121886,
+      857265,
+      115404,
+      46843,
+      24841,
+      14045,
+      8689,
+      31827
+     ]
+    },
+    "tex": {
+     "max": 93,
+     "mean": 0.31416,
+     "over1Pct": 3.8845,
+     "over2Pct": 2.0294,
+     "hist": [
+      5121886,
+      857265,
+      115404,
+      46843,
+      24841,
+      14045,
+      8689,
+      31827
+     ]
+    },
+    "texVsGlGenericHighp": {
+     "max": 93,
+     "mean": 0.2977,
+     "over1Pct": 3.8286,
+     "over2Pct": 2.0282,
+     "hist": [
+      5221011,
+      761620,
+      111999,
+      46749,
+      24820,
+      14050,
+      8724,
+      31827
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 52,
+     "mean": 0.03563,
+     "over1Pct": 0.0198,
+     "over2Pct": 0.0094,
+     "hist": [
+      6002507,
+      217059,
+      649,
+      221,
+      121,
+      85,
+      32,
+      126
+     ]
+    }
+   },
+   "all": {
+    "ext": {
+     "max": 89,
+     "mean": 0.30872,
+     "over1Pct": 3.7989,
+     "over2Pct": 1.9462,
+     "hist": [
+      5116067,
+      868414,
+      115248,
+      45624,
+      23856,
+      13548,
+      8248,
+      29795
+     ]
+    },
+    "tex": {
+     "max": 89,
+     "mean": 0.30872,
+     "over1Pct": 3.7989,
+     "over2Pct": 1.9462,
+     "hist": [
+      5116067,
+      868414,
+      115248,
+      45624,
+      23856,
+      13548,
+      8248,
+      29795
+     ]
+    },
+    "texVsGlGenericHighp": {
+     "max": 90,
+     "mean": 0.29308,
+     "over1Pct": 3.755,
+     "over2Pct": 1.9452,
+     "hist": [
+      5210780,
+      776428,
+      112587,
+      45489,
+      23918,
+      13545,
+      8263,
+      29790
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 52,
+     "mean": 0.03773,
+     "over1Pct": 0.0201,
+     "over2Pct": 0.0095,
+     "hist": [
+      5989487,
+      230062,
+      658,
+      223,
+      126,
+      81,
+      37,
+      126
+     ]
+    }
+   }
+  },
+  "errors": []
+ }
+}

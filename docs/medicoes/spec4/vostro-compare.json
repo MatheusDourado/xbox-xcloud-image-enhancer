@@ -1,0 +1,224 @@
+{
+ "name": "compare",
+ "device": "vostro",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:32:58.268Z"
+ },
+ "after": {
+  "at": "2026-11-07T09:33:02.519Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "timer": true,
+  "spatialPrecision": "highp",
+  "adapter": {
+   "vendor": "intel",
+   "architecture": "gen-12lp",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 3.0999999940395355,
+    "messages": []
+   },
+   "tex": {
+    "ms": 3.5,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    546.1000000014901
+   ],
+   [
+    "texspec3",
+    61.80000000447035
+   ],
+   [
+    "extv9",
+    869.6999999955297
+   ],
+   [
+    "texv9",
+    100.70000000298023
+   ],
+   [
+    "extall",
+    1101.3999999985099
+   ],
+   [
+    "texall",
+    92.60000000149012
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.031
+ },
+ "result": {
+  "result": {
+   "spec3": {
+    "ext": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220531,
+      266,
+      0,
+      2,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "tex": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220531,
+      266,
+      0,
+      2,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "v9": {
+    "ext": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220527,
+      271,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "tex": {
+     "max": 10,
+     "mean": 0.00005,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220527,
+      271,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "all": {
+    "ext": {
+     "max": 10,
+     "mean": 0.00009,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220252,
+      546,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ]
+    },
+    "tex": {
+     "max": 10,
+     "mean": 0.00009,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220252,
+      546,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+     ]
+    },
+    "glGenericVsVariant": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0,
+     "over2Pct": 0,
+     "hist": [
+      6220800,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   }
+  },
+  "errors": []
+ }
+}

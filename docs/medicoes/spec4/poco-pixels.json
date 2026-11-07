@@ -1,0 +1,414 @@
+{
+ "name": "pixels",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T10:26:44.011Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": 0.093,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 44.4,
+  "gpuMaxC": 42.5,
+  "skinC": 37.789,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T10:26:49.995Z",
+  "level": 36,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": 0.187,
+  "tempC": 34.8,
+  "thermal": 0,
+  "cpu0": 52,
+  "gpuMaxC": 46.6,
+  "skinC": 38.152,
+  "socdPct": 64,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": ""
+  },
+  "format": "rgba8unorm",
+  "timestamps": true,
+  "createMs": 471.29999999701977,
+  "warmMs": 440.70000000298023,
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false
+ },
+ "result": {
+  "spatialPrecision": "mediump",
+  "result": {
+   "spec3": {
+    "compute": {
+     "vsGlDefault": {
+      "max": 81,
+      "mean": 0.39056,
+      "over1Pct": 5.2612,
+      "hist": [
+       6680916,
+       1599101,
+       249947,
+       85653,
+       41052,
+       22880,
+       13847,
+       46444
+      ]
+     },
+     "vsGlHighp": {
+      "max": 81,
+      "mean": 0.37549,
+      "over1Pct": 5.176,
+      "hist": [
+       6804870,
+       1482594,
+       243370,
+       84917,
+       40946,
+       22665,
+       13901,
+       46577
+      ]
+     }
+    },
+    "copy": {
+     "vsGlDefault": {
+      "max": 81,
+      "mean": 0.39054,
+      "over1Pct": 5.2605,
+      "hist": [
+       6680834,
+       1599247,
+       249853,
+       85667,
+       41101,
+       22855,
+       13850,
+       46433
+      ]
+     },
+     "vsGlHighp": {
+      "max": 81,
+      "mean": 0.37549,
+      "over1Pct": 5.1758,
+      "hist": [
+       6804682,
+       1482798,
+       243312,
+       84964,
+       40963,
+       22658,
+       13895,
+       46568
+      ]
+     }
+    },
+    "glDefaultVsHighp": {
+     "max": 31,
+     "mean": 0.06524,
+     "over1Pct": 0.3474,
+     "hist": [
+      8210006,
+      499470,
+      26334,
+      2083,
+      775,
+      411,
+      228,
+      533
+     ]
+    }
+   },
+   "v9": {
+    "compute": {
+     "vsGlDefault": {
+      "max": 83,
+      "mean": 0.38746,
+      "over1Pct": 5.6795,
+      "hist": [
+       6781870,
+       1461595,
+       270586,
+       94479,
+       44223,
+       24506,
+       14630,
+       47951
+      ]
+     },
+     "vsGlHighp": {
+      "max": 83,
+      "mean": 0.38746,
+      "over1Pct": 5.6795,
+      "hist": [
+       6781870,
+       1461595,
+       270586,
+       94479,
+       44223,
+       24506,
+       14630,
+       47951
+      ]
+     }
+    },
+    "copy": {
+     "vsGlDefault": {
+      "max": 83,
+      "mean": 0.38742,
+      "over1Pct": 5.678,
+      "hist": [
+       6781706,
+       1461888,
+       270530,
+       94474,
+       44180,
+       24472,
+       14687,
+       47903
+      ]
+     },
+     "vsGlHighp": {
+      "max": 83,
+      "mean": 0.38742,
+      "over1Pct": 5.678,
+      "hist": [
+       6781706,
+       1461888,
+       270530,
+       94474,
+       44180,
+       24472,
+       14687,
+       47903
+      ]
+     }
+    },
+    "glDefaultVsHighp": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0,
+     "hist": [
+      8739840,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "all": {
+    "compute": {
+     "vsGlDefault": {
+      "max": 80,
+      "mean": 0.37672,
+      "over1Pct": 5.2783,
+      "hist": [
+       6769756,
+       1508765,
+       251637,
+       88404,
+       41331,
+       22563,
+       13505,
+       43879
+      ]
+     },
+     "vsGlHighp": {
+      "max": 80,
+      "mean": 0.37672,
+      "over1Pct": 5.2783,
+      "hist": [
+       6769756,
+       1508765,
+       251637,
+       88404,
+       41331,
+       22563,
+       13505,
+       43879
+      ]
+     }
+    },
+    "copy": {
+     "vsGlDefault": {
+      "max": 80,
+      "mean": 0.37673,
+      "over1Pct": 5.2808,
+      "hist": [
+       6769704,
+       1508600,
+       251822,
+       88415,
+       41354,
+       22578,
+       13521,
+       43846
+      ]
+     },
+     "vsGlHighp": {
+      "max": 80,
+      "mean": 0.37673,
+      "over1Pct": 5.2808,
+      "hist": [
+       6769704,
+       1508600,
+       251822,
+       88415,
+       41354,
+       22578,
+       13521,
+       43846
+      ]
+     }
+    },
+    "glDefaultVsHighp": {
+     "max": 0,
+     "mean": 0,
+     "over1Pct": 0,
+     "hist": [
+      8739840,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ]
+    }
+   },
+   "sgsr": {
+    "compute": {
+     "vsGlDefault": {
+      "max": 70,
+      "mean": 0.33852,
+      "over1Pct": 3.715,
+      "hist": [
+       6846160,
+       1568996,
+       166799,
+       60919,
+       29701,
+       16688,
+       10964,
+       39613
+      ]
+     },
+     "vsGlHighp": {
+      "max": 70,
+      "mean": 0.3103,
+      "over1Pct": 3.638,
+      "hist": [
+       7085361,
+       1336525,
+       160517,
+       60673,
+       29605,
+       16659,
+       10899,
+       39601
+      ]
+     }
+    },
+    "copy": {
+     "vsGlDefault": {
+      "max": 70,
+      "mean": 0.33856,
+      "over1Pct": 3.7159,
+      "hist": [
+       6846048,
+       1569030,
+       166842,
+       60850,
+       29778,
+       16703,
+       10959,
+       39630
+      ]
+     },
+     "vsGlHighp": {
+      "max": 70,
+      "mean": 0.31035,
+      "over1Pct": 3.6389,
+      "hist": [
+       7085061,
+       1336742,
+       160560,
+       60629,
+       29704,
+       16633,
+       10902,
+       39609
+      ]
+     }
+    },
+    "glDefaultVsHighp": {
+     "max": 22,
+     "mean": 0.06878,
+     "over1Pct": 0.0759,
+     "hist": [
+      8157730,
+      575474,
+      2965,
+      1141,
+      704,
+      504,
+      377,
+      945
+     ]
+    }
+   },
+   "input": {
+    "max": 93,
+    "mean": 0.42851,
+    "over1Pct": 5.8682,
+    "hist": [
+     4924998,
+     930752,
+     159729,
+     70310,
+     38639,
+     23429,
+     15144,
+     57799
+    ]
+   }
+  },
+  "errors": []
+ }
+}

@@ -1,0 +1,203 @@
+{
+ "name": "compare-mesma-entrada",
+ "device": "poco",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:34:17.746Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.187,
+  "tempC": 33,
+  "thermal": 0,
+  "cpu0": 43.2,
+  "gpuMaxC": 40.9,
+  "skinC": 36.004,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T09:34:23.687Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.187,
+  "tempC": 33,
+  "thermal": 0,
+  "cpu0": 47.2,
+  "gpuMaxC": 42.9,
+  "skinC": 35.902,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 17.200000002980232,
+    "messages": []
+   },
+   "tex": {
+    "ms": 13.5,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    723.6000000014901
+   ],
+   [
+    "texspec3",
+    66.19999999552965
+   ],
+   [
+    "extv9",
+    793.2000000029802
+   ],
+   [
+    "texv9",
+    85.89999999850988
+   ],
+   [
+    "extall",
+    949.3999999985099
+   ],
+   [
+    "texall",
+    94.20000000298023
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.0347
+ },
+ "result": {
+  "spatialPrecision": "mediump",
+  "result": {
+   "spec3": {
+    "vsGlVariant": {
+     "max": 98,
+     "mean": 0.03708,
+     "over1Pct": 0.0246,
+     "over2Pct": 0.0107,
+     "hist": [
+      5994428,
+      224843,
+      862,
+      248,
+      129,
+      85,
+      42,
+      163
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 98,
+     "mean": 0.00254,
+     "over1Pct": 0.0089,
+     "over2Pct": 0.0038,
+     "hist": [
+      6206673,
+      13575,
+      315,
+      89,
+      37,
+      28,
+      20,
+      63
+     ]
+    }
+   },
+   "v9": {
+    "vsGlVariant": {
+     "max": 98,
+     "mean": 0.03682,
+     "over1Pct": 0.029,
+     "over2Pct": 0.0119,
+     "hist": [
+      5996513,
+      222485,
+      1060,
+      268,
+      155,
+      99,
+      51,
+      169
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 98,
+     "mean": 0.00273,
+     "over1Pct": 0.0131,
+     "over2Pct": 0.0047,
+     "hist": [
+      6205895,
+      14092,
+      519,
+      108,
+      53,
+      38,
+      27,
+      68
+     ]
+    }
+   },
+   "all": {
+    "vsGlVariant": {
+     "max": 99,
+     "mean": 0.03928,
+     "over1Pct": 0.0293,
+     "over2Pct": 0.0127,
+     "hist": [
+      5981412,
+      237567,
+      1031,
+      279,
+      175,
+      100,
+      62,
+      174
+     ]
+    },
+    "vsGlGenericHighp": {
+     "max": 99,
+     "mean": 0.00361,
+     "over1Pct": 0.0129,
+     "over2Pct": 0.0054,
+     "hist": [
+      6200570,
+      19425,
+      466,
+      129,
+      68,
+      41,
+      28,
+      73
+     ]
+    }
+   }
+  },
+  "errors": []
+ }
+}

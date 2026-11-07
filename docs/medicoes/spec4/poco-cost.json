@@ -1,0 +1,282 @@
+{
+ "name": "cost",
+ "device": "poco",
+ "query": "",
+ "before": {
+  "at": "2026-11-07T09:35:22.327Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.836,
+  "currentA": -0.187,
+  "tempC": 33.3,
+  "thermal": 0,
+  "cpu0": 43.6,
+  "gpuMaxC": 41.3,
+  "skinC": 36.297,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T09:35:39.552Z",
+  "level": 34,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": -0.093,
+  "tempC": 33.3,
+  "thermal": 0,
+  "cpu0": 51.6,
+  "gpuMaxC": 55,
+  "skinC": 36.956,
+  "socdPct": 66,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": "",
+   "isFallback": false
+  },
+  "features": [
+   "core-features-and-limits",
+   "timestamp-query"
+  ],
+  "compile": {
+   "ext": {
+    "ms": 12.399999998509884,
+    "messages": []
+   },
+   "tex": {
+    "ms": 8.099999994039536,
+    "messages": []
+   }
+  },
+  "pipelineMs": [
+   [
+    "extspec3",
+    792.8000000044703
+   ],
+   [
+    "texspec3",
+    67.60000000149012
+   ],
+   [
+    "extv9",
+    848.5
+   ],
+   [
+    "texv9",
+    92
+   ],
+   [
+    "extall",
+    945.7000000029802
+   ],
+   [
+    "texall",
+    99.10000000149012
+   ]
+  ],
+  "errors": [],
+  "size": [
+   1920,
+   1080
+  ],
+  "time": 0.0215
+ },
+ "result": {
+  "n": 40,
+  "rounds": 5,
+  "result": {
+   "all.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 1.71,
+     "min": 1.422,
+     "max": 1.747
+    },
+    "timer": null
+   },
+   "v9.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 3.13,
+     "min": 2.825,
+     "max": 3.508
+    },
+    "timer": null
+   },
+   "all.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 3.782,
+     "min": 3.242,
+     "max": 5.155
+    },
+    "timer": null
+   },
+   "v9.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 2.12,
+     "min": 1.925,
+     "max": 2.982
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.681,
+     "min": 1.527,
+     "max": 2.695
+    }
+   },
+   "v9.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 1.353,
+     "min": 1.265,
+     "max": 2.99
+    },
+    "timer": null
+   },
+   "spec3.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 1.735,
+     "min": 1.73,
+     "max": 1.813
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.394,
+     "min": 1.353,
+     "max": 1.455
+    }
+   },
+   "spec3.gl": {
+    "wall": {
+     "n": 5,
+     "p50": 0.65,
+     "min": 0.558,
+     "max": 0.665
+    },
+    "timer": null
+   },
+   "v9.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 2.585,
+     "min": 2.095,
+     "max": 3.117
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.005,
+     "min": 1.712,
+     "max": 2.315
+    }
+   },
+   "all.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 2.538,
+     "min": 2.198,
+     "max": 2.938
+    },
+    "timer": {
+     "n": 5,
+     "p50": 2.161,
+     "min": 1.766,
+     "max": 2.535
+    }
+   },
+   "v9.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 5.09,
+     "min": 4.952,
+     "max": 5.715
+    },
+    "timer": {
+     "n": 5,
+     "p50": 4.728,
+     "min": 4.692,
+     "max": 5.322
+    }
+   },
+   "all.gpuExt": {
+    "wall": {
+     "n": 5,
+     "p50": 5.835,
+     "min": 5.728,
+     "max": 6.73
+    },
+    "timer": {
+     "n": 5,
+     "p50": 5.382,
+     "min": 5.336,
+     "max": 6.38
+    }
+   },
+   "spec3.gpuTex": {
+    "wall": {
+     "n": 5,
+     "p50": 0.985,
+     "min": 0.942,
+     "max": 1.25
+    },
+    "timer": {
+     "n": 5,
+     "p50": 0.705,
+     "min": 0.654,
+     "max": 0.922
+    }
+   },
+   "spec3.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 1.355,
+     "min": 1.17,
+     "max": 1.375
+    },
+    "timer": {
+     "n": 5,
+     "p50": 0.8,
+     "min": 0.772,
+     "max": 0.937
+    }
+   },
+   "spec3.glUpload": {
+    "wall": {
+     "n": 5,
+     "p50": 1.78,
+     "min": 1.48,
+     "max": 2.072
+    },
+    "timer": null
+   },
+   "all.gpuCopy": {
+    "wall": {
+     "n": 5,
+     "p50": 2.538,
+     "min": 2.223,
+     "max": 2.955
+    },
+    "timer": {
+     "n": 5,
+     "p50": 1.994,
+     "min": 1.874,
+     "max": 2.58
+    }
+   }
+  },
+  "errors": []
+ }
+}

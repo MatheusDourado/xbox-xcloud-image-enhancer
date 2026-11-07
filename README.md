@@ -1,4 +1,6 @@
-# Better xCloud — tratamento experimental v9.8.0
+# Better xCloud — tratamento experimental v10.0.0
+
+A **v10.0.0** (beta de teste) junta o trabalho das Specs 1 a 4: além da v9.8.0, traz um **renderizador WebGPU opcional** (Renderizador → WebGPU, marcado EXP), com volta automática para o WebGL2 sem recarregar. O **Auto continua em WebGL2**: no Poco F7, o WebGPU gastou 17% a mais de GPU em sessão. Nada foi validado em partida real. Veja [notas v10.0.0](docs/release-v10.0.0.md).
 
 A **v9.8.0** (beta de teste) reduz o custo de GPU no Poco F7: padrões novos, `mediump`, canvas sem MSAA, última passada sem cópia e SGSR como opção de escalador. Nada foi validado em partida real; o padrão antigo continua como preset **Padrão v9**. Veja [notas v9.8.0](docs/release-v9.8.0.md).
 
@@ -50,9 +52,9 @@ A v7.1 corrige as pendências de degradês, halos e movimento da v7. O caminho p
 
 Para o Vostro 3400 ligado à TV por HDMI 1080p, comece em **saída Automática (resolve para nativa), Nitidez 3–5 no painel, orçamento 6 ms, Cor nas bordas 50%, Detalhe 35%, Degradês 30–50%, temporal e AA desligados**. A TV continua responsável por ampliar o sinal recebido para seu painel 4K. Forçar 4K no canvas não cria informação de uma renderização 4K do jogo, nem muda o sinal HDMI.
 
-## Android (v9.8.0)
+## Android (v10.0.0)
 
-Há um APK de teste em `android/dist/xcloud-imagefilter-9.8.0.apk`: um app WebView próprio que abre o xCloud com este userscript (v9.8.0). Veja [android/README.md](android/README.md).
+Há um APK de teste em `android/dist/xcloud-imagefilter-10.0.0.apk`: um app WebView próprio que abre o xCloud com este userscript (v10.0.0). Veja [android/README.md](android/README.md).
 
 ## Instalar
 
