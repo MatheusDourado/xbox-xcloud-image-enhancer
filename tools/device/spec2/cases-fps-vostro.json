@@ -1,0 +1,74 @@
+[
+{
+"name": "prod30-1080-direto-a",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "prod30-1080-fluidez-a",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"fluid": true
+}
+},
+{
+"name": "prod60-1080-direto-a",
+"query": "aa=1&clip=game60&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "aa0-60-1080-direto-a",
+"query": "aa=0&clip=game60&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "desync-30-1080-a",
+"query": "aa=1&desync=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "prod30-1080-direto-b",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "prod30-1080-fluidez-b",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"fluid": true
+}
+},
+{
+"name": "prod60-1080-direto-b",
+"query": "aa=1&clip=game60&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "aa0-60-1080-direto-b",
+"query": "aa=0&clip=game60&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "desync-30-1080-b",
+"query": "aa=1&desync=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+}
+]

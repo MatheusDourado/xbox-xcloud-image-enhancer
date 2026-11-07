@@ -1,0 +1,115 @@
+{
+ "name": "renders2",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T01:58:09.986Z",
+  "level": 23,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 38.6,
+  "thermal": 0,
+  "cpu0": 51.2,
+  "gpuMaxC": 47.4,
+  "skinC": 41.651,
+  "socdPct": 77,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T01:58:41.741Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.468,
+  "tempC": 38.5,
+  "thermal": 0,
+  "cpu0": 56.4,
+  "gpuMaxC": 55.4,
+  "skinC": 42.54,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "fixo": {
+   "n": 5,
+   "p50": 13.842,
+   "p95": 14.088,
+   "p99": 14.088,
+   "max": 14.088,
+   "mean": 13.69
+  },
+  "rot": {
+   "n": 5,
+   "p50": 13.79,
+   "p95": 14.04,
+   "p99": 14.04,
+   "max": 14.04,
+   "mean": 13.779
+  },
+  "rotDuplo": {
+   "n": 5,
+   "p50": 13.7,
+   "p95": 14.085,
+   "p99": 14.085,
+   "max": 14.085,
+   "mean": 13.821
+  },
+  "fixoDuplo": {
+   "n": 5,
+   "p50": 13.795,
+   "p95": 14.24,
+   "p99": 14.24,
+   "max": 14.24,
+   "mean": 13.873
+  },
+  "canvas": {
+   "n": 5,
+   "p50": 13.72,
+   "p95": 13.793,
+   "p99": 13.793,
+   "max": 13.793,
+   "mean": 13.597
+  },
+  "canvasDuplo": {
+   "n": 5,
+   "p50": 13.325,
+   "p95": 13.73,
+   "p99": 13.73,
+   "max": 13.73,
+   "mean": 13.408
+  }
+ }
+}

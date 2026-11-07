@@ -1,0 +1,154 @@
+[
+{
+"name": "prod30-1280-direto-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "prod30-1280-fluidez-a",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "prod30-1080-direto-a",
+"query": "aa=1",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "prod60-1280-direto-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "prod60-1280-fluidez-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "prod60-1080-direto-a",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "aa0-60-1280-fluidez-a",
+"query": "aa=0&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "desync-30-1280-a",
+"query": "aa=1&desync=1",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "desync-60-1280-a",
+"query": "aa=1&desync=1&clip=game60",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "prod30-1280-direto-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "prod30-1280-fluidez-b",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "prod30-1080-direto-b",
+"query": "aa=1",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "prod60-1280-direto-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "prod60-1280-fluidez-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "prod60-1080-direto-b",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "aa0-60-1280-fluidez-b",
+"query": "aa=0&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+}
+},
+{
+"name": "desync-30-1280-b",
+"query": "aa=1&desync=1",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "desync-60-1280-b",
+"query": "aa=1&desync=1&clip=game60",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "tela120-30-fluidez",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fluid": true
+},
+"pre": "BxAndroid.setRefreshRate(120)",
+"post": "BxAndroid.setRefreshRate(60)"
+},
+{
+"name": "tela120-60-fluidez",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fluid": true
+},
+"pre": "BxAndroid.setRefreshRate(120)",
+"post": "BxAndroid.setRefreshRate(60)"
+}
+]

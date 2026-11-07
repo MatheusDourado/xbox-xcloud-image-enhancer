@@ -1,0 +1,26 @@
+[
+{
+"name": "player-nativo",
+"url": "/player/index.html",
+"expr": "(async()=>{const b=await (await fetch('/output/videos/game30.mp4')).blob(),f=new File([b],'g.mp4',{type:'video/mp4'}),d=new DataTransfer();d.items.add(f);const i=document.querySelector('#file');i.files=d.files;i.dispatchEvent(new Event('change'));const v=document.querySelector('#video');v.muted=true;await new Promise(r=>v.onloadeddata=r);for(const [k,x] of [['#gpuBudget','0'],['#scale','native']]){const g=document.querySelector(k);g.value=x;g.dispatchEvent(new Event('change'));}await v.play();const q0=v.getVideoPlaybackQuality(),t0=performance.now();await new Promise(r=>setTimeout(r,__S__*1000));const q=v.getVideoPlaybackQuality();return {fps:(q.totalVideoFrames-q0.totalVideoFrames)*1000/(performance.now()-t0),status:document.querySelector('#status').textContent,dropped:q.droppedVideoFrames-q0.droppedVideoFrames};})()"
+},
+{
+"name": "bancada-1080-direto-aa0",
+"query": "aa=0",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "player-nativo-b",
+"url": "/player/index.html?b",
+"expr": "(async()=>{const b=await (await fetch('/output/videos/game30.mp4')).blob(),f=new File([b],'g.mp4',{type:'video/mp4'}),d=new DataTransfer();d.items.add(f);const i=document.querySelector('#file');i.files=d.files;i.dispatchEvent(new Event('change'));const v=document.querySelector('#video');v.muted=true;await new Promise(r=>v.onloadeddata=r);for(const [k,x] of [['#gpuBudget','0'],['#scale','native']]){const g=document.querySelector(k);g.value=x;g.dispatchEvent(new Event('change'));}await v.play();const q0=v.getVideoPlaybackQuality(),t0=performance.now();await new Promise(r=>setTimeout(r,__S__*1000));const q=v.getVideoPlaybackQuality();return {fps:(q.totalVideoFrames-q0.totalVideoFrames)*1000/(performance.now()-t0),status:document.querySelector('#status').textContent,dropped:q.droppedVideoFrames-q0.droppedVideoFrames};})()"
+},
+{
+"name": "bancada-1080-direto-aa0-b",
+"query": "aa=0&b=1",
+"cfg": {
+"output": 1080
+}
+}
+]

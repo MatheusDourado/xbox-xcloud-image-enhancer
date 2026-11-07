@@ -56,7 +56,31 @@ def gpu_work(path):
         out.append({'startMs': a / 1e6, 'lengthMs': (z - a) / 1e6, 'activeMs': active / 1e6, 'share': active / max(1, z - a), 'uids': {str(u): v / 1e6 for u, v in items}})
     return out
 
+JANK = {1: 'none', 2: 'sf_scheduling', 4: 'prediction', 8: 'display_hal', 16: 'sf_cpu', 32: 'sf_gpu', 64: 'app_deadline', 128: 'buffer_stuffing', 256: 'unknown', 512: 'sf_stuffing', 1024: 'dropped'}
+def frame_timeline(path):
+    """SurfaceFlinger frame timeline (TracePacket field 76): frames and jank per layer."""
+    from collections import Counter
+    layers, display = {}, Counter()
+    for p in packets(path):
+        for f, w, v in fields(p):
+            if f != 76: continue
+            for ef, ew, ev in fields(v):
+                if ef == 4:  # ActualSurfaceFrameStart
+                    d = {a: x for a, b, x in fields(ev)}
+                    name = d.get(5, b'').decode('latin1')[:70]
+                    c = layers.setdefault(name, Counter()); c['frames'] += 1
+                    if d.get(8): c['gpu_composition'] += 1
+                    j = d.get(9, 0); c['jank:' + '+'.join(n for b, n in JANK.items() if j & b) or 'unspecified'] += 1
+                elif ef == 2:  # ActualDisplayFrameStart
+                    d = {a: x for a, b, x in fields(ev)}
+                    display['frames'] += 1
+                    if d.get(6): display['gpu_composition'] += 1
+                    j = d.get(7, 0); display['jank:' + '+'.join(n for b, n in JANK.items() if j & b)] += 1
+    return {'layers': {k: dict(v) for k, v in layers.items()}, 'display': dict(display)}
+
 if __name__ == '__main__':
+    if sys.argv[1] == '--frames':
+        import json; print(json.dumps(frame_timeline(sys.argv[2]), indent=1)); sys.exit()
     if sys.argv[1] == '--work':
         import json; print(json.dumps({'periods': gpu_work(sys.argv[2])})); sys.exit()
     from collections import Counter

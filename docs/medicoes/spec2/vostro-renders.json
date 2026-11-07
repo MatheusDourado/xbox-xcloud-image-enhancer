@@ -1,0 +1,106 @@
+{
+ "name": "renders",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T01:41:02.855Z"
+ },
+ "after": {
+  "at": "2026-11-07T01:41:21.273Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "video1280slot": {
+   "n": 5,
+   "p50": 3.117,
+   "p95": 3.84,
+   "p99": 3.84,
+   "max": 3.84,
+   "mean": 3.283
+  },
+  "video1280slotNoUp": {
+   "n": 5,
+   "p50": 2.683,
+   "p95": 2.83,
+   "p99": 2.83,
+   "max": 2.83,
+   "mean": 2.672
+  },
+  "video1280canvas": {
+   "n": 5,
+   "p50": 3.258,
+   "p95": 3.315,
+   "p99": 3.315,
+   "max": 3.315,
+   "mean": 3.234
+  },
+  "canvas2d1280slot": {
+   "n": 5,
+   "p50": 3.37,
+   "p95": 3.438,
+   "p99": 3.438,
+   "max": 3.438,
+   "mean": 3.341
+  },
+  "canvas2d1280canvas": {
+   "n": 5,
+   "p50": 3.375,
+   "p95": 3.472,
+   "p99": 3.472,
+   "max": 3.472,
+   "mean": 3.377
+  },
+  "video1080slot": {
+   "n": 5,
+   "p50": 3.228,
+   "p95": 3.25,
+   "p99": 3.25,
+   "max": 3.25,
+   "mean": 3.197
+  },
+  "video1080slotNoUp": {
+   "n": 5,
+   "p50": 2.535,
+   "p95": 2.728,
+   "p99": 2.728,
+   "max": 2.728,
+   "mean": 2.591
+  },
+  "video1080canvas": {
+   "n": 5,
+   "p50": 3.263,
+   "p95": 3.313,
+   "p99": 3.313,
+   "max": 3.313,
+   "mean": 3.267
+  }
+ }
+}

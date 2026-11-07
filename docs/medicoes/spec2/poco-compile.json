@@ -1,0 +1,128 @@
+{
+ "name": "compile",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T02:01:22.725Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 38.8,
+  "thermal": 0,
+  "cpu0": 50.4,
+  "gpuMaxC": 47.4,
+  "skinC": 42.019,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T02:01:25.715Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.187,
+  "tempC": 38.8,
+  "thermal": 0,
+  "cpu0": 52.8,
+  "gpuMaxC": 47.8,
+  "skinC": 42.06,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 10,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "perProgram": {
+   "antialias": {
+    "compileLink": 18.7
+   },
+   "copy": {
+    "compileLink": 10.5
+   },
+   "cut": {
+    "compileLink": 23
+   },
+   "easu": {
+    "compileLink": 49.2
+   },
+   "finish": {
+    "compileLink": 13
+   },
+   "motion": {
+    "compileLink": 61.1
+   },
+   "rcas": {
+    "compileLink": 22.3
+   },
+   "spatial": {
+    "compileLink": 68.6
+   },
+   "temporal": {
+    "compileLink": 16.6
+   },
+   "nnFeatures": {
+    "compileLink": 23.5
+   },
+   "nnApply": {
+    "compileLink": 18.3
+   },
+   "cas": {
+    "compileLink": 2.5
+   },
+   "casFiltered": {
+    "compileLink": 2.1
+   }
+  },
+  "engineCtor": 325.8,
+  "first": {
+   "spatial": {
+    "first": 2.6,
+    "second": 1.5
+   },
+   "easu": {
+    "first": 1.5,
+    "second": 1.4
+   },
+   "casFiltered": {
+    "first": 1.5,
+    "second": 1.4
+   },
+   "copy": {
+    "first": 1.9,
+    "second": 1.5
+   }
+  },
+  "parallel": false
+ }
+}

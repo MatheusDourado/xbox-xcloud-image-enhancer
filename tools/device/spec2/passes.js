@@ -58,11 +58,11 @@ async function diffs(){
  for(const [k,u] of [['spatialMp',padrao],['spatialMpS',padrao],['spatialConst',{}],['spatialMpConst',{}],['spatialTex',padrao],['spatialGate',padrao]]){if(failed[k])continue;e.draw(k,b,W,H,{source:e.input},u);read(b,pb);let mx=0,s=0,over=0;for(let i=0;i<n;i++){if((i&3)===3)continue;const d=Math.abs(pa[i]-pb[i]);if(d>mx)mx=d;s+=d;if(d>1)over++;}out[k]={max:mx,mean:+(s/(n*.75)).toFixed(4),over1Pct:+(over/(n*.75)*100).toFixed(4)};}
  await video.play();return out;
 }
-// First use of each program with a cold driver cache (a unique comment defeats the program cache).
+// First use of each program with a cold driver cache: a random dead branch defeats the program caches.
 async function compile(){
- const out={},nonce='// '+Math.random()+'\n',tmp=e.target('pacedcTmp',W,H),par=gl.getExtension('KHR_parallel_shader_compile');
- for(const [k,code] of Object.entries(S)){const a=performance.now();const p=e.compile(code.replace('\n','\n'+nonce));const b=performance.now();out[k]={compileLink:+(b-a).toFixed(1)};gl.deleteProgram(p.program);}
- const a=performance.now();const fresh=new BxRestoration.Engine(gl,Object.fromEntries(Object.entries(S).map(([k,c])=>[k,c.replace('\n','\n//'+Math.random()+'\n')])));const b=performance.now();
+ const out={},bust=c=>c.replace('void main(){','void main(){if(gl_FragCoord.x<-'+(1+Math.random()).toFixed(9)+')discard;'),par=gl.getExtension('KHR_parallel_shader_compile');
+ for(const [k,code] of Object.entries(S)){const a=performance.now();const p=e.compile(bust(code));const b=performance.now();out[k]={compileLink:+(b-a).toFixed(1)};gl.deleteProgram(p.program);}
+ const a=performance.now();const fresh=new BxRestoration.Engine(gl,Object.fromEntries(Object.entries(S).map(([k,c])=>[k,bust(c)])));const b=performance.now();
  const first={},t=fresh.target('t',W,H),px4=new Uint8Array(4);
  for(const k of ['spatial','easu','casFiltered','copy']){gl.bindTexture(gl.TEXTURE_2D,fresh.input);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array(4));const c=performance.now();fresh.draw(k,t,64,64,{source:fresh.input,data:fresh.input},{});gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px4);const d=performance.now();fresh.draw(k,t,64,64,{source:fresh.input,data:fresh.input},{});gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,px4);first[k]={first:+(d-c).toFixed(1),second:+(performance.now()-d).toFixed(1)};}
  fresh.destroy();return {perProgram:out,engineCtor:+(b-a).toFixed(1),first,parallel:!!par};
@@ -77,5 +77,12 @@ async function batches(){await frameAt(4);const out={},s1=B.settings({output:Str
  for(const [k,fn] of Object.entries(list)){out[k]={};for(const M of [1,2,4,8,16,40]){const v=[],end=performance.now()+1500;let t;for(fn(0),finish((fn(1)).fbo);performance.now()<end;){const a=performance.now();for(let i=0;i<M;i++)t=fn(i);finish(t.fbo);v.push((performance.now()-a)/M);}out[k][M]=stat(v).p50;}await sleep(100);}
  await video.play();return out;}
 B.batches=batches;
+// In a burst, upload and passes only add up in some setups. Rotating the output as Fluidez does, and alternating two
+// input textures, tells whether a reused texture makes the driver wait for the GPU.
+async function renders2(rounds=5){await frameAt(4);const st=B.settings({output:String(OH)}),in0=e.input,in1=gl.createTexture();e.configure(in1);let i=0;
+ const f=(mode)=>()=>{const pp=mode.includes('duplo'),rot=mode.includes('rot'),cv=mode.includes('canvas');warm();const a=performance.now();let t=null;for(let n=0;n<N;n++){i++;if(pp)e.input=i&1?in1:in0;t=cv?null:rot?'paced'+(i%5):'paced0';e.render(video,OW,OH,st,1,false,t);}finish(t?e.targets[t].fbo:null);const v=(performance.now()-a)/N;e.input=in0;return v;};
+ const c={fixo:f('fixo'),rot:f('rot'),rotDuplo:f('rot duplo'),fixoDuplo:f('duplo'),canvas:f('canvas'),canvasDuplo:f('canvas duplo')},v={};for(const k in c){v[k]=[];c[k]();}for(let r=0;r<rounds;r++)for(const k in c){v[k].push(c[k]());await sleep(0);}
+ await video.play();return Object.fromEntries(Object.keys(c).map(k=>[k,stat(v[k])]));}
+B.renders2=renders2;
 B.warm=warm;Object.assign(B,{passes,renders,diffs,compile,failed,variants,cases,frameAt});
 })();
