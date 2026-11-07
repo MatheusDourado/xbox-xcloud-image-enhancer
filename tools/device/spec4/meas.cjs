@@ -1,9 +1,9 @@
 // Runs one measurement on a device and stores it with its conditions.
-// Usage: node meas.cjs <poco|vostro> <name> <query> <expression> [timeoutSeconds]
+// Usage: node meas.cjs <poco|vostro> <name> <query> <expression> [timeoutSeconds]; BX_PAGE=session.html for the session bench.
 // Output: docs/medicoes/spec2/<device>-<name>.json. Poco runs record battery and temperature before and after.
 const fs=require('fs'),path=require('path'),{execSync}=require('child_process'),{connect,evaluate,navigate,serveRepo,pocoState}=require('../spec2/drive.cjs');
 const [device,name,query,expr,timeout]=process.argv.slice(2);
-const poco=device==='poco',port=poco?9222:9333,url=`${poco?'https://bench.invalid':'http://127.0.0.1:8765'}/tools/device/spec4/bench.html?${query}`;
+const poco=device==='poco',port=poco?9222:9333,url=`${poco?'https://bench.invalid':'http://127.0.0.1:8765'}/tools/device/spec4/${process.env.BX_PAGE||'bench.html'}?${query}`;
 function state(){return poco?pocoState():{at:new Date().toISOString()};}
 (async()=>{
  const before=state();if(poco&&!before.focus.includes('imagefilter'))throw new Error('app not in front: '+before.focus);

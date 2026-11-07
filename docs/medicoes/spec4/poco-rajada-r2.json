@@ -1,0 +1,449 @@
+{
+ "name": "rajada-r2",
+ "device": "poco",
+ "query": "x=1",
+ "before": {
+  "at": "2026-11-07T10:38:02.113Z",
+  "level": 35,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": 0.187,
+  "tempC": 37.3,
+  "thermal": 0,
+  "cpu0": 56,
+  "gpuMaxC": 48.6,
+  "skinC": 40.304,
+  "socdPct": 65,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T10:38:39.445Z",
+  "level": 35,
+  "status": 2,
+  "voltageV": 3.786,
+  "currentA": -0.093,
+  "tempC": 37.1,
+  "thermal": 0,
+  "cpu0": 58.8,
+  "gpuMaxC": 58.6,
+  "skinC": 42.507,
+  "socdPct": 65,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "Adreno (TM) 825",
+  "timer": false,
+  "spatialPrecision": "mediump",
+  "adapter": {
+   "vendor": "qualcomm",
+   "architecture": "adreno-8xx",
+   "description": ""
+  },
+  "format": "rgba8unorm",
+  "timestamps": true,
+  "createMs": 205,
+  "warmMs": 172.80000000447035,
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false
+ },
+ "result": {
+  "gpuV9": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.07,
+     "p95": 4.07,
+     "max": 4.07,
+     "mean": 4.069
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.867,
+     "p95": 3.867,
+     "max": 3.867,
+     "mean": 3.834
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.083,
+     "p95": 4.083,
+     "max": 4.083,
+     "mean": 4.08
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.801,
+     "p95": 3.801,
+     "max": 3.801,
+     "mean": 3.801
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.125,
+     "p95": 4.125,
+     "max": 4.125,
+     "mean": 4.091
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.801,
+     "p95": 3.801,
+     "max": 3.801,
+     "mean": 3.801
+    }
+   }
+  ],
+  "gpu": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.27,
+     "p95": 3.27,
+     "max": 3.27,
+     "mean": 3.244
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.255,
+     "p95": 3.255,
+     "max": 3.255,
+     "mean": 3.237
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.18,
+     "p95": 3.18,
+     "max": 3.18,
+     "mean": 3.179
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   }
+  ],
+  "glV9": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 9.938,
+     "p95": 9.938,
+     "max": 9.938,
+     "mean": 8.935
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 14.707,
+     "p95": 14.707,
+     "max": 14.707,
+     "mean": 14.542
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 10.747,
+     "p95": 10.747,
+     "max": 10.747,
+     "mean": 9.747
+    },
+    "timestamp": null
+   }
+  ],
+  "gl": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 10.375,
+     "p95": 10.375,
+     "max": 10.375,
+     "mean": 9.702
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 11.903,
+     "p95": 11.903,
+     "max": 11.903,
+     "mean": 11.721
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 8.885,
+     "p95": 8.885,
+     "max": 8.885,
+     "mean": 7.986
+    },
+    "timestamp": null
+   }
+  ],
+  "gpuVideoFrame": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.18,
+     "p95": 3.18,
+     "max": 3.18,
+     "mean": 3.179
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.23,
+     "p95": 3.23,
+     "max": 3.23,
+     "mean": 3.224
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 3.195,
+     "p95": 3.195,
+     "max": 3.195,
+     "mean": 3.189
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 2.949,
+     "p95": 2.949,
+     "max": 2.949,
+     "mean": 2.949
+    }
+   }
+  ],
+  "gpuCompute": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.053,
+     "p95": 4.053,
+     "max": 4.053,
+     "mean": 4.047
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.801,
+     "p95": 3.801,
+     "max": 3.801,
+     "mean": 3.801
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.188,
+     "p95": 4.188,
+     "max": 4.188,
+     "mean": 4.151
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.801,
+     "p95": 3.801,
+     "max": 3.801,
+     "mean": 3.801
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.165,
+     "p95": 4.165,
+     "max": 4.165,
+     "mean": 4.16
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 3.801,
+     "p95": 3.801,
+     "max": 3.801,
+     "mean": 3.801
+    }
+   }
+  ],
+  "gpuSgsr": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 2.035,
+     "p95": 2.035,
+     "max": 2.035,
+     "mean": 1.83
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 1.901,
+     "p95": 1.901,
+     "max": 1.901,
+     "mean": 1.639
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 2.19,
+     "p95": 2.19,
+     "max": 2.19,
+     "mean": 1.949
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 1.901,
+     "p95": 1.901,
+     "max": 1.901,
+     "mean": 1.671
+    }
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 1.975,
+     "p95": 1.975,
+     "max": 1.975,
+     "mean": 1.93
+    },
+    "timestamp": {
+     "n": 2,
+     "p50": 1.638,
+     "p95": 1.638,
+     "max": 1.638,
+     "mean": 1.54
+    }
+   }
+  ],
+  "glVideoFrame": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 10.307,
+     "p95": 10.307,
+     "max": 10.307,
+     "mean": 9.329
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 11.225,
+     "p95": 11.225,
+     "max": 11.225,
+     "mean": 11.184
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 8.825,
+     "p95": 8.825,
+     "max": 8.825,
+     "mean": 8.09
+    },
+    "timestamp": null
+   }
+  ],
+  "glSgsr": [
+   {
+    "wall": {
+     "n": 2,
+     "p50": 4.843,
+     "p95": 4.843,
+     "max": 4.843,
+     "mean": 4.79
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 5.37,
+     "p95": 5.37,
+     "max": 5.37,
+     "mean": 5.265
+    },
+    "timestamp": null
+   },
+   {
+    "wall": {
+     "n": 2,
+     "p50": 5.305,
+     "p95": 5.305,
+     "max": 5.305,
+     "mean": 5.264
+    },
+    "timestamp": null
+   }
+  ]
+ }
+}
