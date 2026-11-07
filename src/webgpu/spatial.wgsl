@@ -18,12 +18,11 @@ override SELECTIVE:bool=true;
 
 fn peak(c:vec3f)->f32{return max(max(abs(c.r),abs(c.g)),abs(c.b));}
 fn lum(c:vec3f)->f32{return dot(c,vec3f(.2126,.7152,.0722));}
-fn at(p:vec2f)->vec3f{return fetchGL(vec2i(p)).rgb;}
-fn tex(uv:vec2f)->vec3f{return sampleGL(uv).rgb;}
 
-@fragment fn fs(@builtin(position) position:vec4f)->@location(0) vec4f{
- let size=vec2f(sourceSize());
- let fc=fragGL(position,size.y);
+// The filters for the pixel at gl_FragCoord fc of a size-texel frame. at(p) (texelFetch) and tex(uv)
+// (bilinear texture()) come from the entry point appended after this file: spatial-fs.wgsl reads the
+// source texture, spatial-cs.wgsl a workgroup tile of the imported frame.
+fn spatial(fc:vec2f,size:vec2f)->vec4f{
  let taps=select(u.taps,TAPS,FIXED);let quantize=select(u.quantize>.5,QUANTIZE,FIXED);let selective=select(u.selective>.5,SELECTIVE,FIXED);
  let p=fc-.5;let c=at(p);var result=c;
  let west=at(p-vec2f(1,0));let east=at(p+vec2f(1,0));

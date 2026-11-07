@@ -55,11 +55,16 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
   check(!bad.length,'Deferred last pass in present() matches WebGL2 across pacer slots',bad);
   check(Object.keys(gpu.targets).filter(k=>k.startsWith('paced')).length===3,'Pacer slots survive reuse',Object.keys(gpu.targets));
   gpu.releasePaced();glE.releasePaced();}
- // Decoded-frame path: a VideoFrame imported without a copy (texture_external), converted once by the copy pass.
- if(typeof VideoFrame==='function'){const o=BxRestoration.outputSize(W,H,'native');glc.width=gpc.width=o.width;glc.height=gpc.height=o.height;const st={...base,deband:.6,chroma:.75,output:'native'};
-  const frame=new VideoFrame(input,{timestamp:0});glE.render(input,o.width,o.height,st,1);const a=glRead();
-  const ok=gpu.render(frame,o.width,o.height,st,1);frame.close();const d=diff(a,ok?await gpu.read('canvas'):new Uint8Array(0));report.cases.videoFrame=d;
-  check(ok&&close(d),'VideoFrame through importExternalTexture matches the canvas upload',d);}
+ // Decoded-frame path: a VideoFrame imported without a copy (texture_external). With spatial filters the fused
+ // compute pass reads it into workgroup tiles; without them, or with compute off, the copy pass converts it once.
+ if(typeof VideoFrame==='function'){const bad=[];report.videoFrame={};
+  for(const [name,s,output] of [['Spec 3 defaults',{deband:.6,chroma:.75},'native'],['v9 defaults',{cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpness:3},'native'],
+   ['all filters + AA',{cleanup:.5,deband:1,chroma:.75,detail:.2,antialias:.5},'native'],['EASU',{deband:.6,chroma:.75},'144'],['Quality',{deband:.6,processingMode:'quality'},'144'],['no spatial',{},'144']]){
+   const o=BxRestoration.outputSize(W,H,output);glc.width=gpc.width=o.width;glc.height=gpc.height=o.height;const st={...base,...s,output};
+   glE.render(input,o.width,o.height,st,1);const a=glRead();
+   for(const compute of [true,false]){gpu.computeSpatial=compute;const frame=new VideoFrame(input,{timestamp:0});const ok=gpu.render(frame,o.width,o.height,st,1);frame.close();
+    const d=diff(a,ok?await gpu.read('canvas'):new Uint8Array(0));report.videoFrame[name+(compute?' compute':' copy')]=d;if(!ok||!close(d))bad.push({name,compute,d});}}
+  gpu.computeSpatial=true;check(!bad.length,'VideoFrame through importExternalTexture (compute tile and copy) matches the canvas upload',bad);}
  // Frames the WebGPU renderer hands back: neural restoration and temporal stay in WebGL2.
  for(const s of [{temporal:.5},{neural:1}]){const st={...base,...s,output:'native'};check(!gpu.supports(st,W,H,W,H)&&!gpu.render(input,W,H,st,1),'WebGPU hands back '+Object.keys(s)[0],s);}
  check(gpu.supports({...base,deband:.6,output:'native'},W,H,W,H),'WebGPU draws the default frame');

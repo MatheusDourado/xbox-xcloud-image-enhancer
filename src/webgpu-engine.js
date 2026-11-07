@@ -18,7 +18,11 @@
   const CONSTANTS={cas:{LIMIT:0},casFiltered:{LIMIT:1}};
   // Spatial variant: the same profile as the WebGL2 variants, as pipeline-overridable constants.
   function spatialConstants(p){const b=v=>v?1:0;return {FIXED:1,CLEANUP:b(p.cleanup),DEBAND:b(p.deband),CHROMA:b(p.chroma),DETAIL:b(p.detail),ANTIALIAS:b(p.antialias),TAPS:p.taps,QUANTIZE:b(p.quantize),SELECTIVE:b(p.selective)};}
-  function wgsl(name,kind){const code=globalThis.BxWgsl.common+'\n'+globalThis.BxWgsl[name],ext=kind==='ext';
+  // WGSL files of each module after common.wgsl: the spatial filters are one function (spatial.wgsl) with a
+  // fragment entry (texture source) and a compute entry (workgroup tile of the imported frame).
+  const PARTS={spatial:['spatial','spatial-fs'],spatialCompute:['spatial','spatial-cs']};
+  function wgsl(name,kind,format){let code=[globalThis.BxWgsl.common,...(PARTS[name]||[name]).map(p=>globalThis.BxWgsl[p])].join('\n');const ext=kind==='ext';
+    if(format)code=code.replaceAll('OUT_FORMAT',format);
     return code.replaceAll('SRC_TYPE',ext?'texture_external':'texture_2d<f32>').replaceAll('LOAD(','loadSource(').replaceAll('SAMPLE(','sampleSource(')+
       (ext?'\nfn loadSource(c:vec2i)->vec4f{return textureLoad(source,c);}\nfn sampleSource(uv:vec2f)->vec4f{return textureSampleBaseClampToEdge(source,linearSampler,uv);}\n'
         :'\nfn loadSource(c:vec2i)->vec4f{return textureLoad(source,c,0);}\nfn sampleSource(uv:vec2f)->vec4f{return textureSampleLevel(source,linearSampler,uv,0.0);}\n');}
@@ -30,6 +34,8 @@
       this.device=device;this.context=context;this.format=format;this.options=options;this.budget=R.createBudget();this.diagnostics=R.createDiagnostics();
       this.frames=0;this.previous=null;this.floatTargets=true;this.fenceTiming=false;this.gpuEstimate=null;this.targets={};this.pipelines=new Map();this.jobs=new Map();this.failedVariants=new Set();
       this.modules={};this.uniforms=new Map();this.failed=null;this.onfail=null;this.renderer='webgpu';
+      // Fused compute spatial pass for decoded frames (task 5); false keeps the copy + fragment path.
+      this.computeSpatial=options.compute!==false;
       this.timestamps=device.features.has('timestamp-query');this.ext=this.timestamps?{}:null;this.pending=[];this.free=[];this.nextQuery=0;
       if(this.timestamps){this.querySet=device.createQuerySet({type:'timestamp',count:SLOTS*4});this.resolve=device.createBuffer({size:SLOTS*256,usage:GPUBufferUsage.QUERY_RESOLVE|GPUBufferUsage.COPY_SRC});}
       const entry=(binding,resource)=>({binding,visibility:GPUShaderStage.FRAGMENT|GPUShaderStage.COMPUTE,...resource});
@@ -43,7 +49,20 @@
     }
     // A failure (device lost, validation error) stops this renderer for good; the owner falls back to WebGL2.
     fail(reason){if(this.failed)return;this.failed=reason;try{this.onfail?.(reason);}catch{}}
-    module(name,kind){const key=name+'|'+kind;return this.modules[key]??=this.device.createShaderModule({code:wgsl(name,kind)});}
+    module(name,kind,format){const key=name+'|'+kind+'|'+(format||'');return this.modules[key]??=this.device.createShaderModule({code:wgsl(name,kind,format)});}
+    // Compute layout of the fused spatial pass: the imported frame in, a storage texture of this format out.
+    computeLayout(format){const key='extc:'+format;if(!this.pipelineLayouts[key]){const v=GPUShaderStage.COMPUTE;
+      this.layouts[key]=this.device.createBindGroupLayout({entries:[{binding:0,visibility:v,buffer:{type:'uniform'}},{binding:1,visibility:v,externalTexture:{}},{binding:2,visibility:v,sampler:{type:'filtering'}},{binding:3,visibility:v,storageTexture:{access:'write-only',format}}]});
+      this.pipelineLayouts[key]=this.device.createPipelineLayout({bindGroupLayouts:[this.layouts[key]]});}return key;}
+    buildCompute(format,constants){const key=this.pipelineKey('spatialCompute','ext',format,constants);
+      if(this.pipelines.has(key))return Promise.resolve(this.pipelines.get(key));let job=this.jobs.get(key);if(job)return job;
+      const layout=this.pipelineLayouts[this.computeLayout(format)],module=this.module('spatialCompute','ext',format);
+      job=this.device.createComputePipelineAsync({layout,compute:{module,entryPoint:'cs',constants}})
+        .then(p=>{this.pipelines.set(key,p);this.jobs.delete(key);return p;},e=>{this.jobs.delete(key);this.failedVariants.add(key);throw e;});
+      this.jobs.set(key,job);return job;}
+    readyCompute(format,constants){const key=this.pipelineKey('spatialCompute','ext',format,constants);const p=this.pipelines.get(key);if(p)return p;
+      if(!this.failedVariants.has(key))this.buildCompute(format,constants).catch(e=>console.warn('[BxWebGPU] compute pipeline failed',key,e));return null;}
+    computePipeline(u,format){const c=spatialConstants(R.spatialProfile(u,'highp'));return this.readyCompute(format,c)||this.readyCompute(format,{FIXED:0});}
     // Pipeline for a pass, created asynchronously. ready() returns it or null while it compiles.
     pipelineKey(name,kind,format,constants){return [name,kind,format,JSON.stringify(constants||{})].join('|');}
     build(name,kind,format,constants={}){const key=this.pipelineKey(name,kind,format,constants);
@@ -61,10 +80,12 @@
       jobs.push(this.build('copy','ext','rgba8unorm'),this.build('copy','tex','rgba8unorm'),this.build('copy','tex',out));
       for(const t of f){jobs.push(this.build('spatial','tex',t,{FIXED:0}),this.build('easu','tex',t));}
       // The default frame: Spec 3 spatial variant, EASU, then casFiltered or SGSR on the canvas or a slot.
-      jobs.push(this.build('spatial','tex','rgba8unorm',spatialConstants(R.spatialProfile({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},'highp'))));
+      const profile=spatialConstants(R.spatialProfile({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},'highp'));
+      jobs.push(this.build('spatial','tex','rgba8unorm',profile));
+      if(this.computeSpatial)for(const t of f)jobs.push(this.buildCompute(t,{FIXED:0}),...(t==='rgba8unorm'?[this.buildCompute(t,profile)]:[]));
       for(const t of new Set([out,'rgba8unorm']))for(const n of ['casFiltered','cas','sgsr','rcas'])jobs.push(this.build(n,'tex',t,CONSTANTS[n]));
       await Promise.all(jobs);}
-    texture(w,h,fp){return this.device.createTexture({size:[w,h],format:fp?'rgba16float':'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_SRC|GPUTextureUsage.COPY_DST});}
+    texture(w,h,fp){return this.device.createTexture({size:[w,h],format:fp?'rgba16float':'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING|GPUTextureUsage.COPY_SRC|GPUTextureUsage.COPY_DST});}
     target(name,w,h,fp=false){this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h&&t.fp===fp)return t;
       t?.texture.destroy();t={w,h,fp,format:fp?'rgba16float':'rgba8unorm'};t.texture=this.texture(w,h,fp);t.view=t.texture.createView();this.targets[name]=t;return t;}
     uniform(key,values){let b=this.uniforms.get(key);const size=Math.ceil(values.length/4)*16;
@@ -76,7 +97,10 @@
       if(ts&&(ts.begin!=null||ts.end!=null)){d.timestampWrites={querySet:this.querySet};if(ts.begin!=null)d.timestampWrites.beginningOfPassWriteIndex=ts.begin;if(ts.end!=null)d.timestampWrites.endOfPassWriteIndex=ts.end;}
       const p=encoder.beginRenderPass(d);p.setPipeline(pipeline);p.setBindGroup(0,group);p.draw(3);p.end();}
     // Encodes a list of passes; the first one writes the begin timestamp and the last one the end.
-    encode(encoder,passes,q){passes.forEach((p,i)=>this.pass(encoder,p.pipeline,p.group,p.view,q&&{begin:i===0?q:null,end:i===passes.length-1?q+1:null}));}
+    encode(encoder,passes,q){passes.forEach((p,i)=>{const ts=q!=null&&{begin:i===0?q:null,end:i===passes.length-1?q+1:null};
+      if(!p.dispatch){this.pass(encoder,p.pipeline,p.group,p.view,ts);return;}
+      const d={};if(ts&&(ts.begin!=null||ts.end!=null)){d.timestampWrites={querySet:this.querySet};if(ts.begin!=null)d.timestampWrites.beginningOfPassWriteIndex=ts.begin;if(ts.end!=null)d.timestampWrites.endOfPassWriteIndex=ts.end;}
+      const c=encoder.beginComputePass(d);c.setPipeline(p.pipeline);c.setBindGroup(0,p.group);c.dispatchWorkgroups(...p.dispatch);c.end();});}
     // Frame import. A decoded frame (VideoFrame, <video>) is imported without a copy (importExternalTexture)
     // and converted to RGB once, by the copy pass into the RGBA8 input: reading the external texture in every
     // tap of the spatial pass converts YUV again each time and costs more (docs/spec4-webgpu.md). Other
@@ -116,9 +140,14 @@
       const revision=this.budget.revision,segment=this.diagnostics.active?this.diagnostics.frame(R.segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets,'webgpu'),performance.now()):null;
       this.usedTargets=new Set();const passes=[];
       try{
-        const input=this.importFrame(source,w,h,passes);if(!input)return false;
-        let src=input;
-        if(plan.spatial){const t=this.target('spatial',w,h,plan.quality),{pipeline}=this.spatialPipeline(plan.spatial,t.format);if(!pipeline)return false;
+        // A decoded frame with spatial filters: the fused compute pass reads it directly (no input copy).
+        let input=null,src=null;
+        if(plan.spatial&&this.computeSpatial&&isFrame(source)){const t=this.target('spatial',w,h,plan.quality),p=this.computePipeline(plan.spatial,t.format);
+          if(p){const ext=this.device.importExternalTexture({source}),layout=this.layouts[this.computeLayout(t.format)];
+            const group=this.device.createBindGroup({layout,entries:[{binding:0,resource:{buffer:this.uniform('spatial',PACK.spatial(plan.spatial))}},{binding:1,resource:ext},{binding:2,resource:this.sampler},{binding:3,resource:t.view}]});
+            passes.push({pipeline:p,group,dispatch:[Math.ceil(w/32),Math.ceil(h/32)]});src=t;}}
+        if(!src){input=this.importFrame(source,w,h,passes);if(!input)return false;src=input;}
+        if(plan.spatial&&src===input){const t=this.target('spatial',w,h,plan.quality),{pipeline}=this.spatialPipeline(plan.spatial,t.format);if(!pipeline)return false;
           passes.push({pipeline,group:this.bind('tex',this.uniform('spatial',PACK.spatial(plan.spatial)),src.view),view:t.view});src=t;}
         if(plan.scaler==='easu'){const t=this.target('scaled',outW,outH,plan.quality),p=this.ready('easu','tex',t.format);if(!p)return false;
           passes.push({pipeline:p,group:this.bind('tex',this.uniform('easu',PACK.easu(null,outW,outH)),src.view),view:t.view});src=t;}
