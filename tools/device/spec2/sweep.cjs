@@ -15,7 +15,7 @@ function trace(seconds){
  const out=path.join(tmp,'gpu3d.txt');try{fs.unlinkSync(out);}catch{}
  const ps=`$s=Get-Counter -Counter '\\GPU Engine(*engtype_3D)\\Utilization Percentage' -SampleInterval 1 -MaxSamples ${seconds};$s|%{($_.CounterSamples|Measure-Object -Property CookedValue -Sum).Sum}|Out-File -Encoding ascii '${out}'`;
  const p=spawn('powershell',['-NoProfile','-Command',ps],{stdio:'ignore'});
- return new Promise(r=>p.on('exit',()=>{const v=fs.readFileSync(out,'utf8').trim().split(/\s+/).map(Number);r({utilPct:v});}));
+ return new Promise(r=>p.on('exit',()=>{const v=fs.readFileSync(out,'utf8').trim().split(/\s+/).map(x=>Number(x.replace(',','.')));r({utilPct:v});}));
 }
 const mid=v=>{const c=v.slice(2,-2),s=[...c].sort((a,b)=>a-b);return c.length?s[s.length>>1]:null;};
 (async()=>{const c=await connect(port);if(poco)await serveRepo(c);let page=null,env=null;const rows=[];
@@ -24,7 +24,9 @@ const mid=v=>{const c=v.slice(2,-2),s=[...c].sort((a,b)=>a-b);return c.length?s[
   if(k.pre){await evaluate(c,k.pre,5000);await sleep(2500);}
   const before=state();if(poco&&!before.focus.includes('imagefilter'))throw new Error('app not in front');
   const T=k.seconds||12,t=trace(T),timeline=[];await sleep(poco?300:800);
-  const ticker=T>60?setInterval(()=>{try{timeline.push(state());}catch{}},30000):null;
+  const ticker=T>60?setInterval(()=>{try{const st=state();timeline.push(st);fs.writeFileSync(path.join(tmp,`timeline-${k.name}.json`),JSON.stringify(timeline));
+   // Section 9: too hot means stop and note it, because heat distorts the costs.
+   if(st.tempC>=45||st.thermal>=3||st.level<=10){timeline.push({stopped:st});evaluate(c,'window.stopSession=true',3000).catch(()=>{});}}catch{}},30000):null;
   const r=JSON.parse(await evaluate(c,`${k.expr?k.expr.replace('__S__',T-1.5):`B.session(${JSON.stringify({...k.cfg,seconds:T-1.5})})`}.then(JSON.stringify)`,(T+20)*1000));
   clearInterval(ticker);const g=await t,after=state();if(k.post)await evaluate(c,k.post,5000);
   // GPU ms per frame: active share of the stable seconds over the frames actually drawn.

@@ -1,0 +1,139 @@
+{
+ "name": "worker60",
+ "device": "poco",
+ "query": "aa=1&clip=game60",
+ "before": {
+  "at": "2026-11-07T02:27:52.408Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": -0.093,
+  "tempC": 36.5,
+  "thermal": 0,
+  "cpu0": 47.2,
+  "gpuMaxC": 44.5,
+  "skinC": 40.112,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 2,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "after": {
+  "at": "2026-11-07T02:28:44.208Z",
+  "level": 22,
+  "status": 2,
+  "voltageV": 3.737,
+  "currentA": 0.093,
+  "tempC": 36.9,
+  "thermal": 0,
+  "cpu0": 56,
+  "gpuMaxC": 54.6,
+  "skinC": 41.683,
+  "socdPct": 78,
+  "coolGpu": 3,
+  "coolBattery": 8,
+  "focus": "com.imagefilter.xcloud"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Linux; Android 16; 25053PC47G Build/BP2A.250605.031.A3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.8078.47 Mobile Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "Adreno (TM) 825",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   806,
+   394
+  ],
+  "dpr": 3.25,
+  "hidden": false,
+  "timer": false
+ },
+ "result": {
+  "mainLivre": {
+   "fps": 56.75,
+   "gaps": {
+    "n": 680,
+    "p50": 16.7,
+    "p95": 32.7,
+    "p99": 33.7,
+    "max": 33.9,
+    "mean": 17.607
+   },
+   "cpu": {
+    "n": 681,
+    "p50": 2,
+    "p95": 3.4,
+    "p99": 4.8,
+    "max": 7.1,
+    "mean": 2.105
+   }
+  },
+  "mainOcupada": {
+   "fps": 45.92,
+   "gaps": {
+    "n": 550,
+    "p50": 16.8,
+    "p95": 48.5,
+    "p99": 58.6,
+    "max": 69.4,
+    "mean": 21.647
+   },
+   "cpu": {
+    "n": 551,
+    "p50": 1.5,
+    "p95": 3.3,
+    "p99": 4.7,
+    "max": 5.4,
+    "mean": 1.667
+   }
+  },
+  "workerLivre": {
+   "fps": 60.17,
+   "gaps": {
+    "n": 721,
+    "p50": 16.7,
+    "p95": 17.9,
+    "p99": 19.7,
+    "max": 21.4
+   },
+   "cpu": {
+    "n": 722,
+    "p50": 1.4,
+    "p95": 2.9,
+    "p99": 4.2,
+    "max": 9.4
+   }
+  },
+  "workerOcupada": {
+   "fps": 50.67,
+   "gaps": {
+    "n": 607,
+    "p50": 16.7,
+    "p95": 45.2,
+    "p99": 54.3,
+    "max": 59.7
+   },
+   "cpu": {
+    "n": 608,
+    "p50": 1.3,
+    "p95": 2.8,
+    "p99": 5,
+    "max": 10.4
+   }
+  }
+ }
+}

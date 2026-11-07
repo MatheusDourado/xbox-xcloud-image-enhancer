@@ -54,14 +54,18 @@ def main():
     # Poco alternatives: compositor stretch of the 1080p result, and SGSR in place of EASU + sharpening.
     run('1280:nativo-esticado', cfg(DEFAULT), '1280', display=True)
     run('1280:semFiltro-esticado', cfg(OFF), '1280', display=True)
-    for name in ('sgsr8s2', 'sgsr8s15', 'sgsr20s2', 'sgsr20s15'):
+    for name in ('sgsr8s2', 'sgsr8s15', 'sgsr20s2', 'sgsr20s15', 'sgsr20s12', 'sgsr20s1', 'sgsr30s15', 'sgsr30s12'):
         run('1280:' + name, cfg(DEFAULT, output='1280', sharpness=0), '1280', swap={'easu': name})
-        run('1280:' + name + '-usm15', cfg(DEFAULT, output='1280', sharpness=1.5), '1280', swap={'easu': name})
+    run('1280:degrades60', cfg(DEFAULT, output='1280', deband=.6), '1280')
+    run('1280:usm2', cfg(DEFAULT, output='1280', sharpness=2), '1280')
+    run('1280:usm15', cfg(DEFAULT, output='1280', sharpness=1.5), '1280')
     page.evaluate('m=>swap(m)', {})
+    out = ROOT / 'docs/medicoes/spec2/ganho-visual.json'
+    out.write_text(json.dumps(res, indent=1) + '\n', encoding='utf-8')
     # Flicker on 1080p sequences: consecutive frames, temporal history kept.
     seq = {}
     for name, s in (('padrao', cfg(DEFAULT)), ('semFiltro', cfg(OFF)), ('temporal50', cfg(DEFAULT, temporal=.5)), ('semDetalhe', cfg(DEFAULT, detail=0)), ('semNitidez', cfg(DEFAULT, sharpness=0))):
-        seq[name] = ev.sequence(s, start=150, end=168, measure_from=8)[0]; print(name, seq[name], flush=True)
+        seq[name] = ev.sequence(s, scenes=R.SCENES, start=150, end=168, measure_from=8)[0]; print(name, seq[name], flush=True)
     res['sequencia'] = seq
     ev.close()
     (ROOT / 'docs/medicoes/spec2/ganho-visual.json').write_text(json.dumps(res, indent=1) + '\n', encoding='utf-8')

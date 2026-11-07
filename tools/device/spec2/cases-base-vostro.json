@@ -1,0 +1,126 @@
+[
+{
+"name": "filtro-1080-vazio",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-compressao",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0.5,
+"deband": 0,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-degrades",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0.3,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-cor",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0.75,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-detalhe",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0.2
+}
+}
+},
+{
+"name": "filtro-1080-aa",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0,
+"antialias": 0.5
+}
+}
+},
+{
+"name": "filtro-1080-padrao",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {}
+}
+},
+{
+"name": "filtro-1080-neural",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"neural": 0.5
+}
+}
+},
+{
+"name": "filtro-1080-temporal",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"temporal": 0.5
+}
+}
+},
+{
+"name": "caminho-1080-atual",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080
+}
+},
+{
+"name": "caminho-1080-so-spatial-usm",
+"query": "aa=1&ow=1920&oh=1080",
+"cfg": {
+"output": 1080,
+"overrides": {
+"sharpness": 0
+}
+}
+}
+]

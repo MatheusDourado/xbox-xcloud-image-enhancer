@@ -1,0 +1,863 @@
+{
+ "name": "msaa",
+ "device": "vostro",
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": true,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "rows": [
+  {
+   "name": "aa0-1080-direto-a",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 18.8,
+   "gpuMsPerFrame": 6.28,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.9,
+    "max": 1.8,
+    "mean": 0.359
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.3,
+    "p95": 50,
+    "p99": 50.2,
+    "max": 50.5,
+    "mean": 33.34
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 318,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     18.9484080336621,
+     16.429784515053,
+     14.8669871911742,
+     17.0903557476783,
+     18.8374664141567,
+     19.1003454766039,
+     18.8749984215252,
+     19.5891806979453,
+     18.4650020180385,
+     18.3636193026161,
+     3.11293968675642,
+     0.184417782428437
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:29:25.680Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:29:39.117Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa0-1080-fluidez-a",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "fluid": true
+   },
+   "gpuBusyPct": 20.5,
+   "gpuMsPerFrame": 6.85,
+   "fps": 29.9,
+   "cpu": {
+    "n": 314,
+    "p50": 0.3,
+    "p95": 0.5,
+    "p99": 1,
+    "max": 1.8,
+    "mean": 0.32
+   },
+   "gaps": {
+    "n": 313,
+    "p50": 33.3,
+    "p95": 34.9,
+    "p99": 49,
+    "max": 49.9,
+    "mean": 33.391
+   },
+   "raf": {
+    "n": 630,
+    "p50": 16.7,
+    "p95": 17,
+    "p99": 17,
+    "max": 18.1,
+    "mean": 16.669
+   },
+   "dropped": 0,
+   "decoded": 319,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     22.1590701436424,
+     20.902952471562,
+     22.2450045771554,
+     19.8544056204753,
+     18.9733211840407,
+     22.67684974201,
+     22.0751645544641,
+     20.4744660916303,
+     17.8415162187843,
+     19.6563374162081,
+     5.8075211294161,
+     0.251421217357964
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:29:40.620Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:29:53.933Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa0-1080-x8-a",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "repeat": 8
+   },
+   "gpuBusyPct": 69.4,
+   "gpuMsPerFrame": 23.13,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.5,
+    "p95": 0.8,
+    "p99": 1.2,
+    "max": 2.1,
+    "mean": 0.557
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.4,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 51.8,
+    "mean": 33.339
+   },
+   "raf": null,
+   "dropped": 2,
+   "decoded": 323,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     71.0640069682313,
+     71.3814006603316,
+     69.0342668980462,
+     69.3949165345253,
+     69.609318576916,
+     69.3808109005072,
+     69.8523968586658,
+     71.0014260420691,
+     67.8942351814246,
+     69.1972293134497,
+     15.5711746575019,
+     0.225721221590221
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:29:55.450Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:30:08.799Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-direto-a",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 21.4,
+   "gpuMsPerFrame": 7.13,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.8,
+    "max": 1.6,
+    "mean": 0.353
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.4,
+    "p95": 50,
+    "p99": 50.3,
+    "max": 50.6,
+    "mean": 33.39
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 317,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     21.8629960256354,
+     21.2827771830242,
+     21.1140186362686,
+     20.04162898009,
+     16.8507519625513,
+     20.3009342036248,
+     21.9802635971373,
+     22.3545129368629,
+     21.3752218165623,
+     22.2585813658835,
+     4.7580560732835,
+     0.13930145300996
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:30:12.046Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:30:25.412Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-fluidez-a",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "fluid": true
+   },
+   "gpuBusyPct": 22.3,
+   "gpuMsPerFrame": 7.47,
+   "fps": 29.9,
+   "cpu": {
+    "n": 314,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 1,
+    "max": 1.2,
+    "mean": 0.303
+   },
+   "gaps": {
+    "n": 313,
+    "p50": 33.3,
+    "p95": 49.8,
+    "p99": 50.2,
+    "max": 51.8,
+    "mean": 33.384
+   },
+   "raf": {
+    "n": 630,
+    "p50": 16.7,
+    "p95": 16.9,
+    "p99": 17,
+    "max": 34.9,
+    "mean": 16.695
+   },
+   "dropped": 0,
+   "decoded": 318,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     21.9824198235482,
+     24.52074826273,
+     22.3344861511571,
+     18.9864613280108,
+     20.3056315359062,
+     20.9618386927627,
+     22.7939524462554,
+     22.4433412729996,
+     22.9226500367369,
+     18.1357504333585,
+     4.70442458190533,
+     0.0891930127019747
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:30:26.924Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:30:40.252Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-x8-a",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "repeat": 8
+   },
+   "gpuBusyPct": 68.5,
+   "gpuMsPerFrame": 22.82,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.5,
+    "p95": 0.8,
+    "p99": 1.2,
+    "max": 3,
+    "mean": 0.527
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.3,
+    "p95": 50,
+    "p99": 50.3,
+    "max": 51.2,
+    "mean": 33.284
+   },
+   "raf": null,
+   "dropped": 5,
+   "decoded": 324,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     70.1771840494476,
+     68.8936797174615,
+     67.7772861231983,
+     69.294078202332,
+     68.6453082714166,
+     68.4403556212773,
+     69.0558479431969,
+     68.4668763541798,
+     67.9530952429852,
+     66.5470277375847,
+     12.6093975741125,
+     0.132566906209038
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:30:41.757Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:30:55.132Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa0-1080-direto-b",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 20.1,
+   "gpuMsPerFrame": 6.7,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.9,
+    "max": 1.9,
+    "mean": 0.363
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.3,
+    "p95": 50,
+    "p99": 50.2,
+    "max": 50.3,
+    "mean": 33.389
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 317,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     20.3111587727468,
+     19.5305797218742,
+     18.9292049190231,
+     15.6390829681895,
+     15.5658819545262,
+     19.8834305090516,
+     20.3238835028231,
+     20.1779355452496,
+     20.0930323663396,
+     20.4662171481639,
+     4.09421467347215,
+     0.140154923487066
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:30:58.379Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:31:11.754Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa0-1080-fluidez-b",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "fluid": true
+   },
+   "gpuBusyPct": 21.4,
+   "gpuMsPerFrame": 7.12,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.3,
+    "p95": 0.7,
+    "p99": 0.9,
+    "max": 1.6,
+    "mean": 0.313
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.3,
+    "p95": 34.9,
+    "p99": 49.4,
+    "max": 50,
+    "mean": 33.39
+   },
+   "raf": {
+    "n": 631,
+    "p50": 16.7,
+    "p95": 16.9,
+    "p99": 17,
+    "max": 18,
+    "mean": 16.669
+   },
+   "dropped": 5,
+   "decoded": 324,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     22.2051783515307,
+     23.3969110747672,
+     21.206873173238,
+     20.0969384170142,
+     22.5987775665667,
+     23.1440963815588,
+     22.3541489809477,
+     21.3726336603541,
+     18.7023117689228,
+     17.8417112974342,
+     6.54684526651,
+     0.914484057192161
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:31:13.259Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:31:26.547Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa0-1080-x8-b",
+   "query": "aa=0&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "repeat": 8
+   },
+   "gpuBusyPct": 69.3,
+   "gpuMsPerFrame": 23.09,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.5,
+    "p95": 0.9,
+    "p99": 1,
+    "max": 1.3,
+    "mean": 0.554
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.2,
+    "p95": 50,
+    "p99": 50.3,
+    "max": 50.8,
+    "mean": 33.285
+   },
+   "raf": null,
+   "dropped": 1,
+   "decoded": 320,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     70.1268229992312,
+     68.5568478285454,
+     69.9585588848464,
+     68.6453081210467,
+     69.1508853206846,
+     69.9806337105241,
+     70.1841125409544,
+     69.2505285767292,
+     68.2126921267638,
+     69.2645251501267,
+     12.3067567998068,
+     0.151872925117953
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:31:28.059Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:31:41.431Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": false,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-direto-b",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080
+   },
+   "gpuBusyPct": 22.2,
+   "gpuMsPerFrame": 7.41,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 1,
+    "max": 1.8,
+    "mean": 0.354
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.3,
+    "p95": 50.1,
+    "p99": 50.4,
+    "max": 50.8,
+    "mean": 33.39
+   },
+   "raf": null,
+   "dropped": 0,
+   "decoded": 318,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     22.6267242323821,
+     19.8904014827177,
+     17.3270485826001,
+     20.579859969268,
+     21.841198956704,
+     22.7419650422685,
+     22.2357242399343,
+     22.4782710972477,
+     21.9662740528181,
+     23.5479129563019,
+     6.27707097243951,
+     0.141688994625247
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:31:44.688Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:31:58.042Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-fluidez-b",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "fluid": true
+   },
+   "gpuBusyPct": 22.6,
+   "gpuMsPerFrame": 7.55,
+   "fps": 29.9,
+   "cpu": {
+    "n": 314,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 1.3,
+    "max": 1.8,
+    "mean": 0.307
+   },
+   "gaps": {
+    "n": 313,
+    "p50": 33.4,
+    "p95": 35,
+    "p99": 50,
+    "max": 50.9,
+    "mean": 33.391
+   },
+   "raf": {
+    "n": 630,
+    "p50": 16.7,
+    "p95": 16.9,
+    "p99": 17,
+    "max": 18.1,
+    "mean": 16.669
+   },
+   "dropped": 6,
+   "decoded": 324,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     23.5217758064695,
+     21.7986922782405,
+     23.1344250404168,
+     19.9243159991955,
+     23.3126946488945,
+     23.5996182491591,
+     22.5736489806755,
+     22.5544013081034,
+     19.435961000168,
+     19.4750247559132,
+     5.41561280816511,
+     0.176799222181345
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:31:59.550Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:32:12.898Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  },
+  {
+   "name": "aa1-1080-x8-b",
+   "query": "aa=1&ow=1920&oh=1080",
+   "cfg": {
+    "output": 1080,
+    "repeat": 8
+   },
+   "gpuBusyPct": 69.7,
+   "gpuMsPerFrame": 23.22,
+   "fps": 30,
+   "cpu": {
+    "n": 315,
+    "p50": 0.5,
+    "p95": 0.8,
+    "p99": 1,
+    "max": 1.8,
+    "mean": 0.521
+   },
+   "gaps": {
+    "n": 314,
+    "p50": 33.4,
+    "p95": 49.9,
+    "p99": 50.2,
+    "max": 50.9,
+    "mean": 33.285
+   },
+   "raf": null,
+   "dropped": 4,
+   "decoded": 323,
+   "fence": null,
+   "trace": {
+    "utilPct": [
+     70.5356550321378,
+     70.6829210628304,
+     69.1033999876604,
+     70.186364494182,
+     69.4500100653916,
+     69.6645211437564,
+     70.4644274164062,
+     71.2362703297698,
+     69.0066081313277,
+     68.375732524984,
+     17.2491815677975,
+     0.954998166888901
+    ]
+   },
+   "timeline": [],
+   "before": {
+    "at": "2026-11-07T02:32:14.413Z"
+   },
+   "after": {
+    "at": "2026-11-07T02:32:27.729Z"
+   },
+   "attrs": {
+    "alpha": false,
+    "antialias": true,
+    "depth": false,
+    "desynchronized": false,
+    "failIfMajorPerformanceCaveat": false,
+    "powerPreference": "default",
+    "premultipliedAlpha": true,
+    "preserveDrawingBuffer": false,
+    "stencil": false,
+    "xrCompatible": false
+   },
+   "samples": 0
+  }
+ ]
+}

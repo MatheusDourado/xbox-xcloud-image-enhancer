@@ -1,0 +1,200 @@
+[
+{
+"name": "so-video-30",
+"query": "aa=1",
+"cfg": {
+"mode": "none",
+"hideCanvas": true
+}
+},
+{
+"name": "canvas-parado-30",
+"query": "aa=1",
+"cfg": {
+"mode": "none"
+}
+},
+{
+"name": "so-upload-30",
+"query": "aa=1",
+"cfg": {
+"uploadOnly": true
+}
+},
+{
+"name": "so-video-60",
+"query": "aa=1&clip=game60",
+"cfg": {
+"mode": "none",
+"hideCanvas": true
+}
+},
+{
+"name": "canvas-parado-60",
+"query": "aa=1&clip=game60",
+"cfg": {
+"mode": "none"
+}
+},
+{
+"name": "so-upload-60",
+"query": "aa=1&clip=game60",
+"cfg": {
+"uploadOnly": true
+}
+},
+{
+"name": "filtro-1080-vazio",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-compressao",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0.5,
+"deband": 0,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-degrades",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0.3,
+"chroma": 0,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-cor",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0.75,
+"detail": 0
+}
+}
+},
+{
+"name": "filtro-1080-detalhe",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0.2
+}
+}
+},
+{
+"name": "filtro-1080-aa",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"cleanup": 0,
+"deband": 0,
+"chroma": 0,
+"detail": 0,
+"antialias": 0.5
+}
+}
+},
+{
+"name": "filtro-1080-padrao",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {}
+}
+},
+{
+"name": "filtro-1080-neural",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"neural": 0.5
+}
+}
+},
+{
+"name": "filtro-1080-temporal",
+"query": "aa=1",
+"cfg": {
+"output": 1080,
+"overrides": {
+"temporal": 0.5
+}
+}
+},
+{
+"name": "caminho-atual-30",
+"query": "aa=1",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "caminho-sgsr-30",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatial",
+"scale": "sgsr8s2"
+}
+}
+},
+{
+"name": "caminho-mp-sgsr-30",
+"query": "aa=1",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "sgsr8s2"
+}
+}
+},
+{
+"name": "caminho-atual-60",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280
+}
+},
+{
+"name": "caminho-mp-sgsr-60",
+"query": "aa=1&clip=game60",
+"cfg": {
+"output": 1280,
+"fast": {
+"spatial": "spatialMpConst",
+"scale": "sgsr8s2"
+}
+}
+}
+]

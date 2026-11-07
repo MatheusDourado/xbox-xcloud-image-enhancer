@@ -50,5 +50,5 @@ const variants={
  sgsr:SGSR,sgsrHp:SGSR.replace('precision mediump float;','precision highp float;').replace('precision mediump sampler2D;','precision highp sampler2D;'),
 };
 const fixed=(t,k)=>SGSR.replace('uniform float sharp,threshold;',`const float sharp=${k.toFixed(1)},threshold=${t}./255.;`);
-Object.assign(variants,{sgsr8s2:fixed(8,2),sgsr8s15:fixed(8,1.5),sgsr20s2:fixed(20,2),sgsr20s15:fixed(20,1.5)});
+Object.assign(variants,{sgsr8s2:fixed(8,2),sgsr8s15:fixed(8,1.5),sgsr20s2:fixed(20,2),sgsr20s15:fixed(20,1.5),sgsr20s12:fixed(20,1.2),sgsr20s1:fixed(20,1),sgsr30s15:fixed(30,1.5),sgsr30s12:fixed(30,1.2)});
 return variants;};

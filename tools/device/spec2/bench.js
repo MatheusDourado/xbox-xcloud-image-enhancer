@@ -79,20 +79,28 @@ async function uploadBurst(N=30,rounds=5){
 }
 // Production-like session: nothing waits for the GPU. Draws from rVFC (direct to the canvas, or through a
 // Fluidez slot presented on rAF). repeat multiplies the GPU load to see how the clock answers.
-function session({seconds=10,mode='render',output=OH,fluid=false,repeat=1,overrides={},upload=true,hideCanvas=false,hideVideo=false,uploadOnly=false}={}){return new Promise(res=>{
+function session({seconds=10,mode='render',output=OH,fluid=false,repeat=1,overrides={},upload=true,hideCanvas=false,hideVideo=false,uploadOnly=false,fast=null}={}){return new Promise(res=>{
  canvas.style.visibility=hideCanvas?'hidden':'';video.style.visibility=hideVideo?'hidden':'';
  const ow=output===H?W:OW,oh=output===H?H:OH,s=settings({output:output===H?'native':String(output),...overrides}),q0=video.getVideoPlaybackQuality();
  const cpu=[],gaps=[],rafGaps=[];let frames=0,done=false,lastAt=null,lastRaf=null,slot=0,pending=null,raf=0;const end=performance.now()+seconds*1000;
  const tick=t=>{if(done)return;if(lastRaf!==null)rafGaps.push(t-lastRaf);lastRaf=t;if(pending){e.present(pending);pending=null;}raf=requestAnimationFrame(tick);};
  if(fluid)raf=requestAnimationFrame(tick);
- const cb=()=>{const now=performance.now();if(now>end){done=true;cancelAnimationFrame(raf);const q=video.getVideoPlaybackQuality();canvas.style.visibility=video.style.visibility='';
+ const cb=()=>{const now=performance.now();if(now>end||window.stopSession){window.stopSession=false;done=true;cancelAnimationFrame(raf);const q=video.getVideoPlaybackQuality();canvas.style.visibility=video.style.visibility='';
    res({frames,fps:+(frames/seconds).toFixed(2),cpu:stat(cpu),gaps:stat(gaps),raf:stat(rafGaps),dropped:q.droppedVideoFrames-q0.droppedVideoFrames,decoded:q.totalVideoFrames-q0.totalVideoFrames,fence:e.gpuEstimate});return;}
   video.requestVideoFrameCallback(cb);if(lastAt!==null)gaps.push(now-lastAt);lastAt=now;frames++;
   if(mode!=='render')return;
   const a=performance.now();
   if(uploadOnly){touch(up('tex',video));cpu.push(performance.now()-a);return;}
+  // Candidate path: mediump specialized spatial, then SGSR straight to the canvas (two passes).
+  if(fast){up('tex',video);const t=e.targets.pacedFast||e.target('pacedFast',W,H);e.draw(fast.spatial,t,W,H,{source:e.input},fast.spatial==='spatial'?{cleanup:.5,deband:.3,chroma:.75,detail:.2,antialias:0,debandTaps:4,quantize:true,selective:true}:{});e.draw(fast.scale,null,ow,oh,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);if(e.fenceTiming&&!e.fence&&a-e.fenceAt>=500)e.startFence(a,'filtered',null);cpu.push(performance.now()-a);return;}
   for(let k=0;k<repeat;k++){const target=fluid?'paced'+(slot=(slot+1)%5):null,go=()=>e.render(video,ow,oh,s,performance.now()/1000,false,target);
    if(upload&&k===0)go();else withoutUpload(go);if(fluid)pending=target;}
   cpu.push(performance.now()-a);};
  video.requestVideoFrameCallback(cb);});}
-window.B={ready,uploadLive,uploadBurst,live,session,stat,e,gl,up,touch,finish,video,canvas,sleep,settings,pipe,W,H,OW,OH,dest,withoutUpload};
+// Is antialias:true really multisampling? A diagonal edge on the default framebuffer shows partial coverage only with MSAA.
+function msaaProbe(){const vs='#version 300 es\nlayout(location=0) in vec2 p;void main(){gl_Position=vec4(p,0,1);}',fs='#version 300 es\nprecision highp float;out vec4 c;void main(){c=vec4(1);}',pr=gl.createProgram();for(const [k,src] of [[gl.VERTEX_SHADER,vs],[gl.FRAGMENT_SHADER,fs]]){const sh=gl.createShader(k);gl.shaderSource(sh,src);gl.compileShader(sh);gl.attachShader(pr,sh);}gl.linkProgram(pr);
+ const b=gl.createBuffer(),va=gl.createVertexArray();gl.bindVertexArray(va);gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-.9,-1,1]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
+ gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,1);gl.clear(gl.COLOR_BUFFER_BIT);gl.useProgram(pr);gl.drawArrays(gl.TRIANGLES,0,3);gl.bindVertexArray(null);
+ const n=canvas.width*canvas.height*4,p=new Uint8Array(n);gl.readPixels(0,0,canvas.width,canvas.height,gl.RGBA,gl.UNSIGNED_BYTE,p);const levels={};let partial=0;for(let i=0;i<n;i+=4){const v=p[i];if(v>0&&v<255){partial++;levels[v]=(levels[v]||0)+1;}}
+ return {antialias:gl.getContextAttributes().antialias,samplesParam:gl.getParameter(gl.SAMPLES),maxSamples:gl.getParameter(gl.MAX_SAMPLES),partial,levels};}
+window.B={msaaProbe,ready,uploadLive,uploadBurst,live,session,stat,e,gl,up,touch,finish,video,canvas,sleep,settings,pipe,W,H,OW,OH,dest,withoutUpload};

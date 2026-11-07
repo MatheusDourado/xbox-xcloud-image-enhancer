@@ -1,0 +1,114 @@
+{
+ "name": "worker",
+ "device": "vostro",
+ "query": "ow=1920&oh=1080",
+ "before": {
+  "at": "2026-11-07T02:10:33.241Z"
+ },
+ "after": {
+  "at": "2026-11-07T02:11:33.727Z"
+ },
+ "env": {
+  "ua": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36",
+  "renderer": "WebKit WebGL",
+  "unmasked": "ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x00009A49) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "attrs": {
+   "alpha": false,
+   "antialias": false,
+   "depth": false,
+   "desynchronized": false,
+   "failIfMajorPerformanceCaveat": false,
+   "powerPreference": "default",
+   "premultipliedAlpha": true,
+   "preserveDrawingBuffer": false,
+   "stencil": false,
+   "xrCompatible": false
+  },
+  "samples": 0,
+  "size": [
+   1920,
+   1080
+  ],
+  "css": [
+   1366,
+   651
+  ],
+  "dpr": 1,
+  "hidden": false,
+  "timer": true
+ },
+ "result": {
+  "mainLivre": {
+   "fps": 30,
+   "gaps": {
+    "n": 449,
+    "p50": 33.2,
+    "p95": 50.1,
+    "p99": 50.3,
+    "max": 50.4,
+    "mean": 33.3
+   },
+   "cpu": {
+    "n": 450,
+    "p50": 0.3,
+    "p95": 0.6,
+    "p99": 0.7,
+    "max": 1.6,
+    "mean": 0.332
+   }
+  },
+  "mainOcupada": {
+   "fps": 27.47,
+   "gaps": {
+    "n": 411,
+    "p50": 33.6,
+    "p95": 66.6,
+    "p99": 77.6,
+    "max": 91,
+    "mean": 36.417
+   },
+   "cpu": {
+    "n": 412,
+    "p50": 0.3,
+    "p95": 0.4,
+    "p99": 0.7,
+    "max": 1.1,
+    "mean": 0.285
+   }
+  },
+  "workerLivre": {
+   "fps": 30.13,
+   "gaps": {
+    "n": 451,
+    "p50": 33.3,
+    "p95": 36.2,
+    "p99": 41.1,
+    "max": 46.8
+   },
+   "cpu": {
+    "n": 452,
+    "p50": 0.4,
+    "p95": 0.9,
+    "p99": 1.6,
+    "max": 7.9
+   }
+  },
+  "workerOcupada": {
+   "fps": 27.87,
+   "gaps": {
+    "n": 417,
+    "p50": 33.5,
+    "p95": 63.5,
+    "p99": 75.8,
+    "max": 80.4
+   },
+   "cpu": {
+    "n": 418,
+    "p50": 0.4,
+    "p95": 0.9,
+    "p99": 1.4,
+    "max": 8.7
+   }
+  }
+ }
+}
