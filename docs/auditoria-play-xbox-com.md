@@ -9,7 +9,7 @@
 > | P1 — Microdetalhe × ruído/cintilação; redundância de realce | concluída | pendente |
 > | P1 — Rede neural atual (baseline) | concluída | pendente |
 > | P2 — Compressão, Degradês, AA e croma | concluída | pendente |
-> | P2 — Renderizador e checagem das afirmações do diagnóstico | em andamento | pendente |
+> | P2 — Renderizador e checagem das afirmações do diagnóstico | concluída | pendente |
 >
 > Até a verificação adversarial terminar, cada seção vale como **pré-verificação**. Correções entram aqui, marcadas.
 
@@ -102,6 +102,9 @@ Responde ao documento *"Xbox xCloud Image Enhancer — diagnóstico e roteiro de
     - A 45°, o AA amostra **através** da borda e desfoca, em vez de suavizar o serrilhado. O mesmo vale para `src/shaders/antialias.glsl`.
     - Isso explica o "AA não trouxe benefício". Não afeta a configuração atual (AA 0). Correção para a fase 2.
 22. **"Cor nas bordas" já é um CfL local que preserva a luma Rec.709 exatamente.** [código] O CfL Lite pendente é um filtro novo de teto baixo (+0,08 dB de croma na bancada) e não recupera luma. Só faz sentido se sobrar franja de cor visível com 75%.
+23. **Com "WebGPU" escolhido no site novo, a imagem tratada pode sair do lugar.** [código] O canvas WebGPU não recebe a classe `bxif-play-canvas` e fica sem posicionamento (7.2, R3). Não use WebGPU no `play.xbox.com` para comparar até corrigir. Com a rede ligada, o quadro é sempre WebGL2.
+24. **Trocar o renderizador no meio de uma medição perde a medição** [código] (7.2, R10).
+25. **Da seção 2 do diagnóstico, as afirmações 1–4 estão corretas.** A 5 é parcialmente correta: o treino é em luma de cenas sintéticas, e a acumulação temporal piora o PSNR. A 6 está correta, mas omite que o Worker foi confirmado em bancada (7.3).
 
 ## 2. P0 — O que realmente roda no play.xbox.com
 
@@ -686,9 +689,49 @@ Critério do diagnóstico: habilitar cada etapa só se o benefício visual super
 
 ## 7. P2 — Renderizador e checagem das afirmações do diagnóstico
 
-*Pendente.*
+### 7.1 Renderizador efetivo no play.xbox.com
 
-Já confirmado pela frente P0 [código]: "Auto" é sempre WebGL2 (`AUTO_WEBGPU` vazio). Com WebGPU e neural>0, o quadro volta ao WebGL2.
+| Painel: Renderizador | Rede / Temporal | O que o código faz | Linhas |
+| --- | --- | --- | --- |
+| Auto (padrão) | qualquer | WebGL2; nenhum canvas WebGPU é criado | `src/image-filter.js:223`, `:260`; `src/restoration-engine.js:383-384` |
+| WebGL2 | qualquer | WebGL2 | `src/image-filter.js:260` |
+| WebGPU | rede > 0 ou temporal > 0 (**config relatada**) | cria o canvas e o device WebGPU, mas o quadro é desenhado pelo WebGL2 ("Temporal e Reconstrução neural só rodam no WebGL2"); o canvas WebGPU fica com `visibility:hidden`, ainda ocupando layout | `src/image-filter.js:261-264`, `:230`; `src/restoration-engine.js:375`, `:379` |
+| WebGPU | rede 0 e temporal 0 | o WebGPU desenha; o canvas WebGL2 fica com `opacity:0`; **no site novo o canvas WebGPU fica sem posicionamento** (R3) | `src/image-filter.js:231`, `:236-238`, `:248` |
+| WebGPU indisponível ou com falha | — | volta ao WebGL2 sem recarregar | `src/image-filter.js:243-244`, `:259`, `:261` |
+
+### 7.2 Achados
+
+| ID | Classe | Achado | Impacto |
+|---|---|---|---|
+| R1 | [código] | "Auto" é sempre WebGL2: `AUTO_WEBGPU` está vazio. Além disso, `status.renderer.probe`, passado a `autoRenderer`, **nunca é atribuído** em `src/`, então mesmo uma lista preenchida não promoveria o WebGPU. É um defeito latente, sem efeito hoje. | baixo |
+| R2 | [código] | Com rede ou temporal > 0, a escolha do renderizador não muda o quadro, porque o quadro inteiro vai para um motor ou para o outro (não há mistura). Com "WebGPU" escolhido, o device e o canvas ficam ociosos. Comparar WebGL2 × WebGPU só faz sentido com rede 0 e temporal 0. | médio |
+| R3 | [código] | **Defeito no site novo: o canvas WebGPU não herda o posicionamento.**<br>• O posicionamento vem só da regra `canvas.bxif-play-canvas` (`src/play/host.js:11`), e a classe é posta apenas no canvas WebGL2 (`:51`).<br>• `startGpu` insere o canvas WebGPU sem a classe (`src/image-filter.js:248`), e `syncCanvas` copia só `style.cssText`, vazio no site novo (`:236-238`).<br>• Numa simulação da estrutura documentada em Chrome headless, ele ficou estático, com 1920×1080 px CSS **abaixo** do vídeo, e a página ganhou rolagem.<br>• O comentário de `image-filter.js:218-220` assume o site antigo (`#game-stream canvas`). O `play-harness` não testa WebGPU.<br>• Conferido nesta consolidação: classe e `syncCanvas` como descritos. | alto (com WebGPU) |
+| R4 | [doc] | Os números da v10/Spec 4 (10,2 × 12,0 ms; SGSR 4,5–5,2 × 7,8–8,1 ms) são de bancada:<br>• bancada `tools/device/spec4/session.html` no WebView 156, clipe game30 1080p a 30 FPS, saída 2276×1280;<br>• padrões da Spec 3, sem rede, `gpuBudget` 0, 20 s por caso;<br>• GPU pelo Perfetto, incluindo a composição;<br>• em rajada a ordem se inverte (10,38 × 3,25 ms).<br>Não valem para saída Nativa com rede, Detalhe e Degradês a 100%. | médio |
+| R5 | [código] | Não há port nem medição de rede ou temporal em WebGPU (`src/webgpu/` só tem cas, common, copy, easu, rcas, sgsr e spatial). Também não existe "custo de transição WebGL↔WebGPU" por quadro, porque não há interop. | médio |
+| R6 | [código] + [doc] | Importação: os dois caminhos fazem 1 conversão YUV→RGB e 1 escrita RGBA8 por quadro (~7,9 MiB em 1080p). O WebGPU faz `importExternalTexture` + uma cópia, porque ler a textura externa em cada tap seria 13–30 conversões por pixel. A vantagem "sem cópia" só aparece em rajada; no caminho inteiro em sessão, o WebGPU fica +1,7–1,9 ms/quadro mais caro. | baixo |
+| R7 | [teste no Poco] | A composição no site real difere da bancada: vídeo com opacity 0 + canvas WebGL2, e com WebGPU mais um canvas. Na bancada só o canvas medido ficava visível. O custo não foi isolado. | médio |
+| R8 | [doc] | A conversão de cor do WebGL2 no Adreno difere da referência (bordas de croma 3–4 níveis; máx. 74–93); a do WebGPU bate. Com a rede ligada, o WebGPU não está disponível; no site novo ainda há o R3. A perceptibilidade não foi avaliada. | baixo |
+| R9 | [código] | Sem cronômetro, o "GPU p95" do painel no Poco com WebGL2 é **estimativa** (fence/cadência). O custo real deve vir do Perfetto. | médio |
+| R10 | [código] | **Trocar o renderizador durante uma medição perde a medição.** Cada motor tem o seu `diagnostics`, e `startMeasurement`/`exportMeasurement` usam o `activeEngine` do momento (`src/image-filter.js:52-62`, `:228`). Protocolo: inicie cada medição só depois que `status.renderer.active` estabilizar e use uma medição por renderizador. | médio |
+| R11 | [código] | O app Android não força 1080p no site novo: o `1080p-hq` só existe no wrapper de `www.xbox.com` (`MainActivity.java:219-231`), não em `wrapPlay` (`:235-241`). Reforça o item 5 do resumo. | alto |
+| R12 | [código] | O bitrate do painel e do HUD está em **Mb/s** (`src/restoration-engine.js:288`; `src/panel.js:1026`, `:1163`; `src/hud.js:162`, `:252`). Resolve a dúvida de unidade do diagnóstico. | baixo |
+| R13 | [código] | Não existe controle chamado "tempo entre quadros" (seção 11). As leituras "tempo = `gpuBudget` 10" e "adaptação = `gpuBudget` 0" se **excluem**, porque são o mesmo controle. | médio |
+| R14 | [código] | O app já tem o que a fase de adb precisa:<br>• `setWebContentsDebuggingEnabled(true)`;<br>• ponte `BxAndroid` (`getRefreshRates`, `getRefreshRate`, `setRefreshRate`, `getAppInfo`, `copyText`, `saveFile`);<br>• exportação para `Downloads/xCloud ImageFilter/bx-v10.0.0-diagnostics-<epoch>.json`;<br>• Game Mode (performance e battery);<br>• taxa de tela fixável. | médio |
+| R15 | [teste no Poco] | O console no logcat **não é garantido**: o app usa um `WebChromeClient` padrão, sem `onConsoleMessage`. O canal confiável de console é o DevTools remoto. | baixo |
+| R16 | [código] | Dos scripts de `tools/device`, só os que **não navegam** servem numa partida real: `spec2/drive.cjs` com URL `-`, `run-in-webview.cjs` e `gpu-probe.cjs`.<br>• `spec2/meas.cjs`, `spec2/sweep.cjs`, `spec4/meas.cjs` e `spec4/suite.cjs` navegam para `bench.invalid` e tirariam o WebView do jogo.<br>• São reaproveitáveis: `pocoState()`, `trace()` de `sweep.cjs` (feito para host Windows) e `pftrace.py`. | médio |
+| R17 | [código] | O Perfetto do repositório (`perfetto-linha-do-tempo.pbtx`) cobre só **18 s**. As séries de 10–20 min precisam de uma cópia com duração maior e `write_into_file`, não testada no repositório (9.2). Alternativa: janelas de 18 s no início, aos 10 min e no fim. | baixo |
+
+### 7.3 Verificação factual da seção 2 do diagnóstico
+
+| # | Afirmação (resumo) | Veredito | Correção ou complemento |
+| --- | --- | --- | --- |
+| 1 | `host.js` acha `<video>` com `srcObject` e trilha WebRTC ativa, cria `WebGL2Player`, põe o canvas sobre o vídeo e deixa a fonte transparente; faz verificação periódica e observa o DOM | **Correta** (`src/play/host.js:28-39`, `:50-51`, `:10-11`, `:60`, `:180-182`) | Com player ativo, a mutação **não** dispara `scan` (`queueScan` retorna se houver `player`, `:89`): só o intervalo de 1 s detecta o fim. Espera `loadeddata` se `videoWidth` = 0. Põe `position:relative` no pai estático. |
+| 2 | `play-xbox-com.md`: validado em harness e site sem login; pede validação logada; não herda resolução/bitrate forçados | **Correta** (`docs/play-xbox-com.md:63-96`, `:112`) | No app Android o `1080p-hq` só existe para `www.xbox.com` (R11). |
+| 3 | `release-v9.8.0`: SGSR só age com saída > entrada; 16,8 ms/quadro no caminho padrão anterior a 30 FPS | **Correta** (`docs/release-v9.8.0.md:13`, `:23`, `:29`; `docs/spec2-estudo.md:9-13`) | Os 16,8 ms são de saída 1280p ampliada, padrões v9, clipe H.264, bancada. Em Nativa nem SGSR nem EASU rodam. |
+| 4 | `release-v10.0.0`: WebGPU opcional com fallback; rede e temporal no WebGL2; 10,2 × 12,0 ms; SGSR 4,5–5,2 × 7,8–8,1 ms | **Correta** (`docs/release-v10.0.0.md:21-33`; `docs/spec4-webgpu.md:19-31`) | Condições de bancada em R4. |
+| 5 | `analysis-v9.1`: rede compacta treinada em pares H.264/limpo, 3 convoluções, 2 passadas; ganho modesto; cintilação maior com nitidez forte; pouca vantagem da acumulação temporal ingênua | **Parcialmente correta** | Treino em **luma de cenas sintéticas** (16 cenas, 57 texturas, x264 8–25 Mb/s), não em vídeo de jogo. A acumulação temporal com movimento exato **piora** o PSNR (37,2 → 33,6 dB em 8 quadros); não é "pouca vantagem". |
+| 6 | `release-v9.8.0`/Spec 2: Worker e CfL Lite pendentes; CfL Lite com benefício limitado ou indeterminado | **Correta, com omissão** | O Worker foi **confirmado em bancada** no Poco com a thread principal ocupada (30 FPS: 25,9 → 29,5 FPS; p95 74,8 → 58,4 ms), com vídeo por `captureStream`, não WebRTC. No Vostro não houve ganho. |
+| extra | Bitrate "~18" | **Mb/s** (R12) | — |
 
 ## 8. Respostas às perguntas da seção 5 do diagnóstico (parciais)
 
@@ -724,7 +767,7 @@ Já confirmado pela frente P0 [código]: "Auto" é sempre WebGL2 (`AUTO_WEBGPU` 
    - Uma medição do painel de ~12 min, na mesma cena, com 60 Hz fixo, Fluidez desligada, painel fechado e DevTools desconectado.
    - Alternar ABAB a cada 3 min só a variável candidata (ex.: neural 100% × 0%; Detalhe 100% × moderado), com Perfetto em paralelo.
    - A candidata passa se display p99 e hitches/min não piorarem, se `videoSkipped` e `app_deadline` não subirem e se a ocupação ficar ≤ ~50% a 30 FPS (regra da Spec 2).
-7. **Fato × hipótese × teste:** marcado em cada achado das seções 1–3. Consolidação final após as frentes restantes.
+7. **Fato × hipótese × teste:** cada achado das seções 2–7 traz a classe ([código], [doc], [hipótese], [teste no Poco]). A verificação adversarial (seção 12) confirma, reclassifica ou corrige cada um.
 
 ## 9. Protocolo de testes via adb por Wi-Fi (rascunho)
 
@@ -882,6 +925,9 @@ Candidatos de código para a fase 2, **só após aprovação**:
 | j | Rede nova (WebGPU, multi-quadro, perda temporal) — só depois de 0d e de um conjunto de teste com movimento | ? | alto | alto |
 | k | Corrigir a direção do AA (`spatial.glsl:144`, `antialias.glsl`) e medir de novo — só se o AA voltar à pauta | baixo | baixo | baixo |
 | l | Corrigir a dica da Compressão ("ruído de compressão" → "degraus de bloco em áreas lisas") | baixo | baixo | baixo |
+| m | Canvas WebGPU no site novo: aplicar a classe `bxif-play-canvas` (ou estilo equivalente) e cobrir no `play-harness` (R3) | alto (com WebGPU) | baixo | baixo |
+| n | Preencher `status.renderer.probe` com o adaptador antes de qualquer entrada em `AUTO_WEBGPU` (R1) | baixo | baixo | baixo |
+| o | Medição sobrevivendo à troca de renderizador, ou aviso no painel (R10) | médio | baixo | baixo |
 
 ## 11. Ambiguidades do relato
 
@@ -894,3 +940,7 @@ Candidatos de código para a fase 2, **só após aprovação**:
 | "adaptação desligada" | A) "Adaptar à compressão" = desligado | intensidades literais 0,3/1/1 | `settings.adaptive` |
 | | B) "Aliviar GPU" = Nunca | sem corte automático | `settings.gpuBudget === 0` |
 | bitrate "~18" | provavelmente Mb/s | o painel mostra `bitrateMbps` | `status.net.bitrateMbps`; `timeline[].bitrateMbps` |
+
+## 12. Registro da verificação adversarial
+
+*Pendente.* Feita pelo modelo Fable, uma passada por frente. Correções, reclassificações e refutações entram aqui e nas seções afetadas.
