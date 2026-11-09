@@ -8,7 +8,7 @@
 > | P0 — Frametime, captura e apresentação | concluída | pendente |
 > | P1 — Microdetalhe × ruído/cintilação; redundância de realce | concluída | pendente |
 > | P1 — Rede neural atual (baseline) | concluída | pendente |
-> | P2 — Compressão, Degradês, AA e croma | em andamento | pendente |
+> | P2 — Compressão, Degradês, AA e croma | concluída | pendente |
 > | P2 — Renderizador e checagem das afirmações do diagnóstico | em andamento | pendente |
 >
 > Até a verificação adversarial terminar, cada seção vale como **pré-verificação**. Correções entram aqui, marcadas.
@@ -74,7 +74,10 @@ Responde ao documento *"Xbox xCloud Image Enhancer — diagnóstico e roteiro de
    - [código] A variante do `spatial` da configuração relatada não é pré-compilada e finaliza de forma bloqueante no 2º quadro (o Poco não tem `KHR_parallel_shader_compile`).
    - [código] Alternar Original/Tratada, a neural ou a resolução recria ~50 MB de alvos.
    - [doc] O motor inteiro compila em ~326 ms no início.
-9. **Com Degradês ligado em Nativa, o dither é aplicado duas vezes com o mesmo padrão** (spatial e passe final; mesmo hash e mesmo `gl_FragCoord`). [código] O efeito visual é [hipótese].
+9. **Dither com Degradês ligado.** [código] Spatial e passe final usam o mesmo ruído na mesma coordenada.
+   - *Corrigido pelas frentes P1/P2:* não há soma. O spatial grava inteiros em RGBA8, e o segundo dither (|n| < 0,5 nível) arredonda de volta ao mesmo valor onde a nitidez não mudou nada.
+   - O resultado é um único dither fixo, ≤ 1 nível. Não é causa de ruído nem de cintilação.
+   - A visibilidade em gradiente escuro é [teste no Poco] (6.2, F9).
 10. **A medição exportada já permite deduzir quais passes rodaram, mas não registra o essencial para a fase 2.** [código] Faltam a lista de passes, o tempo por passe, o motivo da redução automática e a variante do `spatial` (seção 2.9).
 11. **Detalhe 100% e a nitidez USM realçam a mesma banda.**
     - [código] Nos eixos, o termo `fine` do Detalhe tem **exatamente** a mesma resposta em frequência do passa-alta do USM, `(1−cos ω)/2`; no plano 2D a semelhança é 0,978.
@@ -93,6 +96,12 @@ Responde ao documento *"Xbox xCloud Image Enhancer — diagnóstico e roteiro de
     - [código] Pesos e shaders são os mesmos da v9.1; o treino é sintético, sem perda temporal e sem dados do encoder do xCloud.
     - [código] Ela roda em highp no Adreno.
 18. **A dica do painel "Com Reconstrução neural, use Nitidez ~2,5" ficou invertida.** [código] Era para baixar de 3; com o padrão atual em 2, ela leva a **subir** a nitidez.
+19. **Compressão 30% quase não age a ~18 Mb/s.** [código] Ela só trata degraus monótonos de 1 px (~2–25 níveis) entre lados lisos, e não remove ringing nem mosquito, apesar do que a dica do painel promete. [doc] Na bancada, o ganho foi nulo entre 5 e 20 Mb/s, ao custo de +2,4 ms em sessão. Recomendação: 0%, confirmando com A/B.
+20. **Degradês 100% rende pouco a mais que 60%.** [doc] O banding cai −14% contra −11%. [código] Em troca, ele apaga 79%/51%/14% da textura com 1/2/3 níveis pico a pico, e nada depois a devolve. Recomendação: 60%, ou 30% se a prioridade for textura, decidindo com A/B.
+21. **A direção do AA está espelhada.** [código, conferido à mão] Com os vizinhos lidos com y para cima, `dir ∝ (b, a)` para uma rampa `a·x + b·y`, enquanto a tangente da borda é `(−b, a)`.
+    - A 45°, o AA amostra **através** da borda e desfoca, em vez de suavizar o serrilhado. O mesmo vale para `src/shaders/antialias.glsl`.
+    - Isso explica o "AA não trouxe benefício". Não afeta a configuração atual (AA 0). Correção para a fase 2.
+22. **"Cor nas bordas" já é um CfL local que preserva a luma Rec.709 exatamente.** [código] O CfL Lite pendente é um filtro novo de teto baixo (+0,08 dB de croma na bancada) e não recupera luma. Só faz sentido se sobrar franja de cor visível com 75%.
 
 ## 2. P0 — O que realmente roda no play.xbox.com
 
@@ -418,7 +427,7 @@ Leitura: textura de **2–4 níveis** (microtextura sutil) sai **atenuada ou com
 | M5 | [código, emulação] | A rede a 100% **atenua** textura de 1–4 níveis, mais forte em sombras, e põe ~3 níveis de overshoot em degrau duro. [doc] Rede 50% na bancada: `detail` 0,9516 → 0,9546, `energy` igual, **halo +18%**. | alto |
 | M6 | [código] | Degradês 100%: raio 8, taps em `floor(d·8)`. A `textureMask` só protege extremos de raio 1. Uma grade de período 6 ou 16 px com 1 nível sai com **−0,2×** (fase invertida); com 4 níveis, 0,40–0,67×. Textura aleatória de σ 2–3 níveis cai para 0,77–0,87× (contra 0,91–0,97× com 0,6). | alto |
 | M7 | [código, emulação] | `untouched` (`spatial.glsl:115-116`): onde Compressão, Degradês ou Cor mexeram ≥ 2 níveis, o Detalhe é zerado. Com Degradês 1, isso atinge 20–26% dos pixels de textura fraca (0–2% com 0,6). Resultado [hipótese]: um mosaico alisado/realçado que muda a cada quadro ("fervilhamento"). | médio |
-| M8 | [código] | Quantização RGBA8 e dither em dobro: impacto **pequeno**. O `noiseFloor` do USM não realça o dither em área plana, e o padrão é fixo, então não pisca. Não priorizar. | baixo |
+| M8 | [código] | Quantização RGBA8 e dither nas duas passadas: impacto **pequeno**; o segundo dither não altera valores inteiros (6.2, F9). O `noiseFloor` do USM não realça o dither em área plana, e o padrão é fixo, então não pisca. Não priorizar. | baixo |
 | M9 | [doc] + [hipótese] | Cintilação: todo o realce é espacial e vem antes do temporal, e o USM final reamplifica o resíduo. Na bancada, Detalhe 20% custa 4–5× mais cintilação com USM que sem ele. O temporal reduz só 1,5–2,7%, a +8,3 ms de GPU no Poco. Detalhe 100% nunca foi medido; a emulação estima ×1,6–1,8. | alto |
 | M10 | [teste no Poco] | A cadeia é bimodal no ruído: com σ ≤ 2 níveis limpa (0,44–0,68×, graças à rede e ao Degradês); com σ ≥ 3 **amplifica** (1,21–1,33×). Parado a 18 Mb/s ela mascara o excesso; em panorâmica e sombra, quando o QP sobe, amplifica. O coring só foi validado contra ±1 nível. | alto |
 | M11 | [código, emulação] | Halos: os limites se empilham (Detalhe ±2 níveis + USM ±4) e a rede não tem teto local. Degrau duro 60→140: −9,3/+8,6 níveis (USM sozinho ±4). O `clarity` cria uma faixa de ±2 níveis com 3–4 px de largura em bordas de 20–100 níveis. Os limites controlam a amplitude, não a largura nem a naturalidade. | médio |
@@ -593,9 +602,87 @@ Ressalva: o cálculo não inclui a quantização RGBA8 da saída nem o fp16 dos 
 
 ## 6. P2 — Compressão, Degradês, AA e croma
 
-*Pendente.*
+As quatro etapas rodam numa única passada `spatial`, na resolução do stream, com alvo RGBA8 (variante `spatial@mediump.1.1.4.1.1.0.1.1`). Todas **suavizam**; nenhuma realça. A redundância de realce é assunto da seção 4.
 
-Já confirmado pela frente P0 [código]: com AA 0 e temporal 0, o bloco de AA é removido na compilação (custo e efeito zero), e com temporal 0 não existe passe de AA separado (`src/restoration-engine.js:358-363`).
+### 6.1 Tabela por etapa
+
+| Etapa (valor) | O que faz (código) | Leituras extras/px | Risco para microtextura | Benefício esperado a ~18 Mb/s | A/B sugerido |
+| --- | --- | --- | --- | --- | --- |
+| Base do `spatial` | centro + cruz + máscara de textura (`spatial.glsl:40-51`) | 5 | — | — | — |
+| Compressão 30% | degrau de 1 px de ~2–25 níveis entre lados lisos, por eixo; mistura ≤ 24% | +4 (mesmos texels do Detalhe) | baixo; amacia até 24% bordas reais lisas de baixo contraste (HUD) | **~nulo** (bancada: nada a 5–20 Mb/s); não trata ringing nem mosquito | 0 × 30 × 100% (100% só para localizar) em céu ou sombra |
+| Degradês 100% | 4 amostras fixas a ~8,9 px; limiar 1,5–13,3 níveis; mistura ≤ 80%; dither | +4 | **médio**: remove 79/51/14% da textura com 1/2/3 níveis p-p nos extremos; monótonos sem proteção; bloqueia Detalhe e USM | pequeno: banding −14% (100%) × −11% (60%) | 0 × 5% (só dither) × 60 × 100 em céu, neblina, caverna e asfalto |
+| AA 0% | compilado fora (`SPATIAL_ANTIALIAS 0`); sem passada | 0 | nenhum desligado; ligado: alto (direção espelhada) | nenhum | não priorizar |
+| Cor nas bordas 75% | CfL local de 2 amostras a ±2 px guiado pela luma; Y preservado | 0 (liso) ou +2 bilineares | muito baixo na luma; zera o Detalhe onde muda a cor > 2 níveis | pequeno: croma +0,08 dB (bancada) | 0 × 75 em HUD e texto vermelho/azul; WebGL2 × WebGPU com rede 0 |
+| Detalhe 100% (P1) | realce de luma | +16 | (seção 4) | (seção 4) | (seção 4) |
+| **Total** | | **29–31/px** | | | |
+
+Leituras por quadro: 2.073.600 × 31 ≈ 64,3 M em 1080p e ≈ 28,6 M em 720p. Na bancada, o Degradês (4 leituras) custou **mais** que o Detalhe (16), então leitura não é proxy de tempo.
+
+### 6.2 Achados
+
+| ID | Classe | Achado | Impacto |
+|---|---|---|---|
+| F1 | [código] | **Compressão** (`spatial.glsl:52-66`): sem grade de bloco. Fatores da mistura:<br>• `smallStep`: 1 nível → 0,03; 2 → 0,56; 3–10 → ~1; 20 → 0,30; ≥ 25,5 → 0.<br>• `smoothSides`: zera com variação vizinha > ~6 níveis.<br>• `confidence`: rejeita rampas.<br>A 30%, cada pixel anda até 12% do degrau, e o degrau cai no máximo 24%. | baixo |
+| F2 | [código] | A Compressão **não remove ringing nem mosquito**: oscilações ativam a `textureMask` (0,82 com 3 níveis; 1 com ≥ 4), que zera a mistura. A dica "Remove blocos e ruído de compressão" (`src/panel.js:812`) promete mais do que faz. | baixo |
+| F3 | [doc] | Ganho da Compressão ~nulo na bancada a 5–20 Mb/s ("nenhum, nem a 100% em 5 Mb/s"), ao custo de +2,4 ms em sessão (`docs/spec2-estudo.md:195`). Por isso o padrão da Spec 3 é 0. | médio |
+| F4 | [hipótese] | Por que ela quase não age: o deblocking do H.264 transforma degraus em rampas, que o detector rejeita, e a rede, quando ligada, roda antes e limpa os degraus. Com a rede ligada, é redundância de custo. | baixo |
+| F5 | [código] | **Degradês 100%**: raio `mix(2,8,1) = 8`, 4 amostras fixas em `(8,4)`, `(−8,−4)`, `(4,−8)`, `(−4,8)`. O limiar sobe para 13,3 níveis (9,2 com 0,6) e a mistura para até 80% (48% com 0,6). É a configuração mais agressiva do slider. O custo **não** depende do raio. | médio |
+| F6 | [código] | O Degradês 100% apaga microtextura de 1–3 níveis em áreas quase lisas. Depois, `untouched` zera o Detalhe nesses pixels, e o USM não age abaixo de 4 níveis (`noiseFloor`). **Nada devolve a textura.** A 60%, a erosão cai para ~60% da de 100%. | médio |
+| F7 | [doc] | O ganho do Degradês é pequeno: banding −5% (30%), −11% (60%), −14% (100%) nos clipes de céu da bancada. O custo é +3,9 ms em sessão. Mesmo a 100%, faixas mais largas que ~16 px continuam. O padrão de 60% consta como "pendente de validação" (`docs/spec3-implementacao.md:40`). | médio |
+| F8 | [hipótese] | As amostras fixas podem gerar cópias tênues de uma borda deslocadas 4/8 px em degradê escuro. É improvável: a bancada testou um padrão rotacionado e o resultado foi "igual ao atual". | baixo |
+| F9 | [código] | **Dither**: o mesmo ruído IGN estático na mesma coordenada nas duas passadas. O segundo **não altera valores inteiros**, então o efeito é um único dither de ≤ 1 nível (corrige o item 9 do resumo). Sem ele, os subdegraus de 0,2 nível do Degradês se perderiam e o banding voltaria. A visibilidade em gradiente escuro, com brilho alto e em panorâmica (o padrão fica parado na tela), é [teste no Poco]. | baixo |
+| F10 | [código] | **AA 0%** compila fora e não cria passada. Exceção transitória: até a variante compilar, o shader genérico pula o ramo em tempo de execução. | baixo |
+| F11 | [código] | **A direção do AA está espelhada** (`spatial.glsl:142-146`; `antialias.glsl:11-25`).<br>• A conta: `dir = (−(nw+ne−sw−se), nw+sw−ne−se)` com vizinhos lidos com y para cima. Para uma rampa `L = a·x + b·y`, `dir ∝ −(b, a)`, enquanto a tangente da borda é `(−b, a)`.<br>• O desvio é o dobro do ângulo entre a borda e o eixo mais próximo: a 45°, ele amostra exatamente através da borda.<br>• O portão diagonal dá peso total justamente entre ~20° e 70°. Na prática é um desfoque direcional de ±0,5 px através de bordas inclinadas.<br>• Conferido à mão nesta consolidação. | baixo (AA está em 0) |
+| F12 | [doc] | AA em vídeo já suavizado: na bancada, `detail` −0,11 e halo −71%, a +2,0 ms em sessão. A observação "nenhum benefício" é consistente com o código e com as medições. | baixo |
+| F13 | [código] | **Cor nas bordas**: interpola R−Y e B−Y entre amostras a ±2 px, guiada pela posição da luma. Só age em bordas de luma (> 4/255) e só se a cor atual estiver entre os dois lados (preserva linhas finas e texto). A reconstrução `G = (Y − 0,2126·R − 0,0722·B)/0,7152` mantém `lum = Y` **exatamente**, salvo o clamp em bordas muito saturadas e o arredondamento em `mediump`. | baixo |
+| F14 | [código] | Cor nas bordas, Compressão e Degradês **desligam o Detalhe** nos pixels que alteram > 2 níveis em qualquer canal: `untouched` usa `peak()`. O comentário fala só de cleanup e deband. | baixo |
+| F15 | [doc] | O **CfL Lite** pendente é o item 12 da Spec 2: "não medido", com teto de ganho baixo (+0,08 dB de croma, que é o ganho da etapa atual) e ~25 leituras. Não foi prototipado, foi adiado na Spec 3 e não entrou na v9.8.0. **Não recupera luma**: o critério do diagnóstico está correto. | baixo |
+| F16 | [teste no Poco] | No Poco, a conversão YUV→RGB do upload WebGL2 difere ~3–4 níveis nas bordas de croma; a do WebGPU bate com a referência (`docs/spec4-webgpu.md:143-152`). Isso muda a entrada da Cor nas bordas. Com a rede ligada o quadro é sempre WebGL2, e "Auto" também é WebGL2. | baixo |
+| F17 | [código] | Adaptar à compressão a 18 Mb/s: 2.5 e 6.4. O nível neutro (escalas 1) seria ~15 Mb/s em 1080p60. A calibração "0,12 bpp = QP 28" foi feita com x264, não com o encoder do xCloud [teste no Poco]. | médio |
+| F18 | [código] | Sem cronômetro, o Degradês é a **2ª vítima** da cadência, depois da rede: primeiro ×0,5 com 2 amostras, o que compila uma variante nova. | médio |
+| F19 | [doc] | O perfil compilado desta configuração já foi medido: perfil `v9Mp`, mesma chave, **1,93–1,95 ms** em rajada 1080p no Poco, contra **0,86 ms** do padrão (`docs/medicoes/spec3/poco-item2-rajada-r1/r2.json`). Desligar só a Compressão economiza pouco, porque o Detalhe lê os mesmos texels. | médio |
+| F20 | [hipótese] | A saída da rede vai para RGBA8 **sem dither** e pode criar contornos de 1 nível em degradês, que o Degradês depois corrige. Parte do banding residual com a rede ligada pode vir da própria rede. | baixo |
+
+### 6.3 Custos e ganhos documentados (bancada; não somar)
+
+| Etapa | Poco rajada 1080p (ms) | Poco sessão 30 FPS (ms) | Ganho medido contra o stream | Fonte |
+| --- | --- | --- | --- | --- |
+| Compressão | +0,42 a +0,51 | +2,4 | nenhum, nem a 100% em 5 Mb/s | `docs/spec2-estudo.md:195` |
+| Degradês | +1,00 a +1,11 | +3,9 | banding −5% (30%), −11% (60%), −14% (100%) | `:196` |
+| Cor nas bordas | +0,17 a +0,32 | +1,8 | croma +0,08 dB | `:197` |
+| Detalhe (referência) | +0,76 a +0,88 | +3,3 | detail 0,67 → 0,71 | `:198` |
+| Antialiasing | +0,34 a +0,47 | +2,0 | halo −71%, detail −0,11 | `:199` |
+| `spatial`, perfil desta configuração (`v9Mp`) | 1,933 / 1,95 | — | — | `spec3/poco-item2-rajada-r1/r2.json` |
+| `spatial`, perfil padrão (`defMp`) | 0,863 / 0,867 | — | — | idem |
+
+As linhas da Spec 2 são acréscimos sobre o `spatial` vazio, no shader genérico highp, antes das variantes.
+
+### 6.4 Recomendação por etapa
+
+Critério do diagnóstico: habilitar cada etapa só se o benefício visual superar o custo.
+
+| Etapa | Recomendação | Base | Teste no Poco? |
+| --- | --- | --- | --- |
+| Compressão 30% | **0%** (já é o padrão da Spec 3) | código (só degraus monótonos) + bancada (ganho ~nulo) | sim, para confirmar: A/B 0 × 30 em cena escura com blocos |
+| Degradês 100% | **60%** (padrão); 30% se a prioridade for textura | código (erosão de 1–3 níveis + bloqueio do Detalhe/USM) + bancada (−14% × −11%) | sim: 100 × 60 × 30 × 0 em céu, neblina e asfalto; 0 × 5% para o dither |
+| AA 0% | manter 0; não priorizar | código (compilado fora; direção espelhada) + bancada | não |
+| Cor nas bordas 75% | manter | código (luma intacta; 0–2 leituras só em bordas) + bancada | opcional: 0 × 75 em HUD colorido; WebGL2 × WebGPU com rede 0 |
+| CfL Lite | não implementar agora | docs (adiado; teto +0,08 dB; não mexe em luma) | só se sobrar franja de cor com 75% |
+| Adaptar à compressão | opcional; baixar o slider é mais previsível | código | ler `status.adaptive` |
+
+### 6.5 Menor experimento da área
+
+1. Fixe "Aliviar GPU" = Nunca e escolha uma cena parada com degradê escuro e textura fina, por exemplo a pausa do jogo.
+2. Inicie a medição e troque uma variável a cada ~60 s pelo console:
+   - Degradês: 1 → 0,6 → 0,05 (só dither) → 0;
+   - depois, Compressão: 0,3 → 0.
+3. Em cada valor, tire `adb exec-out screencap -p > nome.png`.
+4. Exporte a medição e avalie:
+   - textura em recortes 200%, às cegas;
+   - banding no degradê;
+   - visibilidade do dither (0 contra 0,05);
+   - por segmento, `gpu.p50/p95` e `display.p95/p99/hitches`.
+5. Repita uma vez em pan lento. Compressão e Degradês não têm componente temporal, então baixá-los não deve aumentar a cintilação.
 
 ## 7. P2 — Renderizador e checagem das afirmações do diagnóstico
 
@@ -770,6 +857,7 @@ new PerformanceObserver(l=>{for(const e of l.getEntries())if(e.duration>50)conso
 | 0b | No Poco: Detalhe 1 × 0,2–0,35 e Degradês 1 × 0,6 (neutros em GPU) por screencap, parado e em panorâmica | alto | baixo | baixo |
 | 0c | No Poco: Nativa + Detalhe 1 × Auto + SGSR + Detalhe 0–0,2 | alto | baixo | baixo |
 | 0d | No Poco: matriz rede × Detalhe (5.5), com "Nunca" e WebGL2 — baseline da rede atual | alto | baixo | baixo |
+| 0e | No Poco: Degradês 100 × 60 × 30 × 0 e Compressão 30 × 0 (6.5), por screencap | médio | baixo | baixo |
 | 1 | Confirmar resolução recebida, `floatTargets` e `budget.revision` antes de qualquer A/B visual | alto | baixo | baixo |
 | 2 | Fazer A/B com "Aliviar GPU = Nunca", ou conferir `revision` 0, para a redução por cadência não contaminar | alto | baixo | baixo |
 | 3 | Comparar Nativa × Auto e, em Auto, EASU × SGSR (`effective.scaler`) | alto | baixo | baixo |
@@ -792,6 +880,8 @@ Candidatos de código para a fase 2, **só após aprovação**:
 | h | Corrigir as dicas do painel sobre a rede ("~30%" → ~40–45%; "use ~2,5" sem induzir a subir) | baixo | baixo | baixo |
 | i | Variante `mediump` das passadas da rede, com regressão contra o JAX | médio | médio | médio |
 | j | Rede nova (WebGPU, multi-quadro, perda temporal) — só depois de 0d e de um conjunto de teste com movimento | ? | alto | alto |
+| k | Corrigir a direção do AA (`spatial.glsl:144`, `antialias.glsl`) e medir de novo — só se o AA voltar à pauta | baixo | baixo | baixo |
+| l | Corrigir a dica da Compressão ("ruído de compressão" → "degraus de bloco em áreas lisas") | baixo | baixo | baixo |
 
 ## 11. Ambiguidades do relato
 
