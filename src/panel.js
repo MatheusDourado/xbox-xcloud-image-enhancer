@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.0.0';
+ const VERSION = 'v10.1.0';
  const num = v => typeof v === 'number' && Number.isFinite(v);
 
  /* =============================== api.ui =============================== */
