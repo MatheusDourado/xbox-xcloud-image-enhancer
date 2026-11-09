@@ -390,9 +390,10 @@
   }
   class Engine {
     // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
-    // false keeps the generic uniform-driven spatial shader (benches, comparisons).
+    // false keeps the generic uniform-driven spatial shader (benches, comparisons); options.diagnostics:
+    // a measurement shared with another renderer of the same player (the recording survives a switch).
     constructor(gl,shaders,options={}){
-      this.gl=gl;this.programs={};this.targets={};this.queries=[];this.budget=createBudget();this.previous=null;this.frames=0;this.diagnostics=createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+      this.gl=gl;this.renderer='webgl2';this.programs={};this.targets={};this.queries=[];this.budget=createBudget();this.previous=null;this.frames=0;this.diagnostics=options.diagnostics||createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
       this.fenceTiming=!this.ext&&typeof gl.fenceSync==='function';this.fence=null;this.fenceAt=-Infinity;this.fenceValues=[];this.fenceGeneration=0;this.gpuEstimate=null;
       this.floatTargets=!!gl.getExtension('EXT_color_buffer_float');
       this.spatialPrecision=spatialPrecision(gl,options.spatialPrecision);this.spatialCode=options.spatialVariants===false?null:shaders.spatial||null;
@@ -516,7 +517,7 @@
       this.budget.configure(s,h);
       this.poll();let q=null;
       const revision=this.budget.revision;
-      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets),performance.now()):null;
+      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets,'webgl2'),performance.now()):null;
       this.usedTargets=new Set();
       if(this.ext&&this.queries.length<4){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
       try{

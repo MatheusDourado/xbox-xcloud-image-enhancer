@@ -870,7 +870,7 @@
    if (await api.startMeasurement()) { els.measureAt = Date.now(); els.measureMsg = ''; } else els.measureMsg = 'Sem tratamento ativo para medir';
   });
   els.measureExport.onclick = () => busy(els.measureExport, async () => {
-   const report = await api.exportMeasurement(); els.measureMsg = report ? 'Medição exportada' : 'Nenhuma medição em andamento'; els.measureAt = 0;
+   const report = await api.exportMeasurement(); els.measureMsg = !report ? 'Nenhuma medição em andamento' : report.saved ? 'Medição exportada' : 'Medição sem quadros tratados: nada exportado'; els.measureAt = 0;
   });
   const measureRow = h('div', {class: 'bxif-row bxif-stack bxif-has-val', 'data-bxif-row': 'measure'}, labelCell('Medição').el, h('div', {class: 'bxif-ctl bxif-btns'}, els.measureStart, els.measureExport), els.measureLine,
    h('div', {class: 'bxif-hint', text: 'Grava tempos de GPU e ritmo; exporta um JSON. Não mede a latência do controle.'}));

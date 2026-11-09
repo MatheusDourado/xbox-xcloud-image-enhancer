@@ -31,7 +31,7 @@
   class GpuEngine {
     // Use create(): the device and the pipelines of the default frame are ready before the first frame.
     constructor(device,context,format,options){
-      this.device=device;this.context=context;this.format=format;this.options=options;this.budget=R.createBudget();this.diagnostics=R.createDiagnostics();
+      this.device=device;this.context=context;this.format=format;this.options=options;this.budget=R.createBudget();this.diagnostics=options.diagnostics||R.createDiagnostics();
       this.frames=0;this.previous=null;this.floatTargets=true;this.fenceTiming=false;this.gpuEstimate=null;this.targets={};this.pipelines=new Map();this.jobs=new Map();this.failedVariants=new Set();
       this.modules={};this.uniforms=new Map();this.failed=null;this.onfail=null;this.renderer='webgpu';
       // Fused compute spatial pass for decoded frames (task 5), off unless options.compute: measured slower than
@@ -210,6 +210,10 @@
     destroy(){for(const t of Object.values(this.targets))t.texture.destroy();this.targets={};for(const b of this.uniforms.values())b.destroy();this.uniforms.clear();
       this.querySet?.destroy();this.resolve?.destroy();this.dummy?.destroy();this.onfail=null;try{this.context.unconfigure();}catch{}this.device.destroy();}
   }
+  // {vendor, architecture, description} of an adapter: the key of BxRestoration.AUTO_WEBGPU and the measurement's renderer.
+  const info=adapter=>adapter.info?{vendor:adapter.info.vendor,architecture:adapter.info.architecture,description:adapter.info.description}:{};
+  // Adapter info without a device or pipelines (the 'auto' probe); null without WebGPU or an adapter.
+  async function probe(options={}){if(!navigator.gpu)return null;const adapter=await navigator.gpu.requestAdapter({powerPreference:options.powerPreference||'high-performance'});return adapter?info(adapter):null;}
   // Adapter, device (with timestamp-query when offered) and the pipelines of the default frame, before any
   // frame is drawn: creating a pipeline can take close to a second on the Adreno 825.
   async function create(canvas,options={}){
@@ -222,10 +226,10 @@
     const context=canvas.getContext('webgpu');if(!context){device.destroy();throw new Error('Canvas sem contexto WebGPU');}
     const format=options.format||navigator.gpu.getPreferredCanvasFormat();
     context.configure({device,format,alphaMode:'opaque',usage:GPUTextureUsage.RENDER_ATTACHMENT|(options.readable?GPUTextureUsage.COPY_SRC:0)});
-    const engine=new GpuEngine(device,context,format,options);engine.adapter=adapter.info?{vendor:adapter.info.vendor,architecture:adapter.info.architecture,description:adapter.info.description}:{};
+    const engine=new GpuEngine(device,context,format,options);engine.adapter=info(adapter);
     const t=performance.now();try{await engine.warm();}catch(e){engine.destroy();throw e;}engine.warmMs=performance.now()-t;
     if(engine.failed){const r=engine.failed;engine.destroy();throw new Error(r);}
     return engine;
   }
-  globalThis.BxWebGPU={create,GpuEngine,spatialConstants,supported:()=>!!globalThis.navigator?.gpu};
+  globalThis.BxWebGPU={create,probe,GpuEngine,spatialConstants,supported:()=>!!globalThis.navigator?.gpu};
 })();

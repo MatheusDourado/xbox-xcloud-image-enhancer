@@ -16,7 +16,9 @@ void main(){
  float contrast=hi-lo;
  // Directional post-process AA: only high-contrast slanted edges are blended.
  // Flat regions and axis-aligned edges retain their original samples.
- vec2 direction=vec2(-(nw+ne-sw-se),nw+sw-ne-se);
+ // Edge tangent: the diagonal gradient (ne+se-nw-sw, nw+ne-sw-se) turned 90 degrees, so the two
+ // samples lie along the edge, not across it (v10.1: the y sign was mirrored, blurring across).
+ vec2 direction=vec2(-(nw+ne-sw-se),ne+se-nw-sw);
  float major=max(abs(direction.x),abs(direction.y));
  float diagonal=min(abs(direction.x),abs(direction.y))/max(major,.00001);
  float weight=amount*smoothstep(.04,.15,contrast)*smoothstep(.05,.35,diagonal);

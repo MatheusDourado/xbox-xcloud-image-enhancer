@@ -141,7 +141,9 @@ void main(){
   // Direction and blend come from the source; the blend is applied as a delta.
   float nw=lum(at(p+vec2(-1,1))),ne=lum(at(p+vec2(1,1))),sw=lum(at(p+vec2(-1,-1))),se=lum(at(p+vec2(1,-1)));
   float mid=lum(c),lo=min(mid,min(min(nw,ne),min(sw,se))),hi=max(mid,max(max(nw,ne),max(sw,se)));
-  vec2 dir=vec2(-(nw+ne-sw-se),nw+sw-ne-se);
+  // Edge tangent: the diagonal gradient (ne+se-nw-sw, nw+ne-sw-se) turned 90 degrees, so the two
+  // samples lie along the edge, not across it (v10.1: the y sign was mirrored, blurring across).
+  vec2 dir=vec2(-(nw+ne-sw-se),ne+se-nw-sw);
   float major=max(abs(dir.x),abs(dir.y));
   float weight=antialias*smoothstep(.04,.15,hi-lo)*smoothstep(.05,.35,min(abs(dir.x),abs(dir.y))/max(major,1e-5));
   if(weight>0.){

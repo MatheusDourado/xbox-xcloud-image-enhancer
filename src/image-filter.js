@@ -21,7 +21,9 @@
   // desynchronized attribute of the current canvas context (null before the first player).
   desynchronized:null,
   // Renderer (Spec 4): the setting, the one drawing now, its state (webgl2, starting, webgpu, fallback) and why.
-  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null}};
+  // probe: {vendor, architecture} of the WebGPU adapter for the 'auto' choice (BxRestoration.autoRenderer), null
+  // until a WebGPU engine is created or, while AUTO_WEBGPU names a GPU, the adapter is probed once.
+  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null,probe:null}};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -49,8 +51,11 @@
   nativePref(k){try{if(/^(stream|server|userAgent)\./.test(k))return typeof getGlobalPref==='function'?getGlobalPref(k):undefined;return typeof getStreamPref==='function'?getStreamPref(k):undefined;}catch{return undefined;}},
   get active(){return !!status.lastFrame&&Date.now()-status.lastFrame<2500;},
   directSupported:()=>typeof MediaStreamTrackProcessor==='function'&&typeof VideoFrame==='function',
-  async startMeasurement(){const engine=activeEngine,video=activePlayer?.$video;if(!engine)return false;
-   const initial=await BxRestoration.captureVideoStats(video,peer());if(activeEngine!==engine)return false;
+  // The measurement (diagnostics) belongs to the player and is shared by its two renderers, so a renderer
+  // change during a recording only starts a new segment (config.renderer); the metadata names the renderer
+  // drawing when the recording started.
+  async startMeasurement(){const player=activePlayer,video=player?.$video;if(!activeEngine)return false;
+   const initial=await BxRestoration.captureVideoStats(video,peer());const engine=activeEngine;if(!engine||activePlayer!==player)return false;
    const sc=globalThis.screen;
    const gpu=engine.renderer==='webgpu';
    engine.diagnostics.start({userAgent:navigator.userAgent,renderer:gpu?'WebGPU '+[engine.adapter?.vendor,engine.adapter?.architecture].filter(Boolean).join(' '):engine.gl.getParameter(engine.gl.RENDERER),api:gpu?'webgpu':'webgl2',timer:!!engine.ext,gpuMethod:engine.ext?(gpu?'timestamp':'timer'):engine.fenceTiming?'fence':null,floatTargets:engine.floatTargets,
@@ -59,10 +64,13 @@
    const id=engine.diagnostics.startedAt;measureRefresh().then(hz=>{if(engine.diagnostics.startedAt===id)engine.diagnostics.annotate({refreshMeasuredHz:hz});});
    return true;},
   get measuring(){return !!activeEngine?.diagnostics.active;},
-  async exportMeasurement(){const engine=activeEngine;if(!engine)return null;engine.poll();engine.diagnostics.stop();
-   const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(activePlayer?.$video,peer());report.net=status.net;
+  // Stops the recording and saves the JSON. A recording without any treated frame (no segments) is not
+  // saved: the report comes back with saved false, so the panel can say why there is no file.
+  async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
+   const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
    report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,warnings:status.warnings.map(w=>w.text)};
-   BxRestoration.downloadReport(report);return report;},
+   const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
+   report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
   async copyText(text){try{if(window.BxAndroid?.copyText?.(text))return true;}catch{}try{await navigator.clipboard.writeText(text);return true;}catch{return false;}},
   // Configuration summary to paste in a support conversation (no account data).
@@ -216,11 +224,19 @@
  // Five persistent output textures: the one on screen, up to three queued, one being written.
  function freeSlot(t){const used=new Set([t.shown,...t.pacer.pending.map(f=>f.slot)]);for(let i=0;i<5;i++){const name='paced'+i;if(!used.has(name))return name;}return t.pacer.pending[0]?.slot||'paced0';}
  // Renderer (Spec 4). The WebGL2 engine always exists. The WebGPU one draws on its own canvas, placed under
- // Better xCloud's WebGL2 canvas, which then turns transparent (opacity 0) and keeps receiving input; the
- // CSS of #game-stream canvas positions both. A WebGPU failure (creation, validation error, device lost) or
- // a frame only WebGL2 draws (neural restoration, temporal) shows WebGL2 again from the next frame on,
- // without a reload; after a failure WebGPU is retried only when the setting changes.
- function wantsWebGPU(){return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
+ // the WebGL2 canvas, which then turns transparent (opacity 0) and keeps receiving input. Both are positioned
+ // alike: on www.xbox.com by Better xCloud's '#game-stream canvas' CSS, on play.xbox.com by the classes the host
+ // puts on the WebGL2 canvas (bxif-play-canvas), which syncCanvas copies. A WebGPU failure (creation, validation
+ // error, device lost) or a frame only WebGL2 draws (neural restoration, temporal) shows WebGL2 again from the
+ // next frame on, without a reload; after a failure WebGPU is retried only when the setting changes.
+ // 'auto' compares the adapter {vendor, architecture} with BxRestoration.AUTO_WEBGPU: the probe is filled by the
+ // WebGPU engine when one is created and, only while that list names a GPU, by one requestAdapter (no device).
+ const adapterKey=a=>({vendor:a?.vendor??null,architecture:a?.architecture??null});
+ let probing=false;
+ function probeAdapter(){if(probing||status.renderer.probe||!BxRestoration.AUTO_WEBGPU.length||!globalThis.BxWebGPU?.supported())return;probing=true;
+  BxWebGPU.probe({powerPreference:powerPreference()}).then(info=>{status.renderer.probe=adapterKey(info);},()=>{status.renderer.probe=adapterKey(null);});}
+ function powerPreference(){let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}return power==='low-power'?'low-power':'high-performance';}
+ function wantsWebGPU(){if(settings.renderer==='auto')probeAdapter();return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
  // Better xCloud still draws or reads the WebGL2 canvas when WebGPU is off: only the GL context matters then.
  function renderable(player){return player.bxRender!==player.bxEngine||!!player.gl&&!player.gl.isContextLost();}
  function setRenderer(player,engine){
@@ -233,8 +249,10 @@
   player.bxLastFrame=null;player.bxTimes=[];player.bxReferenceFps=null;player.bxCadenceMark=performance.now();
   status.renderer.active=gpu?'webgpu':'webgl2';
  }
- function syncCanvas(player,g){const c=player.$canvas,css=c.style.cssText;
+ // The WebGPU canvas follows the WebGL2 one: inline style, classes (play.xbox.com positions by class) and size.
+ function syncCanvas(player,g){const c=player.$canvas,css=c.style.cssText,classes=c.className;
   if(g.css!==css){g.css=css;g.canvas.style.cssText=css;g.canvas.style.opacity='';g.canvas.style.pointerEvents='none';g.canvas.style.visibility=player.bxRender===g.engine?'visible':'hidden';}
+  if(g.classes!==classes){g.classes=classes;g.canvas.className=classes;}
   if(g.canvas.width!==c.width)g.canvas.width=c.width;if(g.canvas.height!==c.height)g.canvas.height=c.height;}
  function stopGpu(player){const g=player.bxGpu;if(!g)return;
   if(player.bxRender===g.engine&&g.engine)setRenderer(player,player.bxEngine);
@@ -243,14 +261,13 @@
  function gpuFailed(player,reason){player.bxGpuFailed=true;console.warn('[Bx Restoration] WebGPU → WebGL2:',reason);stopGpu(player);
   Object.assign(status.renderer,{state:'fallback',active:'webgl2',reason:'WebGPU falhou, usando WebGL2: '+reason});}
  function startGpu(player){
-  const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null};
+  const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null,classes:null};
   Object.assign(status.renderer,{state:'starting',reason:'Preparando o WebGPU (compilação dos shaders)'});
-  g.canvas.dataset.bxRenderer='webgpu';player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
-  let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}
-  BxWebGPU.create(g.canvas,{powerPreference:power==='low-power'?'low-power':'high-performance'}).then(engine=>{
+  g.canvas.dataset.bxRenderer='webgpu';g.canvas.setAttribute('aria-hidden','true');player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
+  BxWebGPU.create(g.canvas,{powerPreference:powerPreference(),diagnostics:player.bxDiagnostics}).then(engine=>{
    if(player.bxGpu!==g||player.isStopped){engine.destroy();return;}
    g.engine=engine;g.state='ready';engine.onfail=reason=>{if(player.bxGpu===g)gpuFailed(player,reason);};
-   Object.assign(status.renderer,{state:'webgpu',reason:'',adapter:engine.adapter,timestamps:engine.timestamps,warmMs:Math.round(engine.warmMs)});
+   Object.assign(status.renderer,{state:'webgpu',reason:'',adapter:engine.adapter,timestamps:engine.timestamps,warmMs:Math.round(engine.warmMs),probe:adapterKey(engine.adapter)});
   },error=>{if(player.bxGpu===g)gpuFailed(player,String(error?.message||error));});
  }
  // Before each frame: the renderer the setting asks for, once ready, and WebGL2 otherwise.
@@ -271,7 +288,8 @@
   // compares this with the setting to say when a change waits for the next session.
   try{status.desynchronized=!!this.gl.getContextAttributes()?.desynchronized;}catch{status.desynchronized=null;}
   stopGpu(this);this.bxEngine?.destroy();this.bxRender=null;this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
-  try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);this.bxRender=this.bxEngine;activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
+  // One measurement per player, shared by the WebGL2 and WebGPU engines (and kept across a context restore).
+  try{this.bxDiagnostics??=BxRestoration.createDiagnostics();this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders,{diagnostics:this.bxDiagnostics});this.bxRender=this.bxEngine;activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
   catch(error){status.mode='error';status.error=String(error.message||error);console.warn('[Bx Restoration]',error);}
   finally{this.gl.bindVertexArray(null);this.gl.activeTexture(this.gl.TEXTURE0);this.gl.bindTexture(this.gl.TEXTURE_2D,this.bxOriginalTexture);this.gl.useProgram(this.program);}
   this.bxLastFrame=null;this.bxLastSettings='';this.bxTimes=[];startTiming(this);
