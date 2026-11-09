@@ -6,9 +6,9 @@
 > | --- | --- | --- |
 > | P0 — O que realmente roda (framePlan, bypasses, resolução) | concluída | pendente |
 > | P0 — Frametime, captura e apresentação | concluída | pendente |
-> | P1 — Microdetalhe × ruído/cintilação; redundância de realce | em andamento | pendente |
+> | P1 — Microdetalhe × ruído/cintilação; redundância de realce | concluída | pendente |
 > | P1 — Rede neural atual (baseline) | em andamento | pendente |
-> | P2 — Compressão, Degradês, AA e croma | pendente | pendente |
+> | P2 — Compressão, Degradês, AA e croma | em andamento | pendente |
 > | P2 — Renderizador e checagem das afirmações do diagnóstico | pendente | pendente |
 >
 > Até a verificação adversarial terminar, cada seção vale como **pré-verificação**. Correções entram aqui, marcadas.
@@ -75,7 +75,18 @@ Responde ao documento *"Xbox xCloud Image Enhancer — diagnóstico e roteiro de
    - [código] Alternar Original/Tratada, a neural ou a resolução recria ~50 MB de alvos.
    - [doc] O motor inteiro compila em ~326 ms no início.
 9. **Com Degradês ligado em Nativa, o dither é aplicado duas vezes com o mesmo padrão** (spatial e passe final; mesmo hash e mesmo `gl_FragCoord`). [código] O efeito visual é [hipótese].
-10. **A medição exportada já permite deduzir quais passes rodaram, mas não registra o essencial para a fase 2.** [código] Faltam a lista de passes, o tempo por passe, o motivo da redução automática e a variante do `spatial` (seção 2.7).
+10. **A medição exportada já permite deduzir quais passes rodaram, mas não registra o essencial para a fase 2.** [código] Faltam a lista de passes, o tempo por passe, o motivo da redução automática e a variante do `spatial` (seção 2.9).
+11. **Detalhe 100% e a nitidez USM realçam a mesma banda.**
+    - [código] Nos eixos, o termo `fine` do Detalhe tem **exatamente** a mesma resposta em frequência do passa-alta do USM, `(1−cos ω)/2`; no plano 2D a semelhança é 0,978.
+    - Só o `fine` a 100% já equivale a Nitidez ≈ 4,3. Somado ao USM 2, o termo linear equivale a Nitidez ≈ 6,3, a faixa que a v9.1 associou a halos e cintilação.
+    - A única parte não redundante do Detalhe é o `clarity`, que age em períodos de 6–16 px.
+12. **A rede neural a 100% não realça; ela atenua textura fraca.** [código, emulação com os pesos do repositório] Grades de 1–4 níveis saem com 0,26–0,9× da amplitude. Detalhe e USM depois reamplificam o que sobra.
+13. **Degradês 100% apaga e, em alguns períodos, inverte textura fraca (1–7 níveis).** [código] Raio de 8 px e limiar de "plano" de até 13 níveis. Pelo mecanismo `untouched`, ele também **desliga o Detalhe** em 20–26% dos pixels de textura fraca.
+14. **Juntos, os itens 11–13 formam uma expansão de amplitude.** A microtextura sutil some e a textura média fica exagerada (1,4–2,3×). É uma causa plausível [hipótese] do aspecto "pouco natural".
+15. **A configuração relatada está fora de tudo o que já foi medido.** [doc] O Detalhe só foi medido a 0 e 20%, a rede só a 50%, e o Degradês 100% só num clipe de céu. Rede 1 + Detalhe 1 + Degradês 1 nunca foi medida.
+    - Na bancada, Detalhe 20% sobre o USM já soma +6–7% de cintilação, contra +1,5% sem o USM: a interação é multiplicativa.
+    - A emulação estima cintilação ×1,6–1,8 para Detalhe 1 + USM 2. É um proxy pessimista.
+16. **A intensidade do Detalhe e da rede não muda o custo de GPU** [código]. Só ligar ou desligar muda, porque a variante compilada é a mesma. Baixar o Detalhe de 100% para 20–35% é neutro para o stutter.
 
 ## 2. P0 — O que realmente roda no play.xbox.com
 
@@ -327,9 +338,151 @@ Tráfego de memória estimado só da neural em 1080p: ≈ 91 MB por quadro, ou ~
 
 ## 4. P1 — Microdetalhe × ruído e cintilação; redundância de realce
 
-*Em andamento.*
+**Método.** As respostas em frequência são analíticas. Os ganhos efetivos, o ruído e a cintilação vêm de uma **emulação numpy dos shaders**: pesos reais da rede, coring, limites e quantização em 8 bits entre passes.
+- A emulação reproduz regressões documentadas: onda quadrada ±6 → amplitude 12→16 e degrau 100/120 entre 98 e 122 (`docs/validation-v8.5.md:27`, `:30`).
+- Ela roda em float64, sem o `mediump` do Adreno.
+- Na cintilação, usa ruído novo a cada quadro, o que é mais pessimista que os quadros P do H.264.
+- Os números de emulação são indicativos. Os de bancada vêm de `docs/medicoes/spec2/ganho-visual*.json`: clipe game30, H.264 9 Mb/s, SwiftShader.
 
-Já confirmado em [código] pela frente P0: o dither é aplicado duas vezes com o mesmo padrão (`src/shaders/spatial.glsl:155-158` e `src/shaders/finish.glsl:13-16`; `quantize` true em performance, `src/restoration-engine.js:362`).
+### 4.1 Etapas que tocam alta frequência na configuração relatada
+
+| # | Etapa | Código | Efeito (luma) | Limites / máscaras | Saída |
+|---|---|---|---|---|---|
+| 1 | Rede neural, força 1 | `src/restoration-engine.js:529-533`; `tools/nn_glsl.py:24-37` | residual aprendido: **atenua** AF de 1–4 níveis; ~neutro a partir de 16 níveis; ~3 níveis de overshoot em degrau duro | **nenhum limite local** (só clamp 0–1) | `neural` RGBA8, sem dither |
+| 2 | Compressão 0,3 | `src/shaders/spatial.glsl:53-66` | média com o vizinho num degrau pequeno; mistura ≤ 0,24 | `1−textureMask`, `smoothSides`, `confidence` | — |
+| 3 | Degradês 1 | `spatial.glsl:68-84` | média de 4 taps a ≈ 8,9 px; mistura ≤ 0,8 | "plano" até 13,3 níveis; peso por tap; `1−textureMask` | — |
+| 4 | Cor nas bordas 0,75 (suposto) | `spatial.glsl:86-107` | só croma | `inside`; span ≥ 4/255 | — |
+| 5 | Detalhe 1 | `spatial.glsl:109-135` | `dL = 1,2·fine + 0,8·clarity` | coring `t`; `untouched`; gate de faixa larga; ±2 níveis | RGBA8 + dither |
+| 6 | USM (`casFiltered`, Nitidez 2) | `script.js:264` + `tools/build.py:10-17`, `:35-49` | `e + 0,556·(e − G3×3)` | `noiseFloor` 4/255; `haloMargin` 4/255; `lumaSharpen` | canvas + o mesmo dither |
+
+### 4.2 Redundância: `fine` (Detalhe) ≡ passa-alta do USM nos eixos
+
+[código] As duas fórmulas:
+- `fine = c − ¼(W+E+S+N)` (`spatial.glsl:122`), com resposta `F = 1 − ½(cos ωx + cos ωy)`.
+- O USM do upstream usa o binomial `G = [1 2 1; 2 4 2; 1 2 1]/16` e `e + (e−G)·sharpenFactor/3` (`script.js:264`), com `k = 0,556` para Nitidez 2. Sua parte passa-alta vale `1 − cos²(ωx/2)·cos²(ωy/2)`.
+
+Em qualquer frequência horizontal ou vertical, as duas valem `(1−cos ω)/2`, com diferença numérica de 1e-16. Elas só divergem na diagonal.
+
+Como `k_USM = Nitidez/3,6`, o termo `1,2·fine` do Detalhe 100% equivale **sozinho a Nitidez ≈ 4,3**. Em cascata com USM 2, o termo linear equivale a Nitidez ≈ 6,3.
+
+Se o Método for CAS, em baixo contraste ele também vira `e + 2,08·fine`: o mesmo núcleo.
+
+| Frequência | Período | USM−1 | `fine` | `clarity` | H_USM | H_Detalhe | Detalhe × USM |
+|---|---|---|---|---|---|---|---|
+| Nyquist (eixo) | 2 px | 0,556 | 1,000 | 1,000 | 1,556 | 3,000 | 4,667 |
+| ½ Nyquist | 4 px | 0,278 | 0,500 | 1,000 | 1,278 | 2,400 | 3,067 |
+| ¼ Nyquist | 8 px | 0,081 | 0,146 | 1,177 | 1,081 | 2,117 | 2,289 |
+| ⅛ Nyquist | 16 px | 0,021 | 0,038 | 0,439 | 1,021 | 1,397 | 1,427 |
+| 1/16 Nyquist | 32 px | 0,005 | 0,010 | 0,121 | 1,005 | 1,109 | 1,114 |
+| Xadrez (π,π) | diagonal | 0,556 | 2,000 | 1,000 | 1,556 | 4,200 | 6,533 |
+
+**O `clarity` é a parte não redundante** [código]:
+- É o centro menos a média de 8 amostras bilineares a 2,5–3,5 px; o filtro LINEAR transforma cada amostra num bloco 2×2.
+- Tem máximo de 1,38 em período de 5,9 px e age onde o USM quase não age (6–16 px).
+- Hipótese para a fase 2, a medir antes: dar ao `fine` peso bem menor que ao `clarity`.
+
+### 4.3 Ganho efetivo (com coring e limites; emulação)
+
+O ganho é a razão entre amplitude de saída e de entrada; valor negativo significa fase invertida. A tabela compara a configuração relatada (rede 1, Compressão 0,3, Degradês 1, Detalhe 1, USM 2) com estágios isolados.
+
+| Amplitude | Cadeia | p2 | p4 | p6 | p8 | p16 | xadrez |
+|---|---|---|---|---|---|---|---|
+| 2 níveis | USM 2 | 1,00 | 1,00 | 1,00 | 1,00 | 1,00 | 1,00 |
+| 2 níveis | Rede 1 | 0,26 | 0,54 | 0,77 | 0,86 | 0,97 | −0,02 |
+| 2 níveis | **Configuração relatada** | 0,26 | 0,54 | −0,13 | 0,26 | −0,10 | −0,02 |
+| 4 níveis | USM 2 | 1,56 | 1,00 | 1,02 | 1,00 | 1,00 | 1,56 |
+| 4 níveis | Detalhe 1 + USM 2 | 2,33 | 1,52 | 1,44 | 1,45 | 1,01 | 2,33 |
+| 4 níveis | Degradês 1 + Compressão 0,3 | 1,00 | 1,00 | 0,42 | 0,67 | 0,40 | 1,00 |
+| 4 níveis | Natural (Degradês 0,6 + USM 2) | 1,56 | 1,02 | 0,93 | 0,86 | 0,92 | 1,56 |
+| 4 níveis | **Configuração relatada** | 1,35 | 1,00 | 0,26 | 0,75 | 0,37 | 0,93 |
+| 8 níveis | USM 2 | 1,50 | 1,28 | 1,05 | 1,04 | 1,00 | 1,50 |
+| 8 níveis | **Configuração relatada** | 1,59 | 1,52 | 1,39 | 1,49 | 1,07 | 1,37 |
+| 16 níveis | **Configuração relatada** | 1,37 | 1,41 | 1,51 | 1,45 | 1,16 | 1,16 |
+
+Leitura: textura de **2–4 níveis** (microtextura sutil) sai **atenuada ou com fase invertida**, enquanto a de **8–16 níveis** sai **1,4–1,6× mais forte**. Isso é expansão de amplitude.
+
+### 4.4 Achados
+
+| ID | Classe | Achado | Impacto |
+|---|---|---|---|
+| M1 | [código] | Cadeia montada: rede → spatial (Compressão, Degradês, Cor, Detalhe) → USM. Três quantizações em 8 bits depois do upload. No site novo, `processingMode` fica em performance, então o alvo `neural` é RGBA8. | alto |
+| M2 | [código] | Redundância exata `fine` ≡ USM nos eixos (4.2). Detalhe 100% mais que duplica o realce que o USM já faz em 2–4 px. | alto |
+| M3 | [código] | O `clarity` é a única parte não redundante (banda de 6–16 px). | médio |
+| M4 | [código, emulação] | Ganho efetivo de Detalhe 1 + USM 2 em textura média e fina: ~1,4–2,3×, contra 1,0–1,56× do USM sozinho. | alto |
+| M5 | [código, emulação] | A rede a 100% **atenua** textura de 1–4 níveis, mais forte em sombras, e põe ~3 níveis de overshoot em degrau duro. [doc] Rede 50% na bancada: `detail` 0,9516 → 0,9546, `energy` igual, **halo +18%**. | alto |
+| M6 | [código] | Degradês 100%: raio 8, taps em `floor(d·8)`. A `textureMask` só protege extremos de raio 1. Uma grade de período 6 ou 16 px com 1 nível sai com **−0,2×** (fase invertida); com 4 níveis, 0,40–0,67×. Textura aleatória de σ 2–3 níveis cai para 0,77–0,87× (contra 0,91–0,97× com 0,6). | alto |
+| M7 | [código, emulação] | `untouched` (`spatial.glsl:115-116`): onde Compressão, Degradês ou Cor mexeram ≥ 2 níveis, o Detalhe é zerado. Com Degradês 1, isso atinge 20–26% dos pixels de textura fraca (0–2% com 0,6). Resultado [hipótese]: um mosaico alisado/realçado que muda a cada quadro ("fervilhamento"). | médio |
+| M8 | [código] | Quantização RGBA8 e dither em dobro: impacto **pequeno**. O `noiseFloor` do USM não realça o dither em área plana, e o padrão é fixo, então não pisca. Não priorizar. | baixo |
+| M9 | [doc] + [hipótese] | Cintilação: todo o realce é espacial e vem antes do temporal, e o USM final reamplifica o resíduo. Na bancada, Detalhe 20% custa 4–5× mais cintilação com USM que sem ele. O temporal reduz só 1,5–2,7%, a +8,3 ms de GPU no Poco. Detalhe 100% nunca foi medido; a emulação estima ×1,6–1,8. | alto |
+| M10 | [teste no Poco] | A cadeia é bimodal no ruído: com σ ≤ 2 níveis limpa (0,44–0,68×, graças à rede e ao Degradês); com σ ≥ 3 **amplifica** (1,21–1,33×). Parado a 18 Mb/s ela mascara o excesso; em panorâmica e sombra, quando o QP sobe, amplifica. O coring só foi validado contra ±1 nível. | alto |
+| M11 | [código, emulação] | Halos: os limites se empilham (Detalhe ±2 níveis + USM ±4) e a rede não tem teto local. Degrau duro 60→140: −9,3/+8,6 níveis (USM sozinho ±4). O `clarity` cria uma faixa de ±2 níveis com 3–4 px de largura em bordas de 20–100 níveis. Os limites controlam a amplitude, não a largura nem a naturalidade. | médio |
+| M12 | [código] | Faltam máscaras: não há máscara de movimento (`motion`/`cut` só rodam com temporal>0), nem máscara por luma (a rede age mais nas sombras), nem proteção de textura fraca no Degradês além de extremos. A adaptação por compressão é lenta demais (EMA de ~1 s ou p80 de 60 s) para panorâmicas. | médio |
+| M13 | [doc] | A configuração está fora da faixa medida (item 15 do resumo). `tools/eval/search.py:14` tinha Detalhe até 1, mas os resultados não estão versionados. | alto |
+| M14 | [código] | Intensidade de Detalhe e rede **não muda a GPU** (`spatialProfile`: `detail>0`; `strength` é uniform). Só zerar muda o custo. Só o Detalhe faz 16 leituras/px ≈ 33,2 M por quadro em 1080p. | médio |
+| M15 | [código] | A métrica `detail` da bancada (`tools/eval/run_eval.py:45-46`) usa **o mesmo núcleo do `fine`**, então o próprio Detalhe a infla. Ela precisa de guardas (`energy/detail`, halo, cintilação). Falta uma métrica de textura de baixo contraste. | médio |
+| M16 | [teste no Poco] + [doc] | Em Nativa a nitidez é feita na resolução do stream e esticada pelo compositor. Na bancada, "filtros em 1080, depois esticado" deu `detail` 0,589, contra 0,668 com USM 2 em 1280 e 0,611 com SGSR sem Detalhe (`docs/spec2-estudo.md:225-234`). Hipótese: parte do "preciso de Detalhe 100%" é compensação desse esticamento. | alto |
+
+### 4.5 Ruído e cintilação (emulação; proxy pessimista)
+
+| Cadeia | Cintilação ×entrada (textura σ 3) | (σ 6) | (σ 12) |
+|---|---|---|---|
+| Sem filtro | 1,00 | 1,00 | 1,00 |
+| USM 2 | 1,11 | 1,25 | 1,28 |
+| Natural (Degradês 0,6 + USM 2) | 1,13 | 1,26 | 1,29 |
+| Degradês 0,6 + Detalhe 0,2 + USM 2 | 1,23 | 1,38 | 1,41 |
+| Degradês 0,6 + Detalhe 1 + USM 2 | 1,63 | 1,76 | 1,73 |
+| **Configuração relatada** | **1,07** | **1,57** | **1,69** |
+| Relatada com Detalhe 0,35 | 0,87 | 1,29 | 1,45 |
+| Relatada com Nitidez 1 | 1,00 | 1,40 | 1,53 |
+| Relatada com Degradês 0,6 | 1,20 | 1,54 | 1,68 |
+
+**Bancada versionada** (game30, 9 Mb/s, sequência de 18 quadros; `ganho-visual.json:461`, `ganho-visual-2.json:326`):
+
+| Configuração | `detail` | `energy` | halo | SSIM | Cintilação |
+|---|---|---|---|---|---|
+| Stream sem filtro | 0,680 | 0,691 | 0,039 | 0,9393 | 3,77 |
+| Detalhe 20% sem nitidez | 0,711 | 0,768 | 0,054 | 0,9391 | 3,82 (+1,5%) |
+| USM 2 sem Detalhe | 0,865 | 1,153 | 0,269 | 0,9351 | 4,16 (+10%) |
+| USM 2 + Detalhe 20% | 0,902 | 1,288 | 0,354 | 0,9306 | 4,42 (+17%) |
+| USM 3 sem Detalhe | 0,939 | 1,385 | 0,436 | 0,9301 | 4,53 (+20%) |
+| USM 3 + Detalhe 20% (padrão v9) | 0,977 | 1,543 | 0,557 | 0,9238 | 4,85 (+29%) |
+| Padrão v9 + Temporal 50% | 0,968 | 1,510 | 0,538 | 0,9249 | 4,78 |
+| Padrão v9 + Rede 50% (sem sequência) | 0,955 | 1,520 | 0,792 | 0,9255 | não medida |
+
+### 4.6 Menor experimento (resposta à pergunta 6, lado visual)
+
+**Etapa 1 — bancada, sem aparelho e só com ferramentas existentes.**
+1. Gerar o clipe game30 (`tools/device/spec2/gen-video.js` + `server.py`).
+2. Avaliar com `tools/eval/run_eval.py`:
+   - `Evaluator.score` dá SSIM, `detail`, `energy` e halo;
+   - `Evaluator.sequence(cfg, scenes=['caverna','rocha','noite'], start=150, end=168, measure_from=8)` dá a cintilação, como em `tools/device/spec2/eval_gain2.py:48-51`.
+
+A matriz parte de **U** = configuração relatada e muda uma variável por vez:
+
+| # | Configuração | Pergunta | GPU em relação a U |
+|---|---|---|---|
+| 1 | Sem filtro | âncora | — |
+| 2 | Natural (preset) | âncora medida | menor |
+| 3 | U | linha de base | = |
+| 4 | U com Detalhe 0,35 | redundância `fine` × USM | = (mesma variante) |
+| 5 | U com Detalhe 0,2 | idem, valor medido na v9 | = |
+| 6 | U com Degradês 0,6 | textura fraca × Degradês 100% | = |
+| 7 | U com Rede 0 | contribuição da rede | − 2 passes |
+| 8 (opcional) | U com Nitidez 1 | USM × Detalhe | = |
+
+**Critério fixado antes de rodar.** Há "microdetalhe melhor" quando `detail ≥ detail(Natural) + 0,02`, desde que:
+- `energy/detail` ≤ o do Natural;
+- halo ≤ Natural + 10%;
+- cintilação ≤ Natural, com tolerância de +2%.
+
+As guardas são obrigatórias porque `detail` é inflado pelo próprio Detalhe (M15). As configurações 3–6 e 8 são neutras em GPU por construção (M14).
+
+**Etapa 2 — no Poco** (adb Wi-Fi + `chrome://inspect`):
+- Na mesma cena: 30 s parado + 30 s girando a câmera, ABAB entre U e o melhor candidato da bancada, com medição ligada.
+- Proxy de cintilação: 10 capturas `adb exec-out screencap -p` por configuração, incluindo Comparação = Original, e a média de |ΔY| entre capturas consecutivas num recorte estático e texturizado, como razão contra Original.
+- A captura inclui o esticamento do compositor e não é sincronizada com o quadro.
+- O clipe real é necessário para saber em qual regime de ruído o stream de ~18 Mb/s está (M10).
+- O repositório não tem ferramenta para capturar os quadros decodificados do `play.xbox.com`. MediaRecorder ou `screenrecord` recodificam [hipótese de uso].
 
 ## 5. P1 — Rede neural atual (baseline)
 
@@ -364,10 +517,21 @@ Já confirmado pela frente P0 [código]: "Auto" é sempre WebGL2 (`AUTO_WEBGPU` 
    - Custo [doc, bancada]: +5,2 ms/quadro em sessão a 30 FPS; 2,33–2,59 ms em rajada.
    - Não foi medido em partida real nem a 60 FPS.
    - A diferença visual fica para a frente P1 (seção 5).
-3. *(frente P1 — em andamento)*
+3. **Duas ou mais etapas realçam as mesmas frequências?** Sim, e a redundância é exata (4.2).
+   - O `fine` do Detalhe e o USM final têm resposta idêntica nos eixos. Detalhe 100% equivale sozinho a Nitidez ≈ 4,3; com USM 2, a ≈ 6,3 no termo linear.
+   - Ganho efetivo com coring e limites: 1,4–2,3×, contra 1,0–1,56× do USM sozinho.
+   - O `clarity` (6–16 px) é a parte não redundante.
+   - A rede não é redundante, é **antagônica**: atenua a textura fraca que Detalhe e USM depois reamplificam.
+   - Degradês 100% remove textura fraca e, via `untouched`, desliga o Detalhe nessas áreas.
+   - Medição de bancada: Detalhe 20% sobre USM 2 soma +0,033 de `detail`, +0,123 de `energy`, +25% de halo e +6% de cintilação. Detalhe 100% nunca foi medido.
 4. **O laço acompanha os quadros decodificados?** Não: acompanha os quadros que o `<video>` apresenta. Não repete quadros. Descarta os que chegam no mesmo vsync, e eles ficam contados em `origin.missed`/`videoSkipped`. Com Fluidez + Captura Direta, todos os quadros decodificados chegam ao tratamento. Já existe p50/p95/p99 por segmento para display/arrival/server/wait, mas "display" é a hora de submissão na CPU, e a composição não é medida pelo script.
-5. *(frente P1 neural — em andamento)*
-6. **Menor experimento** (lado da fluidez; o critério visual vem da P1):
+5. **Os testes de cintilação da v9.1 foram reproduzidos na v10?** Não.
+   - A última medição de cintilação é da Spec 2 (game30), só com USM, Detalhe 20% e Temporal.
+   - A cintilação **com rede** não foi medida desde a v9.1. v9.8, v10, Spec 4 e `play-xbox-com` não têm medição de cintilação.
+   - O que mudou desde a v9.1: os padrões (Nitidez 3→2, Detalhe 0,2→0, Degradês 0,3→0,6, Compressão 0,5→0) e o `spatial` em `mediump` no Adreno (diferença média de 0,02–0,04 nível).
+   - A matemática do Detalhe e do Degradês e os pesos da rede (`src/nn/restore.json`) não mudaram.
+   - *(Complemento da frente neural pendente.)*
+6. **Menor experimento.** O lado visual está em 4.6: matriz de 7–8 configurações em bancada com critério fixado antes, depois ABAB no Poco. O lado da fluidez:
    - Uma medição do painel de ~12 min, na mesma cena, com 60 Hz fixo, Fluidez desligada, painel fechado e DevTools desconectado.
    - Alternar ABAB a cada 3 min só a variável candidata (ex.: neural 100% × 0%; Detalhe 100% × moderado), com Perfetto em paralelo.
    - A candidata passa se display p99 e hitches/min não piorarem, se `videoSkipped` e `app_deadline` não subirem e se a ocupação ficar ≤ ~50% a 30 FPS (regra da Spec 2).
@@ -496,10 +660,13 @@ new PerformanceObserver(l=>{for(const e of l.getEntries())if(e.duration>50)conso
   .observe({type:'long-animation-frame',buffered:true});
 ```
 
-## 10. Ranking impacto × esforço × risco (provisório; só P0)
+## 10. Ranking impacto × esforço × risco (provisório; P0 + P1 microdetalhe)
 
 | # | Ação (fase de testes, sem código) | Impacto | Esforço | Risco |
 |---|---|---|---|---|
+| 0 | Matriz de bancada da seção 4.6 (Detalhe 0,2/0,35, Degradês 0,6, Rede 0), com o critério fixado antes | alto | baixo | baixo |
+| 0b | No Poco: Detalhe 1 × 0,2–0,35 e Degradês 1 × 0,6 (neutros em GPU) por screencap, parado e em panorâmica | alto | baixo | baixo |
+| 0c | No Poco: Nativa + Detalhe 1 × Auto + SGSR + Detalhe 0–0,2 | alto | baixo | baixo |
 | 1 | Confirmar resolução recebida, `floatTargets` e `budget.revision` antes de qualquer A/B visual | alto | baixo | baixo |
 | 2 | Fazer A/B com "Aliviar GPU = Nunca", ou conferir `revision` 0, para a redução por cadência não contaminar | alto | baixo | baixo |
 | 3 | Comparar Nativa × Auto e, em Auto, EASU × SGSR (`effective.scaler`) | alto | baixo | baixo |
@@ -516,6 +683,9 @@ Candidatos de código para a fase 2, **só após aprovação**:
 | b | Pré-aquecer a variante do spatial dos ajustes salvos | médio | baixo | baixo |
 | c | Avisar no painel e no HUD quando a neural não roda (`floatTargets`) ou foi cortada | médio | baixo | baixo |
 | d | Worker para o render | alto (se LoAF confirmar) | alto | alto |
+| e | Repesar o Detalhe: `fine` bem menor que `clarity` (só se a bancada confirmar M2/M3) | médio | baixo | médio |
+| f | Métrica de bancada para textura de baixo contraste, sem o núcleo do `fine` (M15) | médio | baixo | baixo |
+| g | Máscara de movimento barata (cópia 1/4 + `cut`) para reduzir o realce em panorâmica (só se a bancada mostrar ganho) | médio | médio | médio |
 
 ## 11. Ambiguidades do relato
 
