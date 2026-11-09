@@ -31,7 +31,7 @@
   class GpuEngine {
     // Use create(): the device and the pipelines of the default frame are ready before the first frame.
     constructor(device,context,format,options){
-      this.device=device;this.context=context;this.format=format;this.options=options;this.budget=R.createBudget();this.diagnostics=options.diagnostics||R.createDiagnostics();
+      this.device=device;this.context=context;this.format=format;this.options=options;this.diagnostics=options.diagnostics||R.createDiagnostics();this.budget=this.newBudget();
       this.frames=0;this.previous=null;this.floatTargets=true;this.fenceTiming=false;this.gpuEstimate=null;this.targets={};this.pipelines=new Map();this.jobs=new Map();this.failedVariants=new Set();
       this.modules={};this.uniforms=new Map();this.failed=null;this.onfail=null;this.renderer='webgpu';
       // Fused compute spatial pass for decoded frames (task 5), off unless options.compute: measured slower than
@@ -51,6 +51,7 @@
     }
     // A failure (device lost, validation error) stops this renderer for good; the owner falls back to WebGL2.
     fail(reason){if(this.failed)return;this.failed=reason;try{this.onfail?.(reason);}catch{}}
+    newBudget(){const b=R.createBudget();b.ondegrade=(reason,revision)=>this.diagnostics.event('degrade',{reason,revision});return b;}
     module(name,kind,format){const key=name+'|'+kind+'|'+(format||'');return this.modules[key]??=this.device.createShaderModule({code:wgsl(name,kind,format)});}
     // Compute layout of the fused spatial pass: the imported frame in, a storage texture of this format out.
     computeLayout(format){const key='extc:'+format;if(!this.pipelineLayouts[key]){const v=GPUShaderStage.COMPUTE;
@@ -76,14 +77,17 @@
       this.jobs.set(key,job);return job;}
     ready(name,kind,format,constants={}){const key=this.pipelineKey(name,kind,format,constants);const p=this.pipelines.get(key);if(p)return p;
       if(!this.failedVariants.has(key))this.build(name,kind,format,constants).catch(e=>console.warn('[BxWebGPU] pipeline failed',key,e));return null;}
-    // Spatial pipeline for these uniforms: the compiled variant once ready, the generic one meanwhile.
-    spatialPipeline(u,format){const c=spatialConstants(R.spatialProfile(u,'highp'));return {pipeline:this.ready('spatial','tex',format,c)||this.ready('spatial','tex',format,{FIXED:0}),variant:c};}
+    // Spatial pipeline for these uniforms: the compiled variant once ready, the generic one meanwhile (generic: true).
+    spatialPipeline(u,format){const c=spatialConstants(R.spatialProfile(u,'highp')),p=this.ready('spatial','tex',format,c);return {pipeline:p||this.ready('spatial','tex',format,{FIXED:0}),variant:c,generic:!p};}
+    // Pipelines of the default frame and, with options.settings, the spatial variant those settings use (audit F8).
     async warm(){const f=['rgba8unorm','rgba16float'],out=this.format,d=R.defaults,jobs=[];
       jobs.push(this.build('copy','ext','rgba8unorm'),this.build('copy','tex','rgba8unorm'),this.build('copy','tex',out));
       for(const t of f){jobs.push(this.build('spatial','tex',t,{FIXED:0}),this.build('easu','tex',t));}
       // The default frame: Spec 3 spatial variant, EASU, then casFiltered or SGSR on the canvas or a slot.
       const profile=spatialConstants(R.spatialProfile({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},'highp'));
       jobs.push(this.build('spatial','tex','rgba8unorm',profile));
+      if(this.options.settings){const plan=R.framePlan(R.normalize(this.options.settings),this.budget,1920,1080,1920,1080,true);
+        if(plan.spatial)jobs.push(this.build('spatial','tex',plan.quality?'rgba16float':'rgba8unorm',spatialConstants(R.spatialProfile(plan.spatial,'highp'))));}
       if(this.computeSpatial)jobs.push(this.warmCompute());
       for(const t of new Set([out,'rgba8unorm']))for(const n of ['casFiltered','cas','sgsr','rcas'])jobs.push(this.build(n,'tex',t,CONSTANTS[n]));
       await Promise.all(jobs);}
@@ -92,6 +96,7 @@
       return Promise.all([this.buildCompute('rgba8unorm',{FIXED:0}),this.buildCompute('rgba16float',{FIXED:0}),this.buildCompute('rgba8unorm',profile)]);}
     texture(w,h,fp){return this.device.createTexture({size:[w,h],format:fp?'rgba16float':'rgba8unorm',usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.STORAGE_BINDING|GPUTextureUsage.COPY_SRC|GPUTextureUsage.COPY_DST});}
     target(name,w,h,fp=false){this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h&&t.fp===fp)return t;
+      this.diagnostics.event('target',{name,w,h,bytes:w*h*(fp?8:4),realloc:!!t});
       t?.texture.destroy();t={w,h,fp,format:fp?'rgba16float':'rgba8unorm'};t.texture=this.texture(w,h,fp);t.view=t.texture.createView();this.targets[name]=t;return t;}
     uniform(key,values){let b=this.uniforms.get(key);const size=Math.ceil(values.length/4)*16;
       if(!b||b.size<size){b?.destroy();b=this.device.createBuffer({size,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});this.uniforms.set(key,b);}
@@ -110,10 +115,11 @@
     // and converted to RGB once, by the copy pass into the RGBA8 input: reading the external texture in every
     // tap of the spatial pass converts YUV again each time and costs more (docs/spec4-webgpu.md). Other
     // sources (canvas, ImageBitmap: tests) are copied by the queue.
-    importFrame(source,w,h,passes){const input=this.target('input',w,h);
+    // trace (measurement only): 'import' is the external-texture copy pass, 'upload' the queue copy.
+    importFrame(source,w,h,passes,trace=null){const input=this.target('input',w,h);
       if(isFrame(source)){const ext=this.device.importExternalTexture({source});const p=this.ready('copy','ext','rgba8unorm');if(!p)return null;
-        passes.push({pipeline:p,group:this.bind('ext',null,ext),view:input.view});}
-      else this.device.queue.copyExternalImageToTexture({source},{texture:input.texture},[w,h]);
+        passes.push({pipeline:p,group:this.bind('ext',null,ext),view:input.view});trace?.push('import');}
+      else{this.device.queue.copyExternalImageToTexture({source},{texture:input.texture},[w,h]);trace?.push('upload');}
       return input;}
     // The last pass of a frame: its pipeline for a target format and its uniform values.
     finalPass(f,format){const name=f.name,p=this.ready(name,'tex',format,CONSTANTS[name]);return p;}
@@ -143,19 +149,21 @@
       const plan=R.framePlan(s,this.budget,w,h,outW,outH,this.floatTargets,diagnostic);
       if(!R.rendererSupports(plan))return false;
       const revision=this.budget.revision,segment=this.diagnostics.active?this.diagnostics.frame(R.segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets,'webgpu'),performance.now()):null;
-      this.usedTargets=new Set();const passes=[];
+      // trace: the pass names of this frame for the measurement (same vocabulary as WebGL2), only while recording.
+      this.usedTargets=new Set();const passes=[],trace=segment?[]:null;
       try{
         // A decoded frame with spatial filters: the fused compute pass reads it directly (no input copy).
         let input=null,src=null;
         if(plan.spatial&&this.computeSpatial&&isFrame(source)){const t=this.target('spatial',w,h,plan.quality),p=this.computePipeline(plan.spatial,t.format);
           if(p){const ext=this.device.importExternalTexture({source}),layout=this.layouts[this.computeLayout(t.format)];
             const group=this.device.createBindGroup({layout,entries:[{binding:0,resource:{buffer:this.uniform('spatial',PACK.spatial(plan.spatial))}},{binding:1,resource:ext},{binding:2,resource:this.sampler},{binding:3,resource:t.view}]});
-            passes.push({pipeline:p,group,dispatch:[Math.ceil(w/32),Math.ceil(h/32)]});src=t;}}
-        if(!src){input=this.importFrame(source,w,h,passes);if(!input)return false;src=input;}
-        if(plan.spatial&&src===input){const t=this.target('spatial',w,h,plan.quality),{pipeline}=this.spatialPipeline(plan.spatial,t.format);if(!pipeline)return false;
-          passes.push({pipeline,group:this.bind('tex',this.uniform('spatial',PACK.spatial(plan.spatial)),src.view),view:t.view});src=t;}
+            passes.push({pipeline:p,group,dispatch:[Math.ceil(w/32),Math.ceil(h/32)]});src=t;trace?.push('spatialCompute');}}
+        if(!src){input=this.importFrame(source,w,h,passes,trace);if(!input)return false;src=input;}
+        if(plan.spatial&&src===input){const t=this.target('spatial',w,h,plan.quality),{pipeline,generic}=this.spatialPipeline(plan.spatial,t.format);if(!pipeline)return false;
+          passes.push({pipeline,group:this.bind('tex',this.uniform('spatial',PACK.spatial(plan.spatial)),src.view),view:t.view});src=t;
+          trace?.push(generic?'spatial':'spatial@'+R.spatialKey(R.spatialProfile(plan.spatial,'highp')));}
         if(plan.scaler==='easu'){const t=this.target('scaled',outW,outH,plan.quality),p=this.ready('easu','tex',t.format);if(!p)return false;
-          passes.push({pipeline:p,group:this.bind('tex',this.uniform('easu',PACK.easu(null,outW,outH)),src.view),view:t.view});src=t;}
+          passes.push({pipeline:p,group:this.bind('tex',this.uniform('easu',PACK.easu(null,outW,outH)),src.view),view:t.view});src=t;trace?.push('easu');}
         const final=plan.final,q=this.nextQueries();
         const item=q==null?null:{q,parts:1,mode:s.mode,revision,segment};
         const encoder=this.device.createCommandEncoder();
@@ -164,15 +172,17 @@
           const owner=src===input?null:Object.keys(this.targets).find(k=>this.targets[k]===src&&!k.startsWith('paced'));
           let slot;
           if(owner){slot=src;this.targets[outputTarget]=slot;if(old)this.targets[owner]=old;else delete this.targets[owner];this.usedTargets.add(outputTarget);}
-          else{slot=this.target(outputTarget,w,h,false);const p=this.ready('copy','tex','rgba8unorm');if(!p)return false;passes.push({pipeline:p,group:this.bind('tex',null,src.view),view:slot.view});}
+          else{slot=this.target(outputTarget,w,h,false);const p=this.ready('copy','tex','rgba8unorm');if(!p)return false;passes.push({pipeline:p,group:this.bind('tex',null,src.view),view:slot.view});trace?.push('copy');}
           slot.final={...final,w:outW,h:outH};slot.pendingQuery=item;
           if(passes.length)this.encode(encoder,passes,item?.q);else if(item)item.empty=true;
+          trace?.push(final.name+(final.filterId?'#'+final.filterId:'')+'@present');
         }else{
           const t=outputTarget?this.target(outputTarget,outW,outH):null,format=t?t.format:this.format,p=this.finalPass(final,format);if(!p)return false;
           passes.push({pipeline:p,group:this.bind('tex',this.uniform('final:'+(outputTarget||''),this.finalValues(final,outW,outH)),src.view),view:t?t.view:this.canvasView()});
-          this.encode(encoder,passes,item?.q);this.collect(encoder,item);
+          this.encode(encoder,passes,item?.q);this.collect(encoder,item);trace?.push(final.name+(final.filterId?'#'+final.filterId:''));
         }
         this.device.queue.submit([encoder.finish()]);if(item?.read)this.mapPending(item);
+        if(segment)this.diagnostics.passes(segment,trace.join(','),final);
         this.frames++;return true;
       }finally{
         for(const [name,t] of Object.entries(this.targets))if(!this.usedTargets.has(name)&&!name.startsWith('paced')){t.texture.destroy();delete this.targets[name];}
@@ -206,7 +216,7 @@
       buf.unmap();buf.destroy();return out;}
     releasePaced(){for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){t.pendingQuery=null;t.texture.destroy();delete this.targets[name];}}
     resetHistory(){this.previous=null;}
-    resetBudget(){for(const t of Object.values(this.targets))t.pendingQuery=null;this.pending=[];this.budget=R.createBudget();this.resetHistory();}
+    resetBudget(){for(const t of Object.values(this.targets))t.pendingQuery=null;this.pending=[];this.budget=this.newBudget();this.resetHistory();}
     destroy(){for(const t of Object.values(this.targets))t.texture.destroy();this.targets={};for(const b of this.uniforms.values())b.destroy();this.uniforms.clear();
       this.querySet?.destroy();this.resolve?.destroy();this.dummy?.destroy();this.onfail=null;try{this.context.unconfigure();}catch{}this.device.destroy();}
   }
