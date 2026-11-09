@@ -29,6 +29,8 @@
       if(typeof value[key]==='number'&&Number.isFinite(value[key]))result[key]=Math.min(max,Math.max(min,value[key]));
     return result;
   }
+  // Monotonic clock for the measurement's events and compile times (Date.now where performance is absent: node tests).
+  const clock=typeof performance!=='undefined'?()=>performance.now():()=>Date.now();
   function historyValid(previous,time,w,h){return !!previous && previous.w===w && previous.h===h && time>previous.time && time-previous.time<.25;}
   // Auto renders at the height the video occupies on screen in physical pixels, so
   // FSR and sharpening happen at final size instead of the compositor's bilinear
@@ -46,7 +48,8 @@
   // Sharpness 0 skips the edge step (threshold above any vote): plain bilinear scaling, no sharpening.
   function sgsrParams(sharpness){return sharpness>0?{sharp:.2+.4*sharpness,threshold:20/255}:{sharp:1,threshold:4};}
   function outputSize(w,h,output){const height=/^\d+$/.test(output)?Number(output):h;return {width:Math.round(w*height/h),height};}
-  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',
+  // ondegrade(reason, revision): set by the engines to date each reduction in the measurement (an event).
+  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',ondegrade:null,
   configure(settings,height){this.settings=normalize(settings);this.sourceHeight=height;},
   outputFor(settings){
     if(settings.mode!=='filtered'||settings.gpuBudget===0||settings.output==='native'||this.outputCap===Infinity)return settings.output;
@@ -67,7 +70,7 @@
     else if((s.detail>0||s.chroma>0)&&this.enhanceAllowed){this.enhanceAllowed=false;this.reason='Detalhe e cor desligados para preservar fluidez';}
     else return;
     // Do not let timings from a more expensive pipeline trigger the next reduction.
-    this.values=[];this.over=0;this.cadenceOver=0;this.revision++;
+    this.values=[];this.over=0;this.cadenceOver=0;this.revision++;this.ondegrade?.(this.reason,this.revision);
   },cadence(reference,current,ratio=.95){
     if(this.limitMs===0)return;
     if(!Number.isFinite(reference)||reference<=0||!Number.isFinite(current))return;
@@ -108,15 +111,19 @@
     // captured by the server (server), the Fluidez wait per frame, its drops and the frames the <video>
     // element skipped; the report adds a per-second stream timeline, so pacing can be read from the
     // file, not only the average FPS.
-    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw=0,disjoints=0,started=null,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false;
-    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,INTERVALS=['display','arrival','server','wait'];
+    // Audit 3.5: each segment also counts the pass sequences it ran (passes), names its last pass (final) and
+    // keeps the main-thread cost (cpu), how late the processing ended against the frame's expected display time
+    // (late) and the receive-to-presentation latency (pipeline); events[] dates compilations, allocations and switches.
+    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw={frame:0,cost:0},disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false;
+    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,INTERVALS=['display','arrival','server','wait','cpu','late','pipeline'],HITCHES=['display','arrival','server'],COST=['cpu','late','pipeline'];
     const percentile=(a,p)=>a.length?a[Math.ceil(a.length*p)-1]:null,round=v=>Math.round(v*100)/100;
     // Interval series: count, mean, deviation and maximum are exact and percentiles come from 0.1 ms bins,
-    // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT in
-    // total (samplesTruncated).
-    const series=()=>({n:0,sum:0,sq:0,max:null,bins:new Map(),samples:[],cut:false});
+    // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT per pool
+    // (samplesTruncated). Two pools: the frame intervals (display/arrival/server/wait, as in schema 2) and the
+    // per-frame costs (cpu/late/pipeline), so the new series do not shorten the raw record of the old ones.
+    const series=pool=>({pool,n:0,sum:0,sq:0,max:null,bins:new Map(),samples:[],cut:false});
     function push(x,v){x.n++;x.sum+=v;x.sq+=v*v;if(x.max===null||v>x.max)x.max=v;const b=Math.round(v*10);x.bins.set(b,(x.bins.get(b)||0)+1);
-      if(raw<RAW_LIMIT){x.samples.push(round(v));raw++;}else x.cut=true;}
+      if(raw[x.pool]<RAW_LIMIT){x.samples.push(round(v));raw[x.pool]++;}else x.cut=true;}
     // Hitches (display/arrival/server): intervals over 1.5x the median, i.e. a frame shown late. Not for waits.
     function summary(x,hitches=true){
       if(!x.n)return {count:0,meanMs:null,p50:null,p95:null,p99:null,maxMs:null,deviationMs:null,hitches:hitches?0:null,samplesMs:[],samplesTruncated:false};
@@ -127,21 +134,35 @@
         hitches:hitches?bins.reduce((a,[b,c])=>b/10>median*1.5?a+c:a,0):null,samplesMs:x.samples,samplesTruncated:x.cut};}
     return {
       get active(){return recording;},get startedAt(){return started;},
-      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=raw=0;disjoints=0;started=Date.now();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;},
+      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=0;raw={frame:0,cost:0};disjoints=0;started=Date.now();startedAt=clock();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;},
       stop(reason=null){if(!recording)return;recording=false;ended=Date.now();stopReason=reason;},
       frame(config,time){if(!recording)return null;const key=JSON.stringify(config);
         if(current?.key!==key){if(current)current.activeMs+=current.last-current.since;
           let segment=byKey.get(key);
           if(!segment){if(segments.length>=256){this.stop('limite de 256 configurações');return null;}
-            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],display:series(),arrival:series(),server:series(),wait:series()};segments.push(segment);byKey.set(key,segment);}
+            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null};for(const k of INTERVALS)segment[k]=series(COST.includes(k)?'cost':'frame');segments.push(segment);byKey.set(key,segment);}
           segment.visits++;segment.since=segment.last=time;current=segment;}
         current.frames++;current.last=time;return current;
       },
-      sample(segment,ms){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
-        if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;
+      // The passes a frame ran, in order ('upload,spatial@mediump.0.1.4.1.0.0.1.1,casFiltered#1'): one counter
+      // per distinct sequence inside the segment (the generic 'spatial' while a variant compiles counts apart),
+      // plus the last pass and its filterId. Never splits a segment.
+      passes(segment,sequence,final=null){if(!segment||!segments.includes(segment))return;segment.passes.set(sequence,(segment.passes.get(sequence)||0)+1);
+        if(final)segment.final={name:final.name,filterId:final.filterId??null};},
+      // Dated events (t in seconds since the start): variant compilation, target allocation, degrade, renderer,
+      // Fluidez/capture and canvas size changes. At most EVENT_LIMIT; eventsTruncated marks the cut.
+      event(type,data){if(!recording)return;if(events.length>=EVENT_LIMIT){eventsCut=true;return;}const row={t:Math.round((clock()-startedAt)*10)/10000,type};
+        for(const k in data){const v=data[k];row[k]=typeof v==='number'?(Number.isFinite(v)?round(v):null):v??null;}events.push(row);},
+      // method: how the engine timed the frame ('timer', 'timestamp' or 'fence'); kept per segment, so
+      // the report says what each gpu series is (audit R9: a fence is an upper bound, not GPU time).
+      sample(segment,ms,method=null){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
+        if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;if(method)segment.gpuMethod=method;
       },
       // Interval (ms) of the configuration being rendered: 'display', 'arrival', 'server' or 'wait'.
-      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0)return;push(current[kind],ms);},
+      // 'cpu' (main-thread time of the frame), 'late' (end of the processing minus the frame's expected display time:
+      // 0 = same vsync, one interval = one vsync late; negative only if it ended before the expected display) and
+      // 'pipeline' (presentation minus receive time) are only fed while a measurement is active.
+      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='late')return;push(current[kind],ms);},
       dropped(n){if(recording&&current&&n>0)current.dropped+=n;},
       skipped(n){if(recording&&current&&n>0)current.skipped+=n;},
       // One row per second of stream telemetry, t in seconds since the start; at most an hour.
@@ -149,13 +170,14 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:2,version:'10.0.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
-        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||segments.length>=256,
+      report(){return {schema:3,version:'10.1.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||segments.length>=256,eventsTruncated:eventsCut,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
-          const sorted=[...gpu].sort((a,b)=>a-b);return {config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
-            gpu:{count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]},
-            display:summary(segment.display),arrival:summary(segment.arrival),server:summary(segment.server),wait:summary(segment.wait,false)};}),
-        timeline};}
+          const sorted=[...gpu].sort((a,b)=>a-b),row={config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
+            passes:[...segment.passes].sort((a,b)=>b[1]-a[1]).map(([sequence,count])=>({sequence,frames:count})),final:segment.final,
+            gpu:{method:segment.gpuMethod,count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]}};
+          for(const k of INTERVALS)row[k]=summary(segment[k],HITCHES.includes(k));return row;}),
+        timeline,events};}
     };
   }
   async function captureVideoStats(video,peer){
@@ -316,7 +338,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.0.0-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.1.0-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -390,22 +412,33 @@
   }
   class Engine {
     // options.spatialPrecision: 'auto' (from the GPU), 'highp' or 'mediump'; options.spatialVariants:
-    // false keeps the generic uniform-driven spatial shader (benches, comparisons).
+    // false keeps the generic uniform-driven spatial shader (benches, comparisons); options.diagnostics:
+    // a measurement shared with another renderer of the same player (the recording survives a switch);
+    // options.settings: the current settings, whose spatial variant is pre-warmed with the default one.
     constructor(gl,shaders,options={}){
-      this.gl=gl;this.programs={};this.targets={};this.queries=[];this.budget=createBudget();this.previous=null;this.frames=0;this.diagnostics=createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+      this.gl=gl;this.renderer='webgl2';this.programs={};this.targets={};this.queries=[];this.budget=this.newBudget();this.previous=null;this.frames=0;this.diagnostics=options.diagnostics||createDiagnostics();this.ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
       this.fenceTiming=!this.ext&&typeof gl.fenceSync==='function';this.fence=null;this.fenceAt=-Infinity;this.fenceValues=[];this.fenceGeneration=0;this.gpuEstimate=null;
       this.floatTargets=!!gl.getExtension('EXT_color_buffer_float');
       this.spatialPrecision=spatialPrecision(gl,options.spatialPrecision);this.spatialCode=options.spatialVariants===false?null:shaders.spatial||null;
       this.spatialJobs=new Map();this.spatialUsed=new Map();this.spatialFailed=new Set();this.parallelCompile=gl.getExtension('KHR_parallel_shader_compile');
+      // trace: the pass names of the frame being rendered, only while a measurement is active (null otherwise).
+      this.trace=null;const t0=clock();
       try {
         this.vao=gl.createVertexArray();gl.bindVertexArray(this.vao);this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),gl.STATIC_DRAW);gl.enableVertexAttribArray(0);gl.vertexAttribPointer(0,2,gl.FLOAT,false,0,0);
         for(const [name,code]of Object.entries(shaders))this.programs[name]=this.compile(name==='sgsr'?sgsrSource(code,this.spatialPrecision):code);
-        // Pre-warmed with the rest: the spatial variant of the default settings on an RGBA8 target.
-        if(this.spatialCode){const d=defaults;this.spatialVariant({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},true);}
+        this.diagnostics.event('compile',{name:'programs',count:Object.keys(this.programs).length,ms:clock()-t0});
+        // Pre-warmed with the rest: the spatial variant of the default settings on an RGBA8 target and, when the
+        // settings are given, the one they use (audit F8: without KHR_parallel_shader_compile it would otherwise
+        // be finished, blocking, inside the second frame).
+        if(this.spatialCode){const d=defaults;this.spatialVariant({cleanup:d.cleanup,deband:d.deband,chroma:d.chroma,detail:d.detail,antialias:d.antialias,debandTaps:4,quantize:true,selective:d.spatialMode==='selective'},true);
+          if(options.settings){const plan=framePlan(normalize(options.settings),this.budget,1920,1080,1920,1080,this.floatTargets);if(plan.spatial)this.spatialVariant(plan.spatial,true);}}
         this.input=gl.createTexture();this.configure(this.input);
       }catch(e){this.destroy();throw e;}finally{gl.bindVertexArray(null);}
+      // Time spent compiling in the constructor (programs and pre-warmed variants): reported in the measurement metadata.
+      this.warmMs=clock()-t0;
     }
+    newBudget(){const b=createBudget();b.ondegrade=(reason,revision)=>this.diagnostics.event('degrade',{reason,revision});return b;}
     // Compilation in two halves: start() issues the work without waiting, finish() reads the status
     // (which waits for the compiler) and deletes the shader objects.
     startProgram(fragment){const gl=this.gl,program=gl.createProgram(),objects=[];
@@ -431,8 +464,10 @@
         let job=this.spatialJobs.get(name);
         if(!job){job=this.startProgram(spatialSource(this.spatialCode,spatialProfile(u,this.spatialPrecision)));job.frame=this.frames;this.spatialJobs.set(name,job);}
         if(!wait&&(job.frame===this.frames||this.parallelCompile&&!gl.getProgramParameter(job.program,this.parallelCompile.COMPLETION_STATUS_KHR)))return 'spatial';
-        this.spatialJobs.delete(name);
-        try{this.programs[name]=this.finishProgram(job);}catch(e){this.spatialFailed.add(name);console.warn('[BxRestoration] spatial variant failed, using the generic shader',name,e);return 'spatial';}
+        this.spatialJobs.delete(name);const t0=clock();
+        try{this.programs[name]=this.finishProgram(job);}catch(e){this.spatialFailed.add(name);this.diagnostics.event('compile-failed',{name,ms:clock()-t0});console.warn('[BxRestoration] spatial variant failed, using the generic shader',name,e);return 'spatial';}
+        // ms: the blocking finish (link status read); frames: how many frames the generic shader drew meanwhile.
+        this.diagnostics.event('compile',{name,ms:clock()-t0,wait,frames:this.frames-job.frame});
       }
       this.spatialUsed.delete(name);this.spatialUsed.set(name,this.frames);
       if(this.spatialUsed.size>8){const [old]=this.spatialUsed.keys();this.spatialUsed.delete(old);gl.deleteProgram(this.programs[old].program);delete this.programs[old];}
@@ -443,6 +478,7 @@
       for(const p of [gl.TEXTURE_WRAP_S,gl.TEXTURE_WRAP_T])gl.texParameteri(gl.TEXTURE_2D,p,gl.CLAMP_TO_EDGE);}
     target(name,w,h,precise=false){const gl=this.gl,fp=precise&&this.floatTargets;this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h&&t.fp===fp)return t;
       if(t){gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);}
+      this.diagnostics.event('target',{name,w,h,bytes:w*h*(fp?8:4),realloc:!!t});
       t={w,h,fp,texture:gl.createTexture(),fbo:gl.createFramebuffer()};this.targets[name]=t;this.configure(t.texture);
       gl.texImage2D(gl.TEXTURE_2D,0,fp?gl.RGBA16F:gl.RGBA8,w,h,0,gl.RGBA,fp?gl.HALF_FLOAT:gl.UNSIGNED_BYTE,null);
       gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t.texture,0);
@@ -451,6 +487,7 @@
     // Two RGBA16F color attachments written by one pass (neural features).
     targetPair(name,w,h){const gl=this.gl;this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h)return t;
       if(t){gl.deleteTexture(t.texture);gl.deleteTexture(t.second);gl.deleteFramebuffer(t.fbo);}
+      this.diagnostics.event('target',{name,w,h,bytes:w*h*16,realloc:!!t});
       t={w,h,fp:true,texture:gl.createTexture(),second:gl.createTexture(),fbo:gl.createFramebuffer()};this.targets[name]=t;
       gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);
       for(const [i,texture] of [t.texture,t.second].entries()){this.configure(texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
@@ -459,7 +496,7 @@
       if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('Framebuffer incompleto');return t;
     }
     draw(name,target,w,h,textures={},uniforms={}){
-      const gl=this.gl,p=this.programs[name];gl.bindVertexArray(this.vao);gl.bindFramebuffer(gl.FRAMEBUFFER,target?target.fbo:null);gl.viewport(0,0,w,h);gl.useProgram(p.program);
+      const gl=this.gl,p=this.programs[name];if(this.trace)this.trace.push(name);gl.bindVertexArray(this.vao);gl.bindFramebuffer(gl.FRAMEBUFFER,target?target.fbo:null);gl.viewport(0,0,w,h);gl.useProgram(p.program);
       // Cache misses too (null): shared uniform sets name uniforms some programs lack.
       const location=k=>Object.hasOwn(p.locations,k)?p.locations[k]:(p.locations[k]=gl.getUniformLocation(p.program,k));
       let slot=0;for(const [key,texture]of Object.entries(textures)){gl.activeTexture(gl.TEXTURE0+slot);gl.bindTexture(gl.TEXTURE_2D,texture);gl.uniform1i(location(key),slot++);}
@@ -477,7 +514,7 @@
       if(gl.getParameter(this.ext.GPU_DISJOINT_EXT)){for(const item of this.queries)this.dropQuery(item);this.queries=[];this.diagnostics.disjoint();return;}
       // A deferred frame (render + present) is one sample made of two queries.
       while(this.queries.length&&[].concat(this.queries[0].q).every(q=>gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))){
-        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=[].concat(item.q).reduce((a,q)=>a+gl.getQueryParameter(q,gl.QUERY_RESULT),0)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms);}this.dropQuery(item);}
+        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=[].concat(item.q).reduce((a,q)=>a+gl.getQueryParameter(q,gl.QUERY_RESULT),0)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms,'timer');}this.dropQuery(item);}
     }
     // Without the timer query (Android WebView), every 0.5 s a fence after a frame, polled on later tasks,
     // times it from its first command until the GPU finished it: an upper bound of the GPU time (it also
@@ -491,7 +528,7 @@
       // A late reading measures the delay, not the GPU: a hidden page throttles timers, and a long task
       // between two polls hides when the fence finished. The first poll waits for the rendering update.
       gl.deleteSync(f.sync);this.fence=null;if(!signaled||now-f.start>=250||gap>20)return;
-      const ms=now-f.start;this.diagnostics.sample(f.segment,ms);
+      const ms=now-f.start;this.diagnostics.sample(f.segment,ms,'fence');
       if(f.mode!=='filtered'||f.generation!==this.fenceGeneration)return;
       this.fenceValues.push(ms);if(this.fenceValues.length>30)this.fenceValues.shift();
       const sorted=[...this.fenceValues].sort((a,b)=>a-b);this.gpuEstimate={p50:sorted[(sorted.length-1)>>1],p95:sorted[Math.ceil(sorted.length*.95)-1],count:sorted.length};
@@ -516,8 +553,8 @@
       this.budget.configure(s,h);
       this.poll();let q=null;
       const revision=this.budget.revision;
-      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets),performance.now()):null;
-      this.usedTargets=new Set();
+      const segment=this.diagnostics.active?this.diagnostics.frame(segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets,'webgl2'),performance.now()):null;
+      this.usedTargets=new Set();this.trace=segment?['upload']:null;
       if(this.ext&&this.queries.length<4){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
       try{
         gl.activeTexture(gl.TEXTURE0);this.configure(this.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
@@ -562,10 +599,13 @@
           if(owner){slot=this.targets[owner];this.targets[outputTarget]=slot;if(old)this.targets[owner]=old;else delete this.targets[owner];}
           else{const fp=source!==this.input;slot=this.target(outputTarget,w,h,fp);this.draw('copy',slot,w,h,{source});}
           slot.final={name:final.name,filterId:final.filterId,key:Object.keys(final.textures)[0],uniforms:final.uniforms,w:outW,h:outH};deferredSlot=slot;
+          // The last pass runs at present(): marked so in the sequence.
+          if(this.trace)this.trace.push(final.name+(final.filterId?'#'+final.filterId:'')+'@present');
         }else this.drawFinal(final,outputTarget?this.target(outputTarget,outW,outH):null,outW,outH);
+        if(segment)this.diagnostics.passes(segment,this.trace.join(','),final);
         if(this.fenceTiming&&!this.fence&&started-this.fenceAt>=500)this.startFence(started,s.mode,segment);
         this.frames++;return true;
-      }finally{
+      }finally{this.trace=null;
         if(q){gl.endQuery(this.ext.TIME_ELAPSED_EXT);const item={q,mode:s.mode,revision,segment};if(deferredSlot)deferredSlot.pendingQuery=item;else this.queries.push(item);}
         for(const [name,t] of Object.entries(this.targets))if(!this.usedTargets.has(name)&&!name.startsWith('paced')){
           gl.deleteTexture(t.texture);if(t.second)gl.deleteTexture(t.second);gl.deleteFramebuffer(t.fbo);delete this.targets[name];
@@ -575,7 +615,7 @@
       }
     }
     drawFinal(f,target,w,h){if(f.filterId){const p=this.programs[f.name];this.gl.useProgram(p.program);this.gl.uniform1i(this.gl.getUniformLocation(p.program,'filterId'),f.filterId);}
-      this.draw(f.name,target,w,h,f.textures,f.uniforms);}
+      this.draw(f.name,target,w,h,f.textures,f.uniforms);if(this.trace&&f.filterId)this.trace[this.trace.length-1]+='#'+f.filterId;}
     // Shows a frame stored by render(...,outputTarget) on the canvas (exact copy at output size).
     // A deferred slot (render(...,deferFinal)) runs its last pass here, timed with its render().
     present(name){const t=this.targets[name],gl=this.gl;if(!t||gl.isContextLost())return false;
@@ -585,7 +625,7 @@
       else this.draw('copy',null,t.w,t.h,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);return true;}
     releasePaced(){const gl=this.gl;for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){if(t.pendingQuery)this.dropQuery(t.pendingQuery);gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);delete this.targets[name];}}
     resetHistory(){this.previous=null;}
-    resetBudget(){for(const item of this.queries)this.dropQuery(item);this.queries=[];for(const t of Object.values(this.targets))if(t.pendingQuery){this.dropQuery(t.pendingQuery);t.pendingQuery=null;}this.budget=createBudget();this.resetHistory();this.fenceGeneration++;this.fenceValues=[];this.gpuEstimate=null;}
+    resetBudget(){for(const item of this.queries)this.dropQuery(item);this.queries=[];for(const t of Object.values(this.targets))if(t.pendingQuery){this.dropQuery(t.pendingQuery);t.pendingQuery=null;}this.budget=this.newBudget();this.resetHistory();this.fenceGeneration++;this.fenceValues=[];this.gpuEstimate=null;}
     destroy(){const gl=this.gl;
       for(const t of Object.values(this.targets)){gl.deleteTexture(t.texture);if(t.second)gl.deleteTexture(t.second);gl.deleteFramebuffer(t.fbo);}
       for(const p of Object.values(this.programs))gl.deleteProgram(p.program);

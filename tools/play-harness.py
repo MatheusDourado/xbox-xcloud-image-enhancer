@@ -17,6 +17,10 @@ probe=r'''
  check(launch&&launch.isConnected&&!launch.hasAttribute('data-stream')&&getComputedStyle(launch).opacity>0.5,'Panel button is visible without a game');
  launch.click();await until(()=>api.panelOpen,2000,'panel visible without a game');
  check(/Nenhum jogo em andamento/.test(document.querySelector('.bxif-play-diag').textContent)&&document.querySelector('.bxif-play-dialog .bxif-panel'),'Panel opens without a game and says none is running');
+ // Review of v10.1.0: before the first frame the measurement kind is unknown, so the GPU label and the Aliviar GPU
+ // hint stay neutral instead of claiming the browser has no GPU timer.
+ {const dialog=document.querySelector('.bxif-play-dialog');await wait(700);const hint=dialog.querySelector('input[data-bxif-key=gpuBudget]').closest('.bxif-row').querySelector('.bxif-hint').textContent;
+  check(api.status.mode==='waiting'&&!/Sem cronômetro/.test(hint)&&/Equilíbrio padrão/.test(hint)&&/Tratamento \(GPU p95\)/.test(dialog.textContent)&&!/≈ fence/.test(dialog.textContent),'Without a game the GPU label and the budget hint do not claim the browser lacks a GPU timer');}
  launch.click();await until(()=>!api.panelOpen,2000,'panel closed');
  // React hydration may drop nodes it did not render: the button comes back.
  launch.remove();await wait(1200);launch=document.querySelector('.bxif-play-launch');check(launch&&launch.isConnected,'Removed button is put back');
@@ -55,6 +59,10 @@ probe=r'''
  let leaked=0;const spy=()=>leaked++;window.addEventListener('keydown',spy);
  dialog.querySelector('.bxif-panel button')?.dispatchEvent(new KeyboardEvent('keydown',{key:'a',bubbles:true}));
  window.removeEventListener('keydown',spy);check(leaked===0,'Keys typed in the panel do not reach the game');
+ // Método Nativo on the new site (audit 12.1): no Better xCloud menu, the saved processing (CAS by default) applies.
+ {const m=dialog.querySelector('input[data-bxif-key=sharpening]'),hint=m.closest('.bxif-row').querySelector('.bxif-hint'),pick=i=>{m.value=String(i);m.dispatchEvent(new InputEvent('input'));};
+  pick(3);check(api.settings.sharpening==='native'&&/Sem menu do Better xCloud neste site: aplica o processamento salvo \(CAS; CAS por padrão\)/.test(hint.textContent)&&!/Segue o Processamento/.test(hint.textContent),'Nativo hint says the saved processing applies on the new site');
+  pick(0);check(api.settings.sharpening==='usm','Método back to USM');}
  await until(()=>api.status.net&&api.status.net.fpsReceived>0,5000,'telemetry from getStats');
  check(true,`Stream telemetry reads the tracked connection (${api.status.net.codec}, ${Math.round(api.status.net.fpsReceived)} FPS)`);
  dialog.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
@@ -69,6 +77,22 @@ probe=r'''
  await until(()=>host.player()&&host.player().$video===video&&api.status.frames>5,6000,'re-attach on reconnect');
  check(!video.nextElementSibling||video.nextElementSibling.classList.contains('bxif-play-canvas'),'A new stream video gets the treatment again');
  check(document.querySelectorAll('canvas.bxif-play-canvas').length===1,'Only one canvas exists');
+ // Renderer WebGPU (audit R3): on the new site the canvas is positioned by the bxif-play-canvas class, so the
+ // WebGPU canvas inherits the classes of the WebGL2 one. Headless Chromium has no WebGPU here: the engine
+ // creation is stubbed to stay 'starting', the state in which the canvas is already placed and synced.
+ {const gpu=globalThis.BxWebGPU,real={supported:gpu.supported,create:gpu.create};gpu.supported=()=>true;gpu.create=()=>new Promise(()=>{});
+  const gpuCanvas=()=>document.querySelector('canvas[data-bx-renderer=webgpu]');
+  api.update({renderer:'webgpu'});await until(gpuCanvas,3000,'WebGPU canvas created');
+  const g=gpuCanvas(),c=host.player().$canvas,rg=g.getBoundingClientRect(),rc=c.getBoundingClientRect(),cs=getComputedStyle(g);
+  check(g.nextElementSibling===c&&g.classList.contains('bxif-play-canvas')&&g.getAttribute('aria-hidden')==='true','WebGPU canvas sits under the WebGL2 canvas with its classes and aria-hidden');
+  check(cs.position==='absolute'&&cs.pointerEvents==='none'&&rg.width>100&&['left','top','width','height'].every(k=>Math.abs(rg[k]-rc[k])<1),`WebGPU canvas covers the WebGL2 canvas rectangle (${rg.width}×${rg.height} at ${rg.left},${rg.top})`);
+  check(api.status.renderer.state==='starting'&&api.status.renderer.active==='webgl2'&&g.style.visibility==='hidden','WebGL2 keeps drawing while WebGPU starts');
+  c.classList.add('bxif-probe');await until(()=>g.classList.contains('bxif-probe'),2000,'class added on the WebGPU canvas');
+  c.classList.remove('bxif-probe');await until(()=>!g.classList.contains('bxif-probe'),2000,'class removed from the WebGPU canvas');
+  check(true,'Class changes on the WebGL2 canvas reach the WebGPU canvas');
+  api.update({renderer:'auto'});await until(()=>!gpuCanvas(),3000,'WebGPU canvas removed');
+  check(document.querySelectorAll('canvas.bxif-play-canvas').length===1&&api.status.renderer.state==='webgl2','Back to Auto removes the WebGPU canvas');
+  Object.assign(gpu,real);}
  running=false;video.srcObject=null;video.remove();await until(()=>!host.player(),3000,'final detach');
  a.close();b.close();
  document.getElementById('result').textContent=JSON.stringify({passed:checks});

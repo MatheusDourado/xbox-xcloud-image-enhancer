@@ -11,7 +11,7 @@
  const settings=BxRestoration.normalize(saved);
  // Native image controls own sharpening; removed experimental color overrides stay neutral.
  settings.contrast=1;settings.saturation=1;settings.shadows=0;
- const status={mode:'waiting',frames:0,lastFrame:0,resolution:'',error:'',gpuP95:null,measurement:'cadence',adaptation:'',fps:null,
+ const status={mode:'waiting',frames:0,lastFrame:0,resolution:'',error:'',gpuP95:null,measurement:'cadence',adaptation:'',neural:'off',fps:null,
   // Display intervals (ms) of the last ~8 s at 30 FPS, oldest first: the HUD's pacing graph.
   intervals:[],intervalsTotal:0,net:null,warnings:[],adaptive:null,capture:{active:false,frames:0,reason:''},
   // GPU time estimate {p50, p95, count} from fences when the browser has no GPU timer (see Engine.startFence).
@@ -21,7 +21,9 @@
   // desynchronized attribute of the current canvas context (null before the first player).
   desynchronized:null,
   // Renderer (Spec 4): the setting, the one drawing now, its state (webgl2, starting, webgpu, fallback) and why.
-  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null}};
+  // probe: {vendor, architecture} of the WebGPU adapter for the 'auto' choice (BxRestoration.autoRenderer), null
+  // until a WebGPU engine is created or, while AUTO_WEBGPU names a GPU, the adapter is probed once.
+  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null,probe:null}};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -49,27 +51,38 @@
   nativePref(k){try{if(/^(stream|server|userAgent)\./.test(k))return typeof getGlobalPref==='function'?getGlobalPref(k):undefined;return typeof getStreamPref==='function'?getStreamPref(k):undefined;}catch{return undefined;}},
   get active(){return !!status.lastFrame&&Date.now()-status.lastFrame<2500;},
   directSupported:()=>typeof MediaStreamTrackProcessor==='function'&&typeof VideoFrame==='function',
-  async startMeasurement(){const engine=activeEngine,video=activePlayer?.$video;if(!engine)return false;
-   const initial=await BxRestoration.captureVideoStats(video,peer());if(activeEngine!==engine)return false;
+  // The measurement (diagnostics) belongs to the player and is shared by its two renderers, so a renderer
+  // change during a recording only starts a new segment (config.renderer); the metadata names the renderer
+  // drawing when the recording started.
+  async startMeasurement(){const player=activePlayer,video=player?.$video;if(!activeEngine)return false;
+   const initial=await BxRestoration.captureVideoStats(video,peer());const engine=activeEngine;if(!engine||activePlayer!==player)return false;
    const sc=globalThis.screen;
-   const gpu=engine.renderer==='webgpu';
+   const gpu=engine.renderer==='webgpu',glEngine=player.bxEngine,gl=glEngine?.gl;
+   // The unmasked GPU (WEBGL_debug_renderer_info, when the browser exposes it; 'WebKit WebGL' otherwise), the
+   // spatial precision profile and whether variants compile in parallel: what the Poco cannot say otherwise.
+   let unmasked=null;try{const dbg=gl?.getExtension('WEBGL_debug_renderer_info');if(dbg)unmasked={renderer:gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)??null,vendor:gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)??null};}catch{}
    engine.diagnostics.start({userAgent:navigator.userAgent,renderer:gpu?'WebGPU '+[engine.adapter?.vendor,engine.adapter?.architecture].filter(Boolean).join(' '):engine.gl.getParameter(engine.gl.RENDERER),api:gpu?'webgpu':'webgl2',timer:!!engine.ext,gpuMethod:engine.ext?(gpu?'timestamp':'timer'):engine.fenceTiming?'fence':null,floatTargets:engine.floatTargets,
+    gpu:unmasked,spatialPrecision:glEngine?.spatialPrecision??null,parallelCompile:!!glEngine?.parallelCompile,warmMs:glEngine?.warmMs??null,
     screen:{width:sc?.width??null,height:sc?.height??null,dpr:window.devicePixelRatio??null,refreshPref:androidCall('getRefreshRate')},app:androidCall('getAppInfo'),
     betterXcloud:nativePrefs(),capture:{...status.capture},smoothing:status.smoothing??null,initial});
    const id=engine.diagnostics.startedAt;measureRefresh().then(hz=>{if(engine.diagnostics.startedAt===id)engine.diagnostics.annotate({refreshMeasuredHz:hz});});
    return true;},
   get measuring(){return !!activeEngine?.diagnostics.active;},
-  async exportMeasurement(){const engine=activeEngine;if(!engine)return null;engine.poll();engine.diagnostics.stop();
-   const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(activePlayer?.$video,peer());report.net=status.net;
-   report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,warnings:status.warnings.map(w=>w.text)};
-   BxRestoration.downloadReport(report);return report;},
+  // Stops the recording and saves the JSON. A recording without any treated frame (no segments) is not
+  // saved: the report comes back with saved false, so the panel can say why there is no file.
+  async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
+   const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
+   report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,neural:status.neural,
+    adaptation:status.adaptation,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},warnings:status.warnings.map(w=>w.text)};
+   const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
+   report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
   async copyText(text){try{if(window.BxAndroid?.copyText?.(text))return true;}catch{}try{await navigator.clipboard.writeText(text);return true;}catch{return false;}},
   // Configuration summary to paste in a support conversation (no account data).
   configText(){const native=nativePrefs();
    const o=status.origin,round=v=>typeof v==='number'?Math.round(v*10)/10:v;
    return JSON.stringify({build:globalThis.BxBuild?.version,app:window.BxAndroid?.getAppInfo?.()??null,screen:`${screen.width}×${screen.height} @${window.devicePixelRatio}`,
-    status:{resolution:status.resolution,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,adaptation:status.adaptation,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
+    status:{resolution:status.resolution,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
     pacing:status.pacing&&{meanMs:round(status.pacing.meanMs),deviationMs:round(status.pacing.deviationMs),p95Ms:round(status.pacing.p95Ms),hitches:status.pacing.hitches},
     origin:o&&{server:o.server&&[round(o.server.meanMs),round(o.server.deviationMs)],arrival:o.arrival&&[round(o.arrival.meanMs),round(o.arrival.deviationMs)],missed:o.missed,presented:o.presented},
     net:status.net&&Object.fromEntries(Object.entries(status.net).map(([k,v])=>[k,k==='bitsPerPixel'&&typeof v==='number'?Math.round(v*1000)/1000:round(v)])),warnings:status.warnings.map(w=>w.text),
@@ -118,7 +131,9 @@
    const diag=activeEngine?.diagnostics;
    if(diag?.active&&d)diag.timeline({fpsReceived:d.fps,fpsShown:api.active?status.fps:null,bitrateMbps:q?.bitrateMbps,lossPct:q?.lossPct,rttMs:rtt,decodeMs:d.dtMs,bufferMs:d.jitterMs,
     qp:q?.qp,bitsPerPixel:q?.bitsPerPixel,level:status.adaptive?.level,gpuMs:status.gpuP95??status.gpuEstimate?.p95,waitMs:status.fluidity?.extraMs,
-    decoderDropped:q?.framesDropped,freezes:q?.freezes,capture:activePlayer?.bxDirect?.rendered>0?'direct':'video'});
+    decoderDropped:q?.framesDropped,freezes:q?.freezes,capture:activePlayer?.bxDirect?.rendered>0?'direct':'video',
+    // Source size, physical video height on screen and the refresh rate asked of the app (audit F10).
+    width:q?.width,height:q?.height,display:status.display,refreshHz:androidCall('getRefreshRate')});
   }catch{status.net=null;}finally{telemetryBusy=false;updateWarnings();}
  }
  // The quantizer level moves the treatment only after a sustained change: an exponential mean of
@@ -153,6 +168,8 @@
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
   if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
+  if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:'Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).'});
+  if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:'Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   status.warnings=w;
  }
@@ -175,7 +192,7 @@
  const statsOf=list=>BxRestoration.frameStats(list.map(e=>e[1]));
  function startTiming(player){
   if(player.bxTiming)return;
-  const t=player.bxTiming={server:[],arrival:[],display:[],presentedLog:[],clock:BxRestoration.createRtpClock(),pendingRtp:null,metaId:null,raf:null,pacer:null,shown:null};
+  const t=player.bxTiming={server:[],arrival:[],display:[],presentedLog:[],clock:BxRestoration.createRtpClock(),pendingRtp:null,metaId:null,raf:null,pacer:null,shown:null,vfAt:null,vfExpected:null,vfPresentation:null,vfReceive:null};
   const video=player.$video;if(!video?.requestVideoFrameCallback)return;
   // Registered before Better xCloud's own draw callback, so a frame's metadata usually comes first;
   // attach() covers the opposite order.
@@ -184,6 +201,9 @@
    // Direct capture records server/arrival times from its own frames (every decoded one).
    if(player.bxDirect?.frames>0)return;
    const at=performance.now(),presented=meta?.presentedFrames;
+   // Measurement only: the frame's expected display time and its receive/presentation times, read by updateFrame
+   // (the draw callback of the same frame) for the late and pipeline series. Field writes, no allocation.
+   if(player.bxDiagnostics?.active){t.vfAt=at;t.vfExpected=meta?.expectedDisplayTime;t.vfPresentation=meta?.presentationTime;t.vfReceive=meta?.receiveTime;}
    // Frames the browser presented between two callbacks never reached the treatment (nor the canvas).
    if(Number.isFinite(presented)){if(presented>t.presented){keep(t.presentedLog,presented-t.presented,at);player.bxRender?.diagnostics.skipped(presented-t.presented-1);}t.presented=presented;}
    const rtp=meta&&Number.isFinite(meta.rtpTimestamp)?t.clock(meta.rtpTimestamp):null,arrival=Number.isFinite(meta?.receiveTime)?meta.receiveTime:at;
@@ -203,7 +223,7 @@
  function stopTiming(player){const t=player.bxTiming;if(!t)return;stopPacer(player);if(t.metaId!==null)player.$video?.cancelVideoFrameCallback?.(t.metaId);player.bxTiming=null;}
  function ensurePacer(player,mode){
   const t=player.bxTiming;if(t.pacer?.mode===mode)return t.pacer;
-  stopPacer(player);t.pacer=BxRestoration.createPacer(mode);t.pacerDropped=0;
+  stopPacer(player);t.pacer=BxRestoration.createPacer(mode);t.pacerDropped=0;player.bxDiagnostics?.event('fluidity',{mode});
   const tick=()=>{
    if(!t.pacer||player.isStopped){t.raf=null;return;}
    t.raf=requestAnimationFrame(tick);
@@ -216,47 +236,57 @@
  // Five persistent output textures: the one on screen, up to three queued, one being written.
  function freeSlot(t){const used=new Set([t.shown,...t.pacer.pending.map(f=>f.slot)]);for(let i=0;i<5;i++){const name='paced'+i;if(!used.has(name))return name;}return t.pacer.pending[0]?.slot||'paced0';}
  // Renderer (Spec 4). The WebGL2 engine always exists. The WebGPU one draws on its own canvas, placed under
- // Better xCloud's WebGL2 canvas, which then turns transparent (opacity 0) and keeps receiving input; the
- // CSS of #game-stream canvas positions both. A WebGPU failure (creation, validation error, device lost) or
- // a frame only WebGL2 draws (neural restoration, temporal) shows WebGL2 again from the next frame on,
- // without a reload; after a failure WebGPU is retried only when the setting changes.
+ // the WebGL2 canvas, which then turns transparent (opacity 0) and keeps receiving input. Both are positioned
+ // alike: on www.xbox.com by Better xCloud's '#game-stream canvas' CSS, on play.xbox.com by the classes the host
+ // puts on the WebGL2 canvas (bxif-play-canvas), which syncCanvas copies. A WebGPU failure (creation, validation
+ // error, device lost) or a frame only WebGL2 draws (neural restoration, temporal) shows WebGL2 again from the
+ // next frame on, without a reload; after a failure WebGPU is retried only when the setting changes.
+ // 'auto' compares the adapter {vendor, architecture} with BxRestoration.AUTO_WEBGPU: the probe is filled by the
+ // WebGPU engine when one is created and, only while that list names a GPU, by one requestAdapter (no device).
+ const adapterKey=a=>({vendor:a?.vendor??null,architecture:a?.architecture??null});
+ let probing=false;
+ function probeAdapter(){if(probing||status.renderer.probe||!BxRestoration.AUTO_WEBGPU.length||!globalThis.BxWebGPU?.supported())return;probing=true;
+  BxWebGPU.probe({powerPreference:powerPreference()}).then(info=>{status.renderer.probe=adapterKey(info);},()=>{status.renderer.probe=adapterKey(null);});}
+ function powerPreference(){let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}return power==='low-power'?'low-power':'high-performance';}
  function wantsWebGPU(){return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
  // Better xCloud still draws or reads the WebGL2 canvas when WebGPU is off: only the GL context matters then.
  function renderable(player){return player.bxRender!==player.bxEngine||!!player.gl&&!player.gl.isContextLost();}
  function setRenderer(player,engine){
   if(player.bxRender===engine)return;
   stopPacer(player);player.bxRender=engine;if(activePlayer===player)activeEngine=engine;
-  const gpu=engine!==player.bxEngine,g=player.bxGpu;
+  const gpu=engine!==player.bxEngine,g=player.bxGpu;player.bxDiagnostics?.event('renderer',{to:gpu?'webgpu':'webgl2'});
   if(g)g.canvas.style.visibility=gpu?'visible':'hidden';
   player.$canvas.style.opacity=gpu?'0':'';
   // A new renderer starts its own budget and cadence comparison.
   player.bxLastFrame=null;player.bxTimes=[];player.bxReferenceFps=null;player.bxCadenceMark=performance.now();
   status.renderer.active=gpu?'webgpu':'webgl2';
  }
- function syncCanvas(player,g){const c=player.$canvas,css=c.style.cssText;
+ // The WebGPU canvas follows the WebGL2 one: inline style, classes (play.xbox.com positions by class) and size.
+ function syncCanvas(player,g){const c=player.$canvas,css=c.style.cssText,classes=c.className;
   if(g.css!==css){g.css=css;g.canvas.style.cssText=css;g.canvas.style.opacity='';g.canvas.style.pointerEvents='none';g.canvas.style.visibility=player.bxRender===g.engine?'visible':'hidden';}
+  if(g.classes!==classes){g.classes=classes;g.canvas.className=classes;}
   if(g.canvas.width!==c.width)g.canvas.width=c.width;if(g.canvas.height!==c.height)g.canvas.height=c.height;}
  function stopGpu(player){const g=player.bxGpu;if(!g)return;
   if(player.bxRender===g.engine&&g.engine)setRenderer(player,player.bxEngine);
   player.bxGpu=null;try{g.engine?.destroy();}catch{}g.canvas.remove();
   if(status.renderer.state!=='fallback'){status.renderer.state='webgl2';status.renderer.reason='';}}
- function gpuFailed(player,reason){player.bxGpuFailed=true;console.warn('[Bx Restoration] WebGPU → WebGL2:',reason);stopGpu(player);
+ function gpuFailed(player,reason){player.bxGpuFailed=true;console.warn('[Bx Restoration] WebGPU → WebGL2:',reason);player.bxDiagnostics?.event('renderer-failed',{reason});stopGpu(player);
   Object.assign(status.renderer,{state:'fallback',active:'webgl2',reason:'WebGPU falhou, usando WebGL2: '+reason});}
  function startGpu(player){
-  const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null};
+  const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null,classes:null};
   Object.assign(status.renderer,{state:'starting',reason:'Preparando o WebGPU (compilação dos shaders)'});
-  g.canvas.dataset.bxRenderer='webgpu';player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
-  let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}
-  BxWebGPU.create(g.canvas,{powerPreference:power==='low-power'?'low-power':'high-performance'}).then(engine=>{
+  g.canvas.dataset.bxRenderer='webgpu';g.canvas.setAttribute('aria-hidden','true');player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
+  BxWebGPU.create(g.canvas,{powerPreference:powerPreference(),diagnostics:player.bxDiagnostics,settings:nativeSettings({...settings})}).then(engine=>{
    if(player.bxGpu!==g||player.isStopped){engine.destroy();return;}
    g.engine=engine;g.state='ready';engine.onfail=reason=>{if(player.bxGpu===g)gpuFailed(player,reason);};
-   Object.assign(status.renderer,{state:'webgpu',reason:'',adapter:engine.adapter,timestamps:engine.timestamps,warmMs:Math.round(engine.warmMs)});
+   Object.assign(status.renderer,{state:'webgpu',reason:'',adapter:engine.adapter,timestamps:engine.timestamps,warmMs:Math.round(engine.warmMs),probe:adapterKey(engine.adapter)});
   },error=>{if(player.bxGpu===g)gpuFailed(player,String(error?.message||error));});
  }
  // Before each frame: the renderer the setting asks for, once ready, and WebGL2 otherwise.
  function chooseRenderer(player,renderSettings,w,h){
   status.renderer.setting=settings.renderer;
   if(player.bxRendererEpoch!==rendererEpoch){player.bxRendererEpoch=rendererEpoch;player.bxGpuFailed=false;if(status.renderer.state==='fallback')Object.assign(status.renderer,{state:'webgl2',reason:''});}
+  if(settings.renderer==='auto')probeAdapter();
   if(!wantsWebGPU()){stopGpu(player);setRenderer(player,player.bxEngine);return;}
   if(!player.bxGpu&&!player.bxGpuFailed){if(globalThis.BxWebGPU?.supported())startGpu(player);else{player.bxGpuFailed=true;Object.assign(status.renderer,{state:'fallback',reason:'WebGPU indisponível neste navegador: usando WebGL2'});}}
   const g=player.bxGpu,ready=g?.state==='ready'&&!g.engine.failed,ok=ready&&g.engine.supports(renderSettings,w,h,w,h);
@@ -271,7 +301,9 @@
   // compares this with the setting to say when a change waits for the next session.
   try{status.desynchronized=!!this.gl.getContextAttributes()?.desynchronized;}catch{status.desynchronized=null;}
   stopGpu(this);this.bxEngine?.destroy();this.bxRender=null;this.bxOriginalTexture=this.gl.getParameter(this.gl.TEXTURE_BINDING_2D);
-  try{this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders);this.bxRender=this.bxEngine;activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
+  // One measurement per player, shared by the WebGL2 and WebGPU engines (and kept across a context restore).
+  // The saved settings go to the constructor, so their spatial variant is compiled now, not inside the first frames (audit F8).
+  try{this.bxDiagnostics??=BxRestoration.createDiagnostics();this.bxEngine=new BxRestoration.Engine(this.gl,BxShaders,{diagnostics:this.bxDiagnostics,settings:nativeSettings({...settings})});this.bxRender=this.bxEngine;activeEngine=this.bxEngine;activePlayer=this;status.mode='ready';status.error='';}
   catch(error){status.mode='error';status.error=String(error.message||error);console.warn('[Bx Restoration]',error);}
   finally{this.gl.bindVertexArray(null);this.gl.activeTexture(this.gl.TEXTURE0);this.gl.bindTexture(this.gl.TEXTURE_2D,this.bxOriginalTexture);this.gl.useProgram(this.program);}
   this.bxLastFrame=null;this.bxLastSettings='';this.bxTimes=[];startTiming(this);
@@ -286,14 +318,18 @@
  };
  // Settings for one frame: native processing mode, compression-adaptive strengths and the output
  // resolved from the on-screen size. Also sizes the canvas (which restarts the pacer).
- function frameSettings(player,w,h){
-  const renderSettings={...settings};
-  // Sharpness comes from this panel, shared by the treatment and the CAS-only reference.
+ // Sharpness comes from this panel, shared by the treatment and the CAS-only reference; the native processing
+ // and its mode come from the Better xCloud menu when there is one.
+ function nativeSettings(s){
   if(typeof getStreamPref==='function'){
    const processing=getStreamPref('video.processing'),mode=getStreamPref('video.processing.mode');
-   if(['cas','usm'].includes(processing))renderSettings.processing=processing;
-   if(['quality','performance'].includes(mode))renderSettings.processingMode=mode;
+   if(['cas','usm'].includes(processing))s.processing=processing;
+   if(['quality','performance'].includes(mode))s.processingMode=mode;
   }
+  return s;
+ }
+ function frameSettings(player,w,h){
+  const renderSettings=nativeSettings({...settings});
   // Compression-adaptive strengths (QP level from the telemetry; neutral until it is known).
   if(settings.adaptive&&settings.mode==='filtered'&&status.adaptive){const k=status.adaptive.scales;
    renderSettings.cleanup=Math.min(1,settings.cleanup*k.cleanup);renderSettings.deband=Math.min(1,settings.deband*k.deband);renderSettings.detail=Math.min(1,settings.detail*k.detail);}
@@ -306,7 +342,7 @@
   // The frame source too: direct capture counts every decoded frame, the video path only those it presents.
   const conditions=`${w}:${h}:${settings.output}:${player.targetFps}:${player.bxDirect?'direct':'video'}`;
   if(player.bxConditions!==conditions){player.bxReferenceFps=null;player.bxTimes=[];player.bxCadenceMark=performance.now();player.bxConditions=conditions;}
-  if(player.$canvas.width!==ow||player.$canvas.height!==oh){player.$canvas.width=ow;player.$canvas.height=oh;player.bxRender.resetHistory();stopPacer(player);}
+  if(player.$canvas.width!==ow||player.$canvas.height!==oh){player.bxDiagnostics?.event('resize',{from:[player.$canvas.width,player.$canvas.height],to:[ow,oh]});player.$canvas.width=ow;player.$canvas.height=oh;player.bxRender.resetHistory();stopPacer(player);}
   if(player.bxGpu)syncCanvas(player,player.bxGpu);
   return {renderSettings,shown,ow,oh};
  }
@@ -317,6 +353,9 @@
   status.mode=api.diagnostic?'diagnostic':settings.mode;status.frames=engine.frames;status.lastFrame=Date.now();status.resolution=`${w}×${h} → ${ow}×${oh}`;
   status.gpuP95=engine.budget.p95;status.measurement=engine.ext?'gpu':'cadence';status.adaptation=engine.budget.reason;
   status.gpuEstimate=engine.ext?null:engine.gpuEstimate;
+  // Whether the neural restoration asked for is drawn: the engine drawing decides (WebGPU draws with
+  // neural > 0 only after its budget cut it); without float targets it never runs (audit N5, item 4).
+  status.neural=settings.mode!=='filtered'||!(settings.neural>0)?'off':!engine.floatTargets?'no-float':!engine.budget.neuralAllowed?'cut':'running';
   status.display=shown;
   const now=performance.now();if(newFrame)player.bxTimes.push(now);while(player.bxTimes.length>1&&now-player.bxTimes[0]>2000)player.bxTimes.shift();
   status.fps=player.bxTimes.length>1?(player.bxTimes.length-1)*1000/(player.bxTimes.at(-1)-player.bxTimes[0]):null;status.pacing=statsOf(timing.display)||BxRestoration.frameStats(player.bxTimes);
@@ -355,7 +394,7 @@
   try{track=source.clone();reader=new MediaStreamTrackProcessor({track}).readable.getReader();}
   catch(error){track?.stop();status.capture={active:false,frames:0,reason:'Indisponível: '+(error.message||error)};return false;}
   const d=player.bxDirect={track,reader,frames:0,rendered:0,started:performance.now(),nextAt:null};
-  status.capture={active:true,frames:0,reason:''};
+  status.capture={active:true,frames:0,reason:''};player.bxDiagnostics?.event('capture',{active:true});
   (async()=>{let reason='Fluxo de vídeo encerrado';
    try{for(;;){const {value,done}=await reader.read();if(done)break;
      try{if(player.bxDirect!==d)break;d.frames++;renderDirect(player,value);}finally{value.close();}}}
@@ -366,7 +405,7 @@
  function stopDirect(player,reason){
   const d=player.bxDirect;if(!d)return;player.bxDirect=null;
   try{d.reader.cancel().catch(()=>{});}catch{}d.track.stop();
-  status.capture={active:false,frames:d.rendered,reason};clearOrigin(player);
+  status.capture={active:false,frames:d.rendered,reason};clearOrigin(player);player.bxDiagnostics?.event('capture',{active:false,reason});
  }
  function renderDirect(player,frame){
   const d=player.bxDirect,t=player.bxTiming;
@@ -397,6 +436,8 @@
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
    publish(player,{w,h,ow,oh,shown,newFrame:true,timing});
+   // Main-thread cost of this frame (measurement only; the late series needs the rVFC metadata, video path only).
+   if(player.bxDiagnostics?.active)player.bxDiagnostics.interval('cpu',performance.now()-at);
   }catch(error){fail(player,error);}
   finally{if(player.gl&&!player.gl.isContextLost())player.gl.useProgram(player.program);}
  }
@@ -414,6 +455,8 @@
  proto.updateFrame=function(){
   if(!this.bxEngine){fallback(this);return;}
   if(this.isStopped)return;
+  // Measurement only: the main-thread time of this call (cpu series) is taken from here to after publish.
+  const t0=this.bxDiagnostics?.active?performance.now():0;
   if(directCapture(this))return;
   const video=this.$video,w=video.videoWidth||video.width,h=video.videoHeight||video.height;
   if(!w||!h)return;
@@ -439,12 +482,19 @@
     if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;pacer.add({slot,arrival:performance.now(),rtp});}
     else if(engine.present(slot))this.gl.useProgram(this.program);
    }else{
-    if(timing.pacer)stopPacer(this);
+    if(timing.pacer){stopPacer(this);this.bxDiagnostics?.event('fluidity',{mode:'off'});}
     if(!engine.render(video,ow,oh,renderSettings,time,api.diagnostic))return;
     if(newFrame)shownAt(timing,performance.now(),engine);
    }
    this.bxLastFrame=token;this.bxLastSettings=controls;
    publish(this,{w,h,ow,oh,shown,newFrame,timing});
+   if(t0){const d=this.bxDiagnostics,end=performance.now();d.interval('cpu',end-t0);
+    // Lateness against the expected display time and receive-to-presentation latency of the frame whose rVFC
+    // metadata arrived just before this draw (same task, under 50 ms); each metadata set is used once. The rVFC
+    // runs in the rendering step of the vsync the frame was expected on, or one later, so the lateness is 0 or
+    // about one vsync, more when the main thread is behind; its upper tail (p95/p99/max) is the one to read.
+    if(newFrame&&timing.vfAt!=null&&end-timing.vfAt<50){if(Number.isFinite(timing.vfExpected))d.interval('late',end-timing.vfExpected);
+     if(Number.isFinite(timing.vfPresentation)&&Number.isFinite(timing.vfReceive))d.interval('pipeline',timing.vfPresentation-timing.vfReceive);timing.vfAt=null;}}
   }catch(error){fail(this,error);}
   finally{if(this.gl&&!this.gl.isContextLost())this.gl.useProgram(this.program);}
  };
@@ -452,7 +502,7 @@
   stopDirect(this,'');stopTiming(this);
   if(activePlayer===this)activePlayer=null;if(activeEngine===this.bxEngine||activeEngine===this.bxRender)activeEngine=null;stopGpu(this);this.bxEngine?.destroy();this.bxEngine=this.bxRender=null;
   if(this.bxListeners){const {reset,lost,restored}=this.bxListeners;for(const name of ['seeking','pause','emptied'])this.$video.removeEventListener(name,reset);this.$canvas.removeEventListener('webglcontextlost',lost);this.$canvas.removeEventListener('webglcontextrestored',restored);this.bxListeners=null;}
-  status.mode='waiting';status.lastFrame=0;api.diagnostic=false;destroy.call(this);
+  status.mode='waiting';status.lastFrame=0;status.neural='off';api.diagnostic=false;destroy.call(this);
  };
  api.mountControls=parent=>api.panel?.mount(parent);
 })();

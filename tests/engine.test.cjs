@@ -1,5 +1,5 @@
 const {test}=require('node:test'); const assert=require('node:assert/strict'); const fs=require('node:fs'); const vm=require('node:vm');
-function api(){const context={globalThis:{}}; if(fs.existsSync('src/restoration-engine.js'))vm.runInNewContext(fs.readFileSync('src/restoration-engine.js','utf8'),context);return context.globalThis.BxRestoration;}
+function api(){const context={globalThis:{},performance}; if(fs.existsSync('src/restoration-engine.js'))vm.runInNewContext(fs.readFileSync('src/restoration-engine.js','utf8'),context);return context.globalThis.BxRestoration;}
 test('validated settings preserve natural colors and separate modes',()=>{const a=api();assert.ok(a,'engine exported');const s=a.normalize({cleanup:5,temporal:-1,contrast:NaN,mode:'bad'});assert.equal(s.cleanup,1);assert.equal(s.temporal,0);assert.equal(s.contrast,1);assert.equal(s.mode,'filtered');assert.equal(s.shadows,0);});
 test('temporal history resets on interruption, resize and backwards time',()=>{const a=api();assert.ok(a);assert.equal(a.historyValid({time:1,w:100,h:100},1.02,100,100),true);for(const [time,w,h]of[[0.5,100,100],[2,100,100],[1.02,200,100]])assert.equal(a.historyValid({time:1,w:100,h:100},time,w,h),false);});
 test('sustained GPU overload disables temporal before reducing debanding',()=>{const a=api();assert.ok(a);const p=a.createBudget();p.configure({temporal:1,deband:1},1080);for(let i=0;i<90;i++)p.sample(6);assert.equal(p.temporalAllowed,false);for(let i=0;i<90;i++)p.sample(6);assert.ok(p.debandScale<1);assert.equal(p.p95,6);});
@@ -64,6 +64,13 @@ test('diagnostics are opt-in, segment settings and compute percentiles without m
  const b=d.frame({mode:'filtered'},1100);d.sample(b,2);d.disjoint();d.sample(b,NaN);d.stop();
  const r=d.report();assert.equal(r.segments.length,2);assert.equal(r.segments[0].gpu.p95,95);assert.equal(r.segments[1].gpu.count,1);assert.equal(r.disjoints,1);assert.equal(d.frame({},2000),null);
  d.start();d.sample(a,123);assert.equal(d.report().segments.length,0);
+});
+// Audit R9: each segment names how its gpu series was timed (timer, timestamp or fence); null without a sample.
+test('diagnostics keep the timing method of each segment',()=>{
+ const d=api().createDiagnostics();d.start();const a=d.frame({r:'webgl2'},0),b=d.frame({r:'webgpu'},10),c=d.frame({r:'none'},20);
+ d.sample(a,4,'fence');d.sample(b,2,'timestamp');d.sample(c,1);d.stop();
+ const [x,y,z]=d.report().segments;assert.equal(x.gpu.method,'fence');assert.equal(y.gpu.method,'timestamp');assert.equal(z.gpu.method,null);assert.equal(z.gpu.count,1);
+ const e=api().createDiagnostics();e.start();const f=e.frame({},0);e.sample(f,3,'timer');assert.equal(e.report().segments[0].gpu.method,'timer');
 });
 test('video stats export only allowlisted video counters, no addresses',async()=>{
  const a=api(),rows=new Map([['v',{id:'v',type:'inbound-rtp',kind:'video',framesDecoded:20,powerEfficientDecoder:true,decoderImplementation:'MediaCodec',codecId:'c',address:'private'}],['c',{mimeType:'video/H264',sdpFmtpLine:'profile-level-id=42e01f'}],['ip',{type:'candidate-pair',address:'private'}]]);
@@ -231,7 +238,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,2);assert.equal(r.version,'10.0.0');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,3);assert.equal(r.version,'10.1.0');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -252,8 +259,24 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v10\.0\.0-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v10\.1\.0-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
+});
+// Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez
+// (7 series per frame) keeps raw display/arrival/server/wait samples as long as schema 2 did (75 000 frames).
+test('measurement keeps the raw frame intervals in a pool apart from the per-frame costs',()=>{
+ const d=api().createDiagnostics();d.start();d.frame({},0);
+ const frame=['display','arrival','server','wait'],cost=['cpu','late','pipeline'];
+ for(let i=0;i<74999;i++)for(const k of [...frame,...cost])d.interval(k,16.7);
+ assert.equal(d.report().truncated,false,'below 300 000 frame samples nothing is truncated');for(const k of [...frame,...cost])d.interval(k,16.7);
+ let seg=d.report().segments[0];
+ for(const k of frame)assert.equal(seg[k].samplesTruncated,false,k+' keeps raw samples through 75 000 frames with 7 series');
+ for(const k of cost)assert.equal(seg[k].samplesTruncated,false);assert.equal(seg.cpu.samplesMs.length,75000);assert.equal(d.report().truncated,true,'the frame pool is full');
+ for(const k of frame)d.interval(k,16.7);seg=d.report().segments[0];
+ for(const k of frame)assert.equal(seg[k].samplesTruncated,true,k+' is cut at 300 000 raw samples of its pool');assert.equal(seg.display.samplesMs.length,75000);assert.equal(seg.display.count,75001);
+ for(const k of cost)assert.equal(seg[k].samplesTruncated,false,k+' is not cut by the frame pool');assert.equal(d.report().truncated,true);
+ for(let i=0;i<25000;i++)for(const k of cost)d.interval(k,1);seg=d.report().segments[0];
+ assert.equal(seg.cpu.samplesMs.length,100000);assert.equal(seg.cpu.samplesTruncated,false);d.interval('late',1);assert.equal(d.report().segments[0].late.samplesTruncated,true,'the cost pool is cut on its own');
 });
 
 test('without GPU timers the live decoder rate is the reference, under the FPS limit',()=>{const a=api();
@@ -364,3 +387,77 @@ test('frame plan: budget-filtered strengths, scaler, last pass and the WebGL2-on
  p=a.framePlan(a.normalize({...s,temporal:.5,antialias:.5}),b,1920,1080,1920,1080,true);assert.equal(p.spatial.antialias,0);assert.equal(p.antialias,.5,'AA after temporal');
  const cut=a.createBudget();cut.configure(s,1080);cut.debandScale=.5;cut.debandTaps=2;cut.enhanceAllowed=false;
  p=a.framePlan(s,cut,1920,1080,1920,1080,false);assert.equal(p.spatial.deband,.3);assert.equal(p.spatial.debandTaps,2);assert.equal(p.spatial.chroma,0);assert.equal(p.final.uniforms.deband,.3);});
+// Audit R10: one measurement per player, shared by both renderers, with the renderer in every segment.
+test('a shared measurement survives a renderer switch: segments carry webgl2 or webgpu',()=>{const a=api(),gl=fakeGl(23),shaders={spatial:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'},d=a.createDiagnostics();
+ const e=new a.Engine(gl,shaders,{diagnostics:d});assert.equal(e.diagnostics,d);assert.equal(e.renderer,'webgl2');assert.notEqual(new a.Engine(gl,shaders).diagnostics,d,'without the option each engine has its own');
+ const b=a.createBudget(),s=a.normalize({deband:.6}),cfg=r=>a.segmentConfig(s,b,1920,1080,1920,1080,0,false,true,r);
+ assert.equal(cfg('webgl2').renderer,'webgl2');assert.equal(cfg('webgpu').renderer,'webgpu');assert.equal('renderer' in cfg(undefined),false);
+ d.start({api:'webgpu'});d.frame(cfg('webgpu'),0);d.frame(cfg('webgpu'),33);d.frame(cfg('webgl2'),66);d.frame(cfg('webgpu'),100);d.stop();
+ const r=d.report();assert.equal(JSON.stringify(r.segments.map(x=>[x.config.renderer,x.frames])),'[["webgpu",3],["webgl2",1]]');assert.equal(r.metadata.api,'webgpu');});
+// Audit R1: the 'auto' probe reads {vendor, architecture} of the adapter without creating a device.
+// (vm objects are from another realm: compared as JSON.)
+function gpuApi(nav){const g={navigator:nav},context={globalThis:g,navigator:nav};for(const f of ['src/restoration-engine.js','src/webgpu-engine.js'])vm.runInNewContext(fs.readFileSync(f,'utf8'),context);return g.BxWebGPU;}
+test('the WebGPU probe gives the adapter info or null, and is only offered where WebGPU exists',async()=>{
+ const calls=[];const gpu=gpuApi({gpu:{requestAdapter:async o=>{calls.push(o);return {info:{vendor:'qualcomm',architecture:'adreno-8xx',description:''}};}}});
+ const info='{"vendor":"qualcomm","architecture":"adreno-8xx","description":""}';assert.equal(gpu.supported(),true);assert.equal(JSON.stringify(await gpu.probe({powerPreference:'low-power'})),info);assert.equal(JSON.stringify(calls),'[{"powerPreference":"low-power"}]');
+ assert.equal(JSON.stringify(await gpu.probe()),info);assert.equal(calls[1].powerPreference,'high-performance');
+ const none=gpuApi({});assert.equal(none.supported(),false);assert.equal(await none.probe(),null);
+ assert.equal(await gpuApi({gpu:{requestAdapter:async()=>null}}).probe(),null);assert.equal(JSON.stringify(await gpuApi({gpu:{requestAdapter:async()=>({})}}).probe()),'{}');});
+
+// Audit 3.5 / 12.1 (measurement instrumentation): pass sequences, last pass, events and the cpu/late/pipeline series.
+test('measurement counts the pass sequences of a segment, names its last pass and keeps the new series',()=>{
+ const d=api().createDiagnostics();d.passes(null,'x');d.event('compile',{ms:1});d.start();
+ const a=d.frame({r:'webgl2'},0);d.passes(a,'upload,spatial,casFiltered#1',{name:'casFiltered',filterId:1});
+ for(let i=0;i<3;i++){d.frame({r:'webgl2'},10+i);d.passes(a,'upload,spatial@highp.0.1.4.1.0.0.1.1,casFiltered#1',{name:'casFiltered',filterId:1});}
+ const b=d.frame({r:'webgpu'},100);d.passes(b,'import,spatial@highp.0.1.4.1.0.0.1.1,sgsr',{name:'sgsr'});d.passes({},'bogus');
+ d.interval('cpu',2.5);d.interval('cpu',-1);d.interval('late',-3.2);d.interval('late',16.7);d.interval('late',0);d.interval('pipeline',48);d.interval('pipeline',NaN);d.interval('slack',5);
+ d.stop();const r=d.report(),[x,y]=r.segments;
+ assert.deepEqual(JSON.parse(JSON.stringify(x.passes)),[{sequence:'upload,spatial@highp.0.1.4.1.0.0.1.1,casFiltered#1',frames:3},{sequence:'upload,spatial,casFiltered#1',frames:1}],'the generic shader counts apart, inside the same segment');
+ assert.deepEqual(JSON.parse(JSON.stringify(x.final)),{name:'casFiltered',filterId:1});assert.deepEqual(JSON.parse(JSON.stringify(y.final)),{name:'sgsr',filterId:null});assert.equal(y.passes.length,1);
+ assert.equal(y.cpu.count,1);assert.equal(y.cpu.p50,2.5);assert.equal(y.cpu.hitches,null);assert.equal(y.late.count,3);assert.equal(y.late.p50,0);assert.equal(y.late.maxMs,16.7,'a frame one vsync late is the upper tail');assert.deepEqual([...y.late.samplesMs],[-3.2,16.7,0],'ending before the expected display (negative) is kept');assert.equal(y.pipeline.count,1);assert.equal(y.pipeline.p95,48);
+ assert.equal(x.cpu.count,0);assert.equal(x.late.p50,null);assert.equal(y.slack,undefined,'schema 3 has no slack series');assert.equal(r.events.length,0);assert.equal(r.eventsTruncated,false);assert.equal(r.sampleLimit.events,500);
+});
+test('measurement events are dated from the start, rounded and capped at 500 with a truncation mark',()=>{
+ const d=api().createDiagnostics();d.start();d.event('compile',{name:'spatial@highp.1.1.4.1.0.0.1.1',ms:12.3456,wait:false,frames:1,none:undefined,bad:NaN});
+ d.event('target',{name:'spatial',w:1920,h:1080,bytes:8294400,realloc:true});d.event('degrade',{reason:'Temporal desligado para preservar fluidez',revision:1});
+ d.event('renderer',{to:'webgpu'});d.event('fluidity',{mode:'balanced'});d.event('capture',{active:false,reason:'x'});d.event('resize',{from:[1920,1080],to:[2276,1280]});
+ let r=d.report();assert.equal(r.events.length,7);const e=r.events[0];assert.equal(e.type,'compile');assert.equal(e.ms,12.35);assert.equal(e.wait,false);assert.equal(e.frames,1);assert.equal(e.none,null);assert.equal(e.bad,null);
+ assert.ok(Number.isFinite(e.t)&&e.t>=0&&e.t<5,'t in seconds since the start');assert.equal(r.events[1].bytes,8294400);assert.equal(r.events[1].realloc,true);assert.match(r.events[2].reason,/Temporal/);assert.deepEqual(JSON.parse(JSON.stringify(r.events[6].to)),[2276,1280]);
+ for(let i=0;i<600;i++)d.event('target',{name:'t'+i});r=d.report();assert.equal(r.events.length,500);assert.equal(r.eventsTruncated,true);assert.equal(r.truncated,true);
+ d.stop();d.event('late',{});assert.equal(d.report().events.length,500);d.start();assert.equal(d.report().events.length,0);assert.equal(d.report().eventsTruncated,false);
+});
+// A GL fake that lets render() run: no context loss, complete framebuffers, distinct textures, no fence.
+function renderGl(precision=23){const calls={programs:0,draws:0};return new Proxy({},{get(_,k){
+ if(k==='calls')return calls;if(k==='getShaderPrecisionFormat')return ()=>({precision,rangeMin:15,rangeMax:15});
+ if(k==='getExtension')return ()=>null;if(k==='createProgram')return ()=>{calls.programs++;return {};};if(k==='fenceSync')return undefined;
+ if(k==='isContextLost')return ()=>false;if(k==='checkFramebufferStatus')return ()=>'FRAMEBUFFER_COMPLETE';if(k==='createTexture')return ()=>({});if(k==='drawArrays')return ()=>{calls.draws++;};
+ if(typeof k==='string'&&/^[A-Z][A-Z0-9_]+$/.test(k))return k;return ()=>true;}});}
+const shaderSet=Object.fromEntries(['spatial','copy','casFiltered','cas','rcas','sgsr','easu','antialias','nnFeatures','nnApply','temporal','motion','cut'].map(n=>[n,'#version 300 es\nvoid main(){}']));
+test('engine records the passes of each frame, the variant compilation, allocations and reductions only while measuring',()=>{
+ const a=api(),gl=renderGl(),d=a.createDiagnostics(),e=new a.Engine(gl,shaderSet,{diagnostics:d}),video={videoWidth:64,videoHeight:36},base=a.normalize({});
+ assert.ok(e.render(video,64,36,base,0));assert.equal(e.trace,null,'no trace outside a measurement');assert.equal(d.report().segments.length,0);
+ d.start();assert.ok(e.render(video,64,36,base,.033));assert.ok(e.render(video,64,36,base,.066));
+ const custom={...base,cleanup:.5};assert.ok(e.render(video,64,36,custom,.1));assert.ok(e.render(video,64,36,custom,.133));assert.ok(e.render(video,64,36,custom,.166));
+ e.budget.configure({...custom,temporal:1},36);e.budget.degrade();d.stop();
+ const r=d.report(),[x,y]=r.segments;assert.equal(r.segments.length,2);
+ assert.deepEqual(JSON.parse(JSON.stringify(x.passes)),[{sequence:'upload,spatial@highp.0.1.4.1.0.0.1.1,casFiltered#1',frames:2}]);assert.deepEqual(JSON.parse(JSON.stringify(x.final)),{name:'casFiltered',filterId:1});
+ assert.deepEqual(JSON.parse(JSON.stringify(y.passes)),[{sequence:'upload,spatial@highp.1.1.4.1.0.0.1.1,casFiltered#1',frames:2},{sequence:'upload,spatial,casFiltered#1',frames:1}],'the generic shader drew while the variant compiled');
+ const types=r.events.map(v=>v.type);assert.ok(types.includes('compile')&&types.includes('degrade'),types.join(','));
+ const compile=r.events.find(v=>v.type==='compile');assert.equal(compile.name,'spatial@highp.1.1.4.1.0.0.1.1');assert.equal(compile.wait,false);assert.equal(compile.frames,1);assert.ok(compile.ms>=0);
+ const degrade=r.events.find(v=>v.type==='degrade');assert.match(degrade.reason,/Temporal/);assert.equal(degrade.revision,1);
+ assert.ok(!r.events.some(v=>v.type==='target'),'targets allocated before the measurement are not events');
+ d.start();assert.ok(e.render(video,128,72,{...custom,output:'72'},.2));const t=d.report().events.find(v=>v.type==='target');assert.ok(t&&t.name==='scaled'&&t.w===128&&t.h===72&&t.bytes===128*72*4&&t.realloc===false,JSON.stringify(t));
+ assert.equal(d.report().segments[0].passes[0].sequence,'upload,spatial@highp.1.1.4.1.0.0.1.1,easu,casFiltered#1');
+ // Deferred last pass (Fluidez): marked as run at present().
+ assert.ok(e.render(video,64,36,custom,.3,false,'paced0',true));assert.match(d.report().segments.at(-1).passes[0].sequence,/casFiltered#1@present$/);
+});
+// Audit F8: the spatial variant of the saved settings is compiled in the constructor, not inside the first frames.
+test('engine pre-warms the spatial variant of the given settings together with the default one',()=>{const a=api(),shaders={spatial:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'};
+ let gl=fakeGl(10);new a.Engine(gl,shaders,{settings:{cleanup:.5}});assert.equal(gl.calls.programs,4,'two shaders, the default variant and the settings variant');
+ gl=fakeGl(10);const e=new a.Engine(gl,shaders,{settings:{cleanup:.5}});assert.equal(e.spatialVariant({cleanup:.5,deband:.6,chroma:.75,detail:0,antialias:0,debandTaps:4,quantize:true,selective:true}),'spatial@mediump.1.1.4.1.0.0.1.1','ready on the first frame');assert.equal(gl.calls.programs,4);
+ gl=fakeGl(10);new a.Engine(gl,shaders,{settings:{}});assert.equal(gl.calls.programs,3,'the defaults are already warm');
+ gl=fakeGl(10);new a.Engine(gl,shaders,{settings:{cleanup:0,deband:0,chroma:0,detail:0}});assert.equal(gl.calls.programs,3,'no spatial pass, nothing more to warm');
+ gl=fakeGl(10);new a.Engine(gl,shaders,{settings:{processingMode:'quality'}});assert.equal(gl.calls.programs,3,'without float targets the quality variant still quantizes: same as the default');
+ gl=fakeGl(23);assert.ok(new a.Engine(gl,shaders,{settings:{temporal:.5,antialias:.5}}).programs['spatial@highp.0.1.4.1.0.0.1.1'],'with temporal the AA leaves the spatial pass');assert.equal(gl.calls.programs,3);
+ assert.ok(Number.isFinite(new a.Engine(fakeGl(10),shaders).warmMs));
+});

@@ -101,7 +101,8 @@ fn spatial(fc:vec2f,size:vec2f)->vec4f{
  if(ANTIALIAS&&u.antialias>0.){
   let nw=lum(at(p+vec2f(-1,1)));let ne=lum(at(p+vec2f(1,1)));let sw=lum(at(p+vec2f(-1,-1)));let se=lum(at(p+vec2f(1,-1)));
   let mid=lum(c);let lo=min(mid,min(min(nw,ne),min(sw,se)));let hi=max(mid,max(max(nw,ne),max(sw,se)));
-  let dir=vec2f(-(nw+ne-sw-se),nw+sw-ne-se);
+  // Edge tangent, as spatial.glsl (same GL frame: see common.wgsl).
+  let dir=vec2f(-(nw+ne-sw-se),ne+se-nw-sw);
   let major=max(abs(dir.x),abs(dir.y));
   let weight=u.antialias*smoothstep(.04,.15,hi-lo)*smoothstep(.05,.35,min(abs(dir.x),abs(dir.y))/max(major,1e-5));
   if(weight>0.){

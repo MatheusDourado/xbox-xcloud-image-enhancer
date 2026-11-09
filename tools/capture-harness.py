@@ -49,8 +49,14 @@ probe=r'''
  let savedFile=null;window.BxAndroid={saveFile:(name,mime,text)=>{savedFile={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const report=await api.exportMeasurement();delete window.BxAndroid;
  const segs=report.segments,seg=segs.find(s=>s.config.settings.capture==='direct'&&s.display.count>40);
- check(savedFile&&/^bx-v10\.0\.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===2,'Measurement is saved through the Android bridge (schema 2)');
+ check(savedFile&&/^bx-v10\.1\.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===3,'Measurement is saved through the Android bridge (schema 3)');
  check(seg&&seg.arrival.count>40&&seg.server.count>40&&seg.wait.count>40,`Direct segment records display, arrival, server and wait intervals (${seg&&[seg.display.count,seg.arrival.count,seg.server.count,seg.wait.count]})`);
+ // Audit 3.5: the direct segment keeps the main-thread cost per frame and its passes end at present(); the video
+ // segment before the switch has the lateness against the expected display time; the switch to direct capture is a dated event.
+ check(seg.cpu.count>40&&seg.cpu.meanMs>0&&seg.passes.length>0&&seg.passes.every(p=>/^upload,.*@present$/.test(p.sequence))&&seg.final.name===seg.passes[0].sequence.split(',').pop().replace(/[#@].*$/,''),`Direct segment records the cpu series and deferred pass sequences (${seg.passes[0].sequence}; cpu ${seg.cpu.count} frames, mean ${seg.cpu.meanMs&&seg.cpu.meanMs.toFixed(2)} ms)`);
+ const videoSeg=segs.find(s=>s.config.settings.capture!=='direct'&&s.frames>10);
+ check(videoSeg&&videoSeg.cpu.count>10&&videoSeg.late.count>10&&videoSeg.late.hitches===null&&Number.isFinite(videoSeg.late.p50)&&videoSeg.late.p95>=videoSeg.late.p50&&videoSeg.late.maxMs>-1,`Video segment records the lateness against the expected display time (p50 ${videoSeg&&videoSeg.late.p50} ms, p95 ${videoSeg&&videoSeg.late.p95} ms, ${videoSeg&&videoSeg.pipeline.count} pipeline samples)`);
+ const kinds=[...new Set(report.events.map(e=>e.type))];check(report.events.some(e=>e.type==='capture'&&e.active===true)&&report.events.every(e=>Number.isFinite(e.t)&&e.t>=0),`The switch to direct capture is a dated event (${kinds.join(',')})`);
  const longest=Math.max(...segs.flatMap(s=>[s.server.maxMs||0,s.arrival.maxMs||0]));
  check(longest<500,`No interval spans the switch between clocks (longest ${longest.toFixed(1)} ms)`);
  const shown=Math.max(...segs.map(s=>s.display.maxMs||0)),waited=Math.max(...segs.map(s=>s.wait.maxMs||0));
