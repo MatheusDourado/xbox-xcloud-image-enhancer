@@ -192,7 +192,7 @@
  const statsOf=list=>BxRestoration.frameStats(list.map(e=>e[1]));
  function startTiming(player){
   if(player.bxTiming)return;
-  const t=player.bxTiming={server:[],arrival:[],display:[],presentedLog:[],clock:BxRestoration.createRtpClock(),pendingRtp:null,metaId:null,raf:null,pacer:null,shown:null};
+  const t=player.bxTiming={server:[],arrival:[],display:[],presentedLog:[],clock:BxRestoration.createRtpClock(),pendingRtp:null,metaId:null,raf:null,pacer:null,shown:null,vfAt:null,vfExpected:null,vfPresentation:null,vfReceive:null};
   const video=player.$video;if(!video?.requestVideoFrameCallback)return;
   // Registered before Better xCloud's own draw callback, so a frame's metadata usually comes first;
   // attach() covers the opposite order.

@@ -44,7 +44,10 @@ probe=r'''
  check(api.status.renderer.active==='webgpu'&&player.bxTiming.pacer&&player.bxTiming.shown,'The pacer presents WebGPU slots');
  if(player.bxRender.timestamps){await wait(1500);player.bxRender.poll();check(player.bxRender.budget.values.length>0&&api.status.measurement==='gpu','timestamp-query feeds the budget: measurement is GPU time, not cadence');}
  check(await api.startMeasurement(),'Measurement starts with WebGPU');await wait(800);
- {let report=null;BxRestoration.downloadReport=r=>{report=r;};await api.exportMeasurement();check(report&&report.metadata.api==='webgpu'&&report.segments.some(s=>s.config.renderer==='webgpu'),'The measurement records the WebGPU renderer');}
+ {let report=null;BxRestoration.downloadReport=r=>{report=r;};await api.exportMeasurement();check(report&&report.metadata.api==='webgpu'&&report.segments.some(s=>s.config.renderer==='webgpu'),'The measurement records the WebGPU renderer');
+  // Audit 3.5: WebGPU segments list their passes too (import of the decoded frame first, the deferred last pass marked @present).
+  const seg=report.segments.find(s=>s.config.renderer==='webgpu'),seq=seg.passes[0]?.sequence||'';
+  check(seg.passes.length>0&&/^import,/.test(seq)&&/@present$/.test(seq)&&seg.final&&seg.final.name===seq.split(',').pop().replace(/[#@].*$/,'')&&seg.cpu.count>0,'WebGPU segments list their passes and the main-thread cost ('+seq+')');}
  // Temporal is WebGL2-only: the frames go back to WebGL2 and return once it is off. A measurement started
  // before the switch keeps recording (audit R10): each renderer only adds its own segments.
  check(await api.startMeasurement(),'Measurement starts before the renderer switch');await wait(300);
@@ -55,7 +58,8 @@ probe=r'''
  api.update({temporal:0});check(await until(()=>api.status.renderer.active==='webgpu'),'WebGPU resumes when temporal is off');
  await wait(400);
  {let report=null;BxRestoration.downloadReport=r=>{report=r;};const r=await api.exportMeasurement();const renderers=report?[...new Set(report.segments.map(s=>s.config.renderer))]:null;
-  check(r===report&&r.saved===true&&report.metadata.api==='webgpu'&&renderers.includes('webgpu')&&renderers.includes('webgl2')&&report.segments.every(s=>s.frames>0),'A renderer switch during the recording only adds segments: the export names both renderers',renderers);}
+  check(r===report&&r.saved===true&&report.metadata.api==='webgpu'&&renderers.includes('webgpu')&&renderers.includes('webgl2')&&report.segments.every(s=>s.frames>0),'A renderer switch during the recording only adds segments: the export names both renderers',renderers);
+  const switches=report.events.filter(e=>e.type==='renderer').map(e=>e.to);check(switches.includes('webgl2')&&switches.includes('webgpu')&&report.events.every(e=>Number.isFinite(e.t)),'The renderer switches are dated events of the measurement ('+switches.join(',')+')');}
  // A failure falls back to WebGL2 at once, without a reload, and is not retried until the setting changes.
  const glFrames=player.bxEngine.frames;player.bxRender.fail('forced in test');
  check(api.status.renderer.active==='webgl2'&&api.status.renderer.state==='fallback'&&!gpuCanvas()&&player.$canvas.style.opacity==='','A WebGPU failure falls back to WebGL2 and removes its canvas');

@@ -55,22 +55,31 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
   - `{source: 'bitrate', qp: null, qpMean: null, qpEstimate, bitsPerPixel, level, scales}`: sem QP no navegador. Usa o percentil 80 dos bits por pixel do último minuto (mínimo 5 s; segundos com menos de 10 quadros ficam de fora). 0,12 bit/pixel equivale ao QP 28 (neutro) e cada dobro, a 4 QP a menos (`BxRestoration.qpFromBitsPerPixel`).
 - `warnings` — lista `{level: 'error'|'warn'|'info', key, text}` (renderizador, bitrate limitado, resolução, decodificação por software, perda de pacotes, saída acima da tela, rede neural pedida e não rodando, erro do motor).
 
-## Medição — relatório de `api.exportMeasurement()` (`schema: 2`)
+## Medição — relatório de `api.exportMeasurement()` (`schema: 3`)
 
 Arquivo `bx-v9.7.1-diagnostics-<timestamp>.json`. No app Android vai para Downloads/xCloud ImageFilter; no navegador, para a pasta de downloads.
 
-- `metadata`: `userAgent`, `renderer`, `timer` (cronômetro de GPU), `gpuMethod` (`timer`, `fence` ou `null`), `floatTargets`, `screen` (`width`, `height`, `dpr`, `refreshPref` do app), `refreshMeasuredHz` (mediana de 30 quadros de animação no início), `app`, `betterXcloud` (preferências do stream), `capture`, `smoothing`, `initial` (contadores do vídeo e do WebRTC).
+- `metadata`: `userAgent`, `renderer`, `api` (`webgl2` ou `webgpu`), `timer` (cronômetro de GPU), `gpuMethod` (`timer`, `timestamp`, `fence` ou `null`), `floatTargets`, `gpu` (`{renderer, vendor}` desmascarados por `WEBGL_debug_renderer_info` quando o navegador expõe; `null` quando não), `spatialPrecision` (`highp` ou `mediump`, perfil das variantes do `spatial`), `parallelCompile` (`KHR_parallel_shader_compile` disponível), `warmMs` (tempo de compilação no construtor do motor WebGL2: programas e variantes pré-aquecidas), `screen` (`width`, `height`, `dpr`, `refreshPref` do app), `refreshMeasuredHz` (mediana de 30 quadros de animação no início), `app`, `betterXcloud` (preferências do stream), `capture`, `smoothing`, `initial` (contadores do vídeo e do WebRTC).
 - `segments`: um por configuração distinta (voltar a uma configuração continua o segmento). Campos de cada um:
   - `config` (ajustes, `effective`, `source`, `output` e `renderer`: `webgl2` ou `webgpu`), `frames`, `durationMs`, `drawFps`, `pacerDropped` (quadros descartados pela Fluidez) e `videoSkipped` (quadros que o `<video>` não apresentou, no caminho de vídeo);
+  - `passes`: as sequências de passes executadas, em ordem decrescente de quadros, cada uma `{sequence, frames}`. `sequence` lista os passes na ordem em que rodaram, separados por vírgula: `upload` (textura do vídeo no WebGL2; no WebGPU `import` é a cópia da textura externa e `upload` a cópia pela fila), `nnFeatures`, `nnApply`, `spatial@<perfil>` (variante compilada, ex.: `spatial@mediump.1.1.4.1.0.0.1.1`) ou `spatial` (shader genérico enquanto a variante compila — conta à parte, no mesmo segmento), `spatialCompute`, `copy`, `cut`, `motion`, `temporal`, `antialias`, `easu` e o passe final com o `filterId` (`casFiltered#1` = USM, `#2` = CAS; `cas#2`, `rcas`, `sgsr`). Com Fluidez o passe final roda em `present()` e termina em `@present`;
+  - `final`: `{name, filterId}` do último passe (`filterId` `null` quando não há);
   - `gpu` (`{method, count, p50, p95, p99, samplesMs}`; `method` é como o motor do segmento mediu: `timer` (WebGL2 com cronômetro), `timestamp` (WebGPU) ou `fence` (WebGL2 sem cronômetro: tempo até concluir, limite superior que inclui a fila), `null` sem amostra);
   - intervalos, cada um com `{count, meanMs, p50, p95, p99, maxMs, deviationMs, hitches, samplesMs, samplesTruncated}`:
     - contagem, média, desvio e máximo são exatos; os percentis vêm de faixas de 0,1 ms;
-    - `hitches` conta intervalos acima de 1,5× a mediana e é `null` em `wait`;
+    - `hitches` conta intervalos acima de 1,5× a mediana e é `null` em `wait`, `cpu`, `slack` e `pipeline`;
     - intervalos que atravessam a página oculta (troca de app) ficam de fora;
     - `display`: entre quadros exibidos;
     - `arrival`: entre quadros chegando ao tratamento (veja `origin.arrivalNetwork`);
     - `server`: entre os tempos de captura no servidor (RTP no vídeo, timestamp do `VideoFrame` na captura direta);
-    - `wait`: espera de cada quadro na Fluidez.
-- `timeline`: uma linha por segundo, até 1 hora. Campos: `t` (s desde o início), `fpsReceived`, `fpsShown`, `bitrateMbps`, `lossPct`, `rttMs`, `decodeMs`, `bufferMs`, `qp`, `bitsPerPixel`, `level`, `gpuMs`, `waitMs`, `decoderDropped`, `freezes` e `capture` (`direct`/`video`).
-- `final` (contadores no fim), `net` e `status` (`capture`, `fluidity`, `adaptive`, `smoothing`, `pacing`, `origin`, `gpuP95`, `gpuEstimate`, `measurement`, `neural`, `warnings`).
-- Limites (`sampleLimit`): até 300 mil amostras brutas de intervalos no total, 120 mil de GPU, 3.600 linhas na linha do tempo e 256 configurações. Os resumos continuam além do corte; `truncated` indica que algum limite foi atingido.
+    - `wait`: espera de cada quadro na Fluidez;
+    - `cpu`: tempo na thread principal de cada quadro tratado (`updateFrame` ou `renderDirect`, da entrada até depois de publicar o estado), só com a medição ativa;
+    - `slack`: `expectedDisplayTime` do quadro (metadados do `requestVideoFrameCallback`) menos o fim do processamento; negativo quando o quadro ficou pronto depois da hora prevista. Só no caminho de vídeo, com a medição ativa;
+    - `pipeline`: `presentationTime − receiveTime` do mesmo quadro, quando o navegador informa os dois (WebRTC); só no caminho de vídeo.
+- `events`: até 500 eventos datados `{t (s desde o início), type, ...}`; `eventsTruncated` marca o corte. Tipos: `compile` (`name` do programa ou da variante do `spatial`, `ms` da finalização bloqueante, `wait`, `frames` que o genérico desenhou enquanto compilava; `name: 'programs'` com `count` quando o motor é criado durante a gravação), `compile-failed`, `target` (alocação ou realocação de alvo: `name`, `w`, `h`, `bytes`, `realloc`), `degrade` (`reason`, `revision` da redução automática), `renderer` (`to`: `webgl2`/`webgpu`), `renderer-failed` (`reason`), `fluidity` (`mode`), `capture` (`active`, `reason`) e `resize` do canvas (`from`, `to`).
+- `timeline`: uma linha por segundo, até 1 hora. Campos: `t` (s desde o início), `fpsReceived`, `fpsShown`, `bitrateMbps`, `lossPct`, `rttMs`, `decodeMs`, `bufferMs`, `qp`, `bitsPerPixel`, `level`, `gpuMs`, `waitMs`, `decoderDropped`, `freezes`, `capture` (`direct`/`video`), `width` e `height` da fonte, `display` (altura física do vídeo na tela) e `refreshHz` (taxa pedida ao app, `BxAndroid.getRefreshRate()`; `null` fora dele).
+- `final` (contadores no fim), `net` e `status` (`capture`, `fluidity`, `adaptive`, `smoothing`, `pacing`, `origin`, `gpuP95`, `gpuEstimate`, `measurement`, `neural`, `adaptation` (motivo da última redução automática, `budget.reason`), `display`, `resolution`, `renderer` (cópia de `status.renderer`), `warnings`).
+- Limites (`sampleLimit`): até 300 mil amostras brutas de intervalos no total, 120 mil de GPU, 3.600 linhas na linha do tempo, 500 eventos e 256 configurações. Os resumos continuam além do corte; `truncated` indica que algum limite foi atingido.
+- Fora da medição nada disso custa: o rastro de passes e as séries só existem com a gravação ativa (checagens triviais por quadro).
+
+O construtor do motor WebGL2 (`BxRestoration.Engine(gl, shaders, {settings})`) e `BxWebGPU.create(canvas, {settings})` recebem os ajustes atuais e pré-aquecem a variante do `spatial` que eles usam junto com a dos padrões, para a compilação não acontecer dentro dos primeiros quadros (auditoria F8).
