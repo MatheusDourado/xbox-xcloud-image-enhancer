@@ -7,9 +7,9 @@
 > | P0 — O que realmente roda (framePlan, bypasses, resolução) | concluída | pendente |
 > | P0 — Frametime, captura e apresentação | concluída | pendente |
 > | P1 — Microdetalhe × ruído/cintilação; redundância de realce | concluída | pendente |
-> | P1 — Rede neural atual (baseline) | em andamento | pendente |
+> | P1 — Rede neural atual (baseline) | concluída | pendente |
 > | P2 — Compressão, Degradês, AA e croma | em andamento | pendente |
-> | P2 — Renderizador e checagem das afirmações do diagnóstico | pendente | pendente |
+> | P2 — Renderizador e checagem das afirmações do diagnóstico | em andamento | pendente |
 >
 > Até a verificação adversarial terminar, cada seção vale como **pré-verificação**. Correções entram aqui, marcadas.
 
@@ -87,6 +87,12 @@ Responde ao documento *"Xbox xCloud Image Enhancer — diagnóstico e roteiro de
     - Na bancada, Detalhe 20% sobre o USM já soma +6–7% de cintilação, contra +1,5% sem o USM: a interação é multiplicativa.
     - A emulação estima cintilação ×1,6–1,8 para Detalhe 1 + USM 2. É um proxy pessimista.
 16. **A intensidade do Detalhe e da rede não muda o custo de GPU** [código]. Só ligar ou desligar muda, porque a variante compilada é a mesma. Baixar o Detalhe de 100% para 20–35% é neutro para o stutter.
+17. **A rede neural custa caro e o ganho medido é pequeno.**
+    - [doc] +5,2 ms/quadro (+45%) em sessão a 30 FPS na bancada do Poco: mais que o spatial padrão inteiro. A dica do painel diz "~30%".
+    - [doc] Na mesma nitidez, a bancada mediu SSIM e PSNR iguais e **halo +18%**. A cintilação com a rede não é medida desde a v9.1.
+    - [código] Pesos e shaders são os mesmos da v9.1; o treino é sintético, sem perda temporal e sem dados do encoder do xCloud.
+    - [código] Ela roda em highp no Adreno.
+18. **A dica do painel "Com Reconstrução neural, use Nitidez ~2,5" ficou invertida.** [código] Era para baixar de 3; com o padrão atual em 2, ela leva a **subir** a nitidez.
 
 ## 2. P0 — O que realmente roda no play.xbox.com
 
@@ -486,11 +492,104 @@ As guardas são obrigatórias porque `detail` é inflado pelo próprio Detalhe (
 
 ## 5. P1 — Rede neural atual (baseline)
 
-*Em andamento.*
+**Conclusão da frente:**
+- A rede atual é pequena: 208 MAC/px, campo receptivo de 5×5 px.
+- Pesos e shaders não mudaram desde a v9.1 (único commit `9e72d0a`).
+- Ela custa caro no Poco: +5,2 ms/quadro na bancada a 30 FPS, +45%.
+- O ganho visual documentado é pequeno e, na mesma nitidez, aparece como **halo +18%**.
+- Aplicada a sinais sintéticos, ela **atenua textura fina de baixo contraste**.
+- Antes de pensar numa rede nova, é preciso medir a atual no Poco (5.5).
 
-Já confirmado pela frente P0:
-- condições de execução [código] (2.3);
-- +5,2 ms/quadro na bancada a 30 FPS [doc] (1.3).
+### 5.1 Arquitetura e custo pelo código
+
+| Camada | Operação | Canais | MAC/px | Passada | Precisão | Armazenamento |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | luma BT.709 dos 9 vizinhos | 3→1 | 27 MAD | nnFeatures | highp | registradores |
+| 1 | conv 3×3 + ReLU | 1→8 | 72 | nnFeatures | highp | registradores |
+| 2 | conv 1×1 + ReLU | 8→8 | 64 | nnFeatures | highp | MRT 2×RGBA16F |
+| 3 | conv 3×3 + residual (`Y + strength·dY`) | 8→1 | 72 | nnApply | highp | `neural` RGBA8 (performance) |
+| **Total** | campo receptivo 5×5 | — | **208** (+17 bias) | 2 passadas | — | +41,5 MB de VRAM em 1080p |
+
+O total equivale a 431 M MAC por quadro em 1080p: 12,9 G MAC/s a 30 FPS e 25,9 G MAC/s a 60 FPS.
+
+**Leituras e banda em 1080p.** A contagem de leituras vem do código. Os bytes de DRAM são [hipótese]: supõem cache ideal, sem UBWC.
+
+| Passada | Leituras/px | DRAM/px (estim.) | MB/quadro | GB/s a 30 FPS | GB/s a 60 FPS |
+| --- | --- | --- | --- | --- | --- |
+| nnFeatures | 9 (RGBA8) | 20 | 41,5 | 1,24 | 2,49 |
+| nnApply | 18 (RGBA16F) + 1 | 24 | 49,8 | 1,49 | 2,99 |
+| **Rede** | **28** | **44** | **91,2** | **2,74** | **5,47** |
+| Caminho sem rede (upload + spatial + final) | 40 | 20 | 41,5 | 1,24 | 2,49 |
+| Caminho com rede | 68 | 64 | 132,7 | 3,98 | 7,96 |
+
+Corroboração indireta [doc]: no Poco, uma cópia RGBA16F custa 2,4× a mesma cópia em RGBA8 (`docs/medicoes/spec2/poco-passes-r1.json`).
+
+### 5.2 Achados
+
+| ID | Classe | Achado | Impacto |
+|---|---|---|---|
+| N1 | [código] | Arquitetura 3 camadas / 8 canais / 5×5 (`tools/nn_glsl.py:3-37`; o gerador recusa outra arquitetura). Os shaders no userscript do site novo batem byte a byte com `generate('src/nn/restore.json')`. Um campo de 5×5 não cobre um bloco 8×8: a rede corrige transições locais e ruído, mas não reconstrói textura descartada pelo encoder (coerente com `docs/analysis-v9.1.md:38`). | médio |
+| N2 | [código] | Ligar a rede aumenta as buscas de textura do tratamento em **+70%** (de 40 para 68 por pixel), 18 delas em RGBA16F. | médio |
+| N3 | [hipótese] | Banda de DRAM ×3,2 com a rede: o custo viria em boa parte da ida e volta dos 32 B/px de features em fp16. Pesa em energia e temperatura. | médio |
+| N4 | [código] | As duas passadas da rede são **highp**, enquanto o spatial e o SGSR usam `mediump` no Adreno (`tools/nn_glsl.py:20`; `src/restoration-engine.js:403`). Uma variante mediump é [hipótese] de ganho; o spatial ganhou −21%. Exige regressão contra o JAX. | médio |
+| N5 | [código] | No site novo a rede roda em WebGL2 sob três condições: `filtered`, `EXT_color_buffer_float` e `neuralAllowed` (`:353-355`). Roda na resolução da **fonte**: um stream 720p custa 44% de um 1080p. A saída fica em RGBA8, porque o modo é sempre performance. Sem float targets, ela é pulada **sem aviso**. | alto |
+| N6 | [código] | Na configuração relatada, a rede é a **primeira** etapa cortada pela cadência, e 3/6/10 ms se comportam igual. `adaptive=false` **não** afeta a rede. Só "Nunca" impede o corte (2.4). | alto |
+| N7 | [código] | 100% é a saída treinada: não existe >1. A correção é só de luma, aplicada igual em RGB (Cb/Cr preservados). **5% custa o mesmo que 100%**: o único corte de custo é 0%. A adaptação por QP não modula a rede. | médio |
+| N8 | [código, cálculo local] | Resposta com os pesos reais (5.3): ela **atenua** textura de 1–6 níveis em 2–4 px. Textura aleatória de σ 2/4/8/16 níveis sai com 0,61/0,77/0,91/1,00. Um degrau de 2 níveis vira rampa de ~3 px. Uma borda de 51 níveis ganha −2/+1 nível de sub e sobressinal. | alto |
+| N9 | [código] | Treino:<br>**Existe**: 16 cenas sintéticas (texturas fora da avaliação, luz, degradê, HUD); pan de 4 px/quadro + zoom ±4%; x264 veryfast/zerolatency, sem B-frames, 8–25 Mb/s sorteados por cena; quadros P; perda L1 + 0,5·L1 do Laplaciano; 4000 passos (≈13 épocas); holdout das **mesmas** cenas.<br>**Não existe**: perda temporal ou entrada multi-quadro; perda perceptual; condicionamento por QP; treino ciente de fp16 ou quantização; dados de jogo real ou do encoder do xCloud; métrica de cintilação. As docstrings citam `docs/analysis-v10.md` e `docs/analysis-v8.7.md`, que **não existem**. | alto |
+| N10 | [hipótese] | Domínio diferente do stream real. O xCloud só aceitou H.264 e recusou o perfil High (`docs/release-v9.3.md`, `release-v9.5.md`), enquanto o x264 do treino tende ao High. O treino cobre 0,064–0,201 bpp; os ~18 Mb/s dão 0,145 bpp a 60 FPS (dentro), mas **0,289 bpp a 30 FPS (acima)**. Num stream mais limpo, a rede pode tratar textura real como ruído. | médio |
+| N11 | [doc] | Custo no Poco, sempre bancada: 1,96–2,21 ms (Spec 1, rajada, imagem sintética); 2,33–2,59 ms (Spec 2, rajada, quadros H.264); **+5,21 ms em sessão a 30 FPS** (11,48 → 16,69 ms, ocupação 34,3% → 50,1%). Em sessão, a rede custa mais que o spatial padrão inteiro. A dica do painel ("~30%") está subestimada. Não medido: 60 FPS, WebRTC, `play.xbox.com`, Chrome, a config relatada. | alto |
+| N12 | [doc] | Ganho visual pequeno e confundido:<br>• v9.1: SSIM 0,930 → 0,934, mas comparando USM 3 com USM 2,5. Baixar só a nitidez (3 → 2) já reduz a cintilação em 9%.<br>• Spec 2, na **mesma** USM 3 e com rede 50%: SSIM 0,9258 → 0,9255, PSNR igual, `detail` 0,952 → 0,955, **halo +18%**.<br>• Não existe medição visual no Adreno: o SwiftShader roda tudo em highp. | alto |
+| N13 | [doc] | A cintilação com a rede **não foi medida depois da v9.1**. As sequências da Spec 2 não incluem a rede. | alto |
+| N14 | [código] | O que mudou desde a v9.1 em volta da rede (ela mesma não mudou): padrões, spatial em mediump com variantes, SGSR só com saída maior, WebGPU que devolve ao WebGL2, margem de cadência por caminho e o host do site novo sempre em performance. As medições da v9.1 **não valem como baseline** da v10. | médio |
+| N15 | [código] | Dicas do painel desatualizadas: "~30% mais GPU" (`src/panel.js:814`, `:892`) e "Com Reconstrução neural, use ~2,5" (`:946`). Com o padrão atual em 2, esse texto leva a **subir** a nitidez. | baixo |
+| N16 | [teste no Poco] | Antagonismo: rede, Compressão e Degradês suavizam a mesma faixa que Detalhe e USM reamplificam. A v9.1 só testou a rede com Detalhe 0,2. | alto |
+| N17 | [código] | Não há interop WebGL2/WebGPU: são dois canvases, e um quadro com a rede troca o renderizador inteiro. Isso reinicia o pacer e a cadência. Com "WebGPU", ligar ou desligar a rede pode causar engasgo pontual. Para medir a rede, use WebGL2 ou Auto. | médio |
+| N18 | [hipótese] | A rede em WebGPU (compute com tiles + `shader-f16`) é possível em tese. Mas o WebGPU já gastou mais que o WebGL2 no Poco, e `shader-f16` não foi testado. Não é ponto de partida. | médio |
+| N19 | [doc] | Riscos de uma rede nova, pelo que a v9.1 já mostrou: a rede maior custou ~14× sem ganho; pesar o Laplaciano não gerou detalhe; a acumulação temporal piorou o PSNR. | alto |
+
+### 5.3 Resposta da rede a sinais sintéticos
+
+Cálculo local com os pesos do repositório: fp64, borda replicada, ganho = amplitude de saída ÷ entrada.
+
+| Amplitude (níveis) | Período 2 px | 4 px | 8 px |
+| --- | --- | --- | --- |
+| 1 | 0,13 | 0,53 | 0,76 |
+| 3 | 0,48 | 0,71 | 0,85 |
+| 6 | 0,75 | 0,87 | 0,93 |
+| 12 | 0,94 | 1,01 | 1,00 |
+| 24 | 1,02 | 1,04 | 1,02 |
+
+Ressalva: o cálculo não inclui a quantização RGBA8 da saída nem o fp16 dos features. A frente de microdetalhe (4.3) chegou a valores coerentes com uma emulação independente.
+
+### 5.4 Ganho visual documentado (bancada em SwiftShader)
+
+| Fonte | Comparação | SSIM | PSNR | detail | Halo | Cintilação |
+| --- | --- | --- | --- | --- | --- | --- |
+| `analysis-v9.1.md:44-45` | v9 (USM 3) → rede + USM 2,5 | 0,930 → 0,934 | 33,95 → 34,09 | ≈ 0,98 | 0,75 → 0,90 | 4,49 → 4,35 (confundido com a nitidez) |
+| `ganho-visual.json` | 1080p, USM 3 igual, rede 0 → 0,5 | 0,9258 → 0,9255 | 35,69 → 35,69 | 0,952 → 0,955 | 0,671 → 0,792 (+18%) | não medida |
+| `ganho-visual.json` | 1280p, USM 3 igual, rede 0 → 0,5 | 0,9198 → 0,9182 | 34,99 → 34,95 | 0,723 → 0,728 | 0,430 → 0,524 | não medida |
+| `spec2-estudo.md:236` (controle) | USM 3 → USM 2, sem rede | — | — | — | — | 4,85 → 4,42 (−9%) |
+
+### 5.5 Medição decisiva no Poco (baseline antes de qualquer rede nova)
+
+1. Prepare a sessão: adb Wi-Fi + `chrome://inspect`, "Aliviar GPU" = **Nunca**, para a cadência não cortar a rede, e Renderizador = **WebGL2**.
+2. Grave quatro segmentos de ~2 min na mesma cena, na ordem A-B-C-D-A, trocando com `BxImageFilter.update({neural, detail})`:
+
+   | Segmento | Rede | Detalhe |
+   |---|---|---|
+   | A | 0 | 1 |
+   | B | 1 | 1 |
+   | C | 1 | 0 |
+   | D | 0 | 0 |
+
+3. Compare, por segmento:
+   - `config.effective.neural`;
+   - `gpu.p50/p95` (fence) e o `gpu_work_period` do Perfetto;
+   - `display.p95/p99`, `hitches` e `videoSkipped`;
+   - screencaps de cena parada, em recortes de vegetação, asfalto e tecido.
+4. Anote também `net.codec`/`net.profile`, `timeline[].bitsPerPixel` e `net.fpsReceived`, e compare o bpp com a faixa de treino (0,064–0,201).
+5. Critério: a rede fica só se a textura fina não perder contraste e se o ritmo não piorar em relação ao segmento sem rede.
 
 ## 6. P2 — Compressão, Degradês, AA e croma
 
@@ -516,7 +615,10 @@ Já confirmado pela frente P0 [código]: "Auto" é sempre WebGL2 (`AUTO_WEBGPU` 
    - Sim, sempre em WebGL2, se houver `EXT_color_buffer_float` e se a cadência não a tiver cortado. Leia `e.floatTargets`, `e.budget.neuralAllowed` e `effective.neural`.
    - Custo [doc, bancada]: +5,2 ms/quadro em sessão a 30 FPS; 2,33–2,59 ms em rajada.
    - Não foi medido em partida real nem a 60 FPS.
-   - A diferença visual fica para a frente P1 (seção 5).
+   - Pelo código: 208 MAC/px, 28 buscas/px (+70% sobre o resto do caminho) e ~91 MB/quadro de DRAM [hipótese].
+   - Diferença visual documentada: pequena; na mesma nitidez, halo +18% sem ganho de SSIM (N12).
+   - Com os pesos reais, a rede atenua textura fina de baixo contraste (5.3).
+   - Medição decisiva no Poco: 5.5.
 3. **Duas ou mais etapas realçam as mesmas frequências?** Sim, e a redundância é exata (4.2).
    - O `fine` do Detalhe e o USM final têm resposta idêntica nos eixos. Detalhe 100% equivale sozinho a Nitidez ≈ 4,3; com USM 2, a ≈ 6,3 no termo linear.
    - Ganho efetivo com coring e limites: 1,4–2,3×, contra 1,0–1,56× do USM sozinho.
@@ -530,7 +632,7 @@ Já confirmado pela frente P0 [código]: "Auto" é sempre WebGL2 (`AUTO_WEBGPU` 
    - A cintilação **com rede** não foi medida desde a v9.1. v9.8, v10, Spec 4 e `play-xbox-com` não têm medição de cintilação.
    - O que mudou desde a v9.1: os padrões (Nitidez 3→2, Detalhe 0,2→0, Degradês 0,3→0,6, Compressão 0,5→0) e o `spatial` em `mediump` no Adreno (diferença média de 0,02–0,04 nível).
    - A matemática do Detalhe e do Degradês e os pesos da rede (`src/nn/restore.json`) não mudaram.
-   - *(Complemento da frente neural pendente.)*
+   - A frente neural confirma: a única cintilação medida com a rede (v9.1, 4,49 → 4,35) também baixou a nitidez de 3 para 2,5, então os −3% não podem ser atribuídos à rede. O `release-v9.1.md` diz "com a mesma nitidez", mas a tabela da análise não (N12, N13).
 6. **Menor experimento.** O lado visual está em 4.6: matriz de 7–8 configurações em bancada com critério fixado antes, depois ABAB no Poco. O lado da fluidez:
    - Uma medição do painel de ~12 min, na mesma cena, com 60 Hz fixo, Fluidez desligada, painel fechado e DevTools desconectado.
    - Alternar ABAB a cada 3 min só a variável candidata (ex.: neural 100% × 0%; Detalhe 100% × moderado), com Perfetto em paralelo.
@@ -667,6 +769,7 @@ new PerformanceObserver(l=>{for(const e of l.getEntries())if(e.duration>50)conso
 | 0 | Matriz de bancada da seção 4.6 (Detalhe 0,2/0,35, Degradês 0,6, Rede 0), com o critério fixado antes | alto | baixo | baixo |
 | 0b | No Poco: Detalhe 1 × 0,2–0,35 e Degradês 1 × 0,6 (neutros em GPU) por screencap, parado e em panorâmica | alto | baixo | baixo |
 | 0c | No Poco: Nativa + Detalhe 1 × Auto + SGSR + Detalhe 0–0,2 | alto | baixo | baixo |
+| 0d | No Poco: matriz rede × Detalhe (5.5), com "Nunca" e WebGL2 — baseline da rede atual | alto | baixo | baixo |
 | 1 | Confirmar resolução recebida, `floatTargets` e `budget.revision` antes de qualquer A/B visual | alto | baixo | baixo |
 | 2 | Fazer A/B com "Aliviar GPU = Nunca", ou conferir `revision` 0, para a redução por cadência não contaminar | alto | baixo | baixo |
 | 3 | Comparar Nativa × Auto e, em Auto, EASU × SGSR (`effective.scaler`) | alto | baixo | baixo |
@@ -686,6 +789,9 @@ Candidatos de código para a fase 2, **só após aprovação**:
 | e | Repesar o Detalhe: `fine` bem menor que `clarity` (só se a bancada confirmar M2/M3) | médio | baixo | médio |
 | f | Métrica de bancada para textura de baixo contraste, sem o núcleo do `fine` (M15) | médio | baixo | baixo |
 | g | Máscara de movimento barata (cópia 1/4 + `cut`) para reduzir o realce em panorâmica (só se a bancada mostrar ganho) | médio | médio | médio |
+| h | Corrigir as dicas do painel sobre a rede ("~30%" → ~40–45%; "use ~2,5" sem induzir a subir) | baixo | baixo | baixo |
+| i | Variante `mediump` das passadas da rede, com regressão contra o JAX | médio | médio | médio |
+| j | Rede nova (WebGPU, multi-quadro, perda temporal) — só depois de 0d e de um conjunto de teste com movimento | ? | alto | alto |
 
 ## 11. Ambiguidades do relato
 
