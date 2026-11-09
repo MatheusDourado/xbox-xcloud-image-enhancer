@@ -72,6 +72,31 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  const ring0=render({}),ring1=render({detail:1});const ringAmp=px=>Math.max(...[59,60,61,62].map(x=>Math.abs(px[(40*128+x)*4]-50)));
  check(ringAmp(ring1)<=ringAmp(ring0)+1,'Detail does not amplify ringing beside a strong edge',{before:ringAmp(ring0),after:ringAmp(ring1)});
  step(100,120);const stepDetail=render({detail:1});check(Array.from({length:8},(_,i)=>stepDetail[(40*128+60+i)*4]).every(v=>v>=96&&v<=124),'Detail overshoot stays within CAS halo bound at a step',Array.from({length:8},(_,i)=>stepDetail[(40*128+60+i)*4]));
+ // v10.1 (audit F11, item 21): the AA samples along the edge tangent, not across it. A hard slanted edge
+ // (50/200) at 30 and 45 degrees: the blend stays within about one pixel of the line, as a coverage AA would
+ // (the mirrored direction doubled the transition width: ~2 and ~2.9 intermediate pixels per edge pixel),
+ // and the contrast across the edge is kept (it lost ~30% before). Fused in the spatial pass and as the
+ // separate pass used with temporal (antialias.glsl, on a still frame). AA 0 leaves the bytes untouched.
+ {const LA=50,LB=200,img=ctx.createImageData(128,96),line=deg=>{const t=deg*Math.PI/180;return {n:[-Math.sin(t),Math.cos(t)],cx:64.3,cy:48.2};};
+  // Source rows in the GL frame (row 0 at the bottom, as readPixels returns them).
+  const draw=deg=>{const {n,cx,cy}=line(deg);for(let y=0;y<96;y++)for(let x=0;x<128;x++){const v=(x+.5-cx)*n[0]+(y+.5-cy)*n[1]>0?LB:LA,i=((95-y)*128+x)*4;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=255;}ctx.putImageData(img,0,0);};
+  const at=(p,x,y)=>p[(Math.min(95,Math.max(0,y))*128+Math.min(127,Math.max(0,x)))*4];
+  // Bilinear read at texel coordinates, clamped, as texture() does.
+  const tap=(p,u,v)=>{const x=u-.5,y=v-.5,x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0;return at(p,x0,y0)*(1-fx)*(1-fy)+at(p,x0+1,y0)*fx*(1-fy)+at(p,x0,y0+1)*(1-fx)*fy+at(p,x0+1,y0+1)*fx*fy;};
+  // width: intermediate values within 4 px of the line per pixel of edge length; across: mean contrast between
+  // the two bilinear taps one texel either side of the line, from the pixels the line crosses.
+  const measure=(p,deg)=>{const {n,cx,cy}=line(deg);let mid=0,across=0,near=0;
+   for(let y=4;y<92;y++)for(let x=32;x<96;x++){const d=(x+.5-cx)*n[0]+(y+.5-cy)*n[1],v=p[(y*128+x)*4];
+    if(Math.abs(d)<4&&v>LA+8&&v<LB-8)mid++;
+    if(Math.abs(d)<.5){near++;across+=Math.abs(tap(p,x+.5+n[0],y+.5+n[1])-tap(p,x+.5-n[0],y+.5-n[1]));}}
+   return {width:mid/(64/Math.cos(deg*Math.PI/180)),across:across/near};};
+  const same=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
+  for(const deg of [30,45]){draw(deg);const off=render({}),src=measure(off,deg);
+   check(off.every((v,i)=>i%4===3||v===img.data[((95-(i>>9))*128+((i>>2)&127))*4]),'AA 0 passes the slanted edge through untouched ('+deg+'°)');
+   for(const [name,s,time] of [['fused',{antialias:1},1],['separate pass',{antialias:1,temporal:.3},1.03]]){
+    if(time>1)render(s,1);const p=render(s,time),out=measure(p,deg);
+    check(!same(p,off)&&out.width>.5&&out.width<=1.6&&out.across>=src.across*.85,'AA blends along the slanted edge, not across it ('+name+', '+deg+'°)',{width:+out.width.toFixed(2),contrast:+(out.across/src.across).toFixed(3)});}}
+  engine.resetHistory();}
  // Count real draw submissions to protect the low-cost default and bypass paths.
  const draw=engine.draw.bind(engine);let passes=[];engine.draw=(name,...args)=>{passes.push(name);return draw(name,...args);};
  render({cleanup:.35,deband:.3,chroma:.5,detail:.35,sharpness:2});

@@ -364,3 +364,19 @@ test('frame plan: budget-filtered strengths, scaler, last pass and the WebGL2-on
  p=a.framePlan(a.normalize({...s,temporal:.5,antialias:.5}),b,1920,1080,1920,1080,true);assert.equal(p.spatial.antialias,0);assert.equal(p.antialias,.5,'AA after temporal');
  const cut=a.createBudget();cut.configure(s,1080);cut.debandScale=.5;cut.debandTaps=2;cut.enhanceAllowed=false;
  p=a.framePlan(s,cut,1920,1080,1920,1080,false);assert.equal(p.spatial.deband,.3);assert.equal(p.spatial.debandTaps,2);assert.equal(p.spatial.chroma,0);assert.equal(p.final.uniforms.deband,.3);});
+// Audit R10: one measurement per player, shared by both renderers, with the renderer in every segment.
+test('a shared measurement survives a renderer switch: segments carry webgl2 or webgpu',()=>{const a=api(),gl=fakeGl(23),shaders={spatial:'#version 300 es\nvoid main(){}',copy:'#version 300 es\nvoid main(){}'},d=a.createDiagnostics();
+ const e=new a.Engine(gl,shaders,{diagnostics:d});assert.equal(e.diagnostics,d);assert.equal(e.renderer,'webgl2');assert.notEqual(new a.Engine(gl,shaders).diagnostics,d,'without the option each engine has its own');
+ const b=a.createBudget(),s=a.normalize({deband:.6}),cfg=r=>a.segmentConfig(s,b,1920,1080,1920,1080,0,false,true,r);
+ assert.equal(cfg('webgl2').renderer,'webgl2');assert.equal(cfg('webgpu').renderer,'webgpu');assert.equal('renderer' in cfg(undefined),false);
+ d.start({api:'webgpu'});d.frame(cfg('webgpu'),0);d.frame(cfg('webgpu'),33);d.frame(cfg('webgl2'),66);d.frame(cfg('webgpu'),100);d.stop();
+ const r=d.report();assert.equal(JSON.stringify(r.segments.map(x=>[x.config.renderer,x.frames])),'[["webgpu",3],["webgl2",1]]');assert.equal(r.metadata.api,'webgpu');});
+// Audit R1: the 'auto' probe reads {vendor, architecture} of the adapter without creating a device.
+// (vm objects are from another realm: compared as JSON.)
+function gpuApi(nav){const g={navigator:nav},context={globalThis:g,navigator:nav};for(const f of ['src/restoration-engine.js','src/webgpu-engine.js'])vm.runInNewContext(fs.readFileSync(f,'utf8'),context);return g.BxWebGPU;}
+test('the WebGPU probe gives the adapter info or null, and is only offered where WebGPU exists',async()=>{
+ const calls=[];const gpu=gpuApi({gpu:{requestAdapter:async o=>{calls.push(o);return {info:{vendor:'qualcomm',architecture:'adreno-8xx',description:''}};}}});
+ const info='{"vendor":"qualcomm","architecture":"adreno-8xx","description":""}';assert.equal(gpu.supported(),true);assert.equal(JSON.stringify(await gpu.probe({powerPreference:'low-power'})),info);assert.equal(JSON.stringify(calls),'[{"powerPreference":"low-power"}]');
+ assert.equal(JSON.stringify(await gpu.probe()),info);assert.equal(calls[1].powerPreference,'high-performance');
+ const none=gpuApi({});assert.equal(none.supported(),false);assert.equal(await none.probe(),null);
+ assert.equal(await gpuApi({gpu:{requestAdapter:async()=>null}}).probe(),null);assert.equal(JSON.stringify(await gpuApi({gpu:{requestAdapter:async()=>({})}}).probe()),'{}');});

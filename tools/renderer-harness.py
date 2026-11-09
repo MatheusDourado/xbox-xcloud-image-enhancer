@@ -19,7 +19,7 @@ probe=r'''
  const video=document.createElement('video');video.muted=true;video.autoplay=true;video.playsInline=true;video.srcObject=stream;document.body.append(video);
  await new Promise(r=>video.addEventListener('loadeddata',r,{once:true}));await video.play().catch(()=>{});
  const player=new WebGL2Player(video);await player.setupShaders();
- const draw=()=>{if(player.isStopped)return;player.updateFrame();video.requestVideoFrameCallback(draw);};video.requestVideoFrameCallback(draw);
+ let hold=false;const draw=()=>{if(player.isStopped)return;if(!hold)player.updateFrame();video.requestVideoFrameCallback(draw);};video.requestVideoFrameCallback(draw);
  const api=BxImageFilter,gpuCanvas=()=>document.querySelector('canvas[data-bx-renderer=webgpu]');
  api.update({renderer:'auto',fluidity:'off',capture:'video'});await wait(500);
  check(api.status.renderer.active==='webgl2'&&!gpuCanvas(),'Auto draws with WebGL2 and creates no WebGPU canvas');
@@ -28,6 +28,13 @@ probe=r'''
  const c=gpuCanvas();check(c&&c.nextElementSibling===player.$canvas&&c.style.visibility==='visible'&&player.$canvas.style.opacity==='0','WebGPU canvas sits under the transparent WebGL2 canvas');
  check(c.style.pointerEvents==='none'&&c.width===player.$canvas.width&&c.height===player.$canvas.height&&c.style.width===player.$canvas.style.width,'WebGPU canvas follows the WebGL2 canvas size and style, without input');
  {const f0=player.bxRender.frames;await wait(700);check(player.bxRender.renderer==='webgpu'&&player.bxRender.frames>f0,'WebGPU renders the video frames');}
+ // Audit R1: the adapter of the engine fills the probe that Auto compares with BxRestoration.AUTO_WEBGPU.
+ {const p=api.status.renderer.probe,a=player.bxRender.adapter;check(p&&p.vendor===a.vendor&&p.architecture===a.architecture&&BxRestoration.autoRenderer(p)==='webgl2','The WebGPU adapter fills the probe read by Auto',p);}
+ // Audit R10: one measurement per player, shared by both renderers; nothing is saved without a treated frame.
+ check(player.bxGpu.engine.diagnostics===player.bxEngine.diagnostics&&player.bxDiagnostics===player.bxEngine.diagnostics,'Both renderers share the player measurement');
+ {hold=true;await wait(200);let saved=0;const download=BxRestoration.downloadReport;BxRestoration.downloadReport=()=>{saved++;};
+  check(await api.startMeasurement(),'Measurement starts with no frame drawn');const r=await api.exportMeasurement();BxRestoration.downloadReport=download;hold=false;
+  check(r&&r.saved===false&&r.segments.length===0&&saved===0&&!api.measuring,'An export without segments saves no file and says so (saved false)');}
  // Read in the task that draws: a WebGPU canvas texture is only readable until it is presented.
  {player.bxLastFrame=null;player.updateFrame();const t=document.createElement('canvas');t.width=c.width;t.height=c.height;const x=t.getContext('2d');x.drawImage(c,0,0);const p=x.getImageData(0,0,t.width,t.height).data;let lit=0;for(let i=0;i<p.length;i+=4)if(p[i]+p[i+1]+p[i+2]>30)lit++;
   check(lit>p.length/8,'The WebGPU canvas shows the picture ('+lit+' lit pixels)');}
@@ -38,11 +45,17 @@ probe=r'''
  if(player.bxRender.timestamps){await wait(1500);player.bxRender.poll();check(player.bxRender.budget.values.length>0&&api.status.measurement==='gpu','timestamp-query feeds the budget: measurement is GPU time, not cadence');}
  check(await api.startMeasurement(),'Measurement starts with WebGPU');await wait(800);
  {let report=null;BxRestoration.downloadReport=r=>{report=r;};await api.exportMeasurement();check(report&&report.metadata.api==='webgpu'&&report.segments.some(s=>s.config.renderer==='webgpu'),'The measurement records the WebGPU renderer');}
- // Temporal is WebGL2-only: the frames go back to WebGL2 and return once it is off.
+ // Temporal is WebGL2-only: the frames go back to WebGL2 and return once it is off. A measurement started
+ // before the switch keeps recording (audit R10): each renderer only adds its own segments.
+ check(await api.startMeasurement(),'Measurement starts before the renderer switch');await wait(300);
  api.update({temporal:.5});check(await until(()=>api.status.renderer.active==='webgl2'),'Temporal hands the frames back to WebGL2');
  check(gpuCanvas().style.visibility==='hidden'&&player.$canvas.style.opacity==='','WebGL2 canvas is visible again');
  check(/WebGL2/.test(api.status.renderer.reason),'The panel status says why');
+ await wait(400);check(api.measuring,'The measurement is still recording on WebGL2');
  api.update({temporal:0});check(await until(()=>api.status.renderer.active==='webgpu'),'WebGPU resumes when temporal is off');
+ await wait(400);
+ {let report=null;BxRestoration.downloadReport=r=>{report=r;};const r=await api.exportMeasurement();const renderers=report?[...new Set(report.segments.map(s=>s.config.renderer))]:null;
+  check(r===report&&r.saved===true&&report.metadata.api==='webgpu'&&renderers.includes('webgpu')&&renderers.includes('webgl2')&&report.segments.every(s=>s.frames>0),'A renderer switch during the recording only adds segments: the export names both renderers',renderers);}
  // A failure falls back to WebGL2 at once, without a reload, and is not retried until the setting changes.
  const glFrames=player.bxEngine.frames;player.bxRender.fail('forced in test');
  check(api.status.renderer.active==='webgl2'&&api.status.renderer.state==='fallback'&&!gpuCanvas()&&player.$canvas.style.opacity==='','A WebGPU failure falls back to WebGL2 and removes its canvas');

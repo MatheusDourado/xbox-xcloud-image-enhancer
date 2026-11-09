@@ -69,6 +69,22 @@ probe=r'''
  await until(()=>host.player()&&host.player().$video===video&&api.status.frames>5,6000,'re-attach on reconnect');
  check(!video.nextElementSibling||video.nextElementSibling.classList.contains('bxif-play-canvas'),'A new stream video gets the treatment again');
  check(document.querySelectorAll('canvas.bxif-play-canvas').length===1,'Only one canvas exists');
+ // Renderer WebGPU (audit R3): on the new site the canvas is positioned by the bxif-play-canvas class, so the
+ // WebGPU canvas inherits the classes of the WebGL2 one. Headless Chromium has no WebGPU here: the engine
+ // creation is stubbed to stay 'starting', the state in which the canvas is already placed and synced.
+ {const gpu=globalThis.BxWebGPU,real={supported:gpu.supported,create:gpu.create};gpu.supported=()=>true;gpu.create=()=>new Promise(()=>{});
+  const gpuCanvas=()=>document.querySelector('canvas[data-bx-renderer=webgpu]');
+  api.update({renderer:'webgpu'});await until(gpuCanvas,3000,'WebGPU canvas created');
+  const g=gpuCanvas(),c=host.player().$canvas,rg=g.getBoundingClientRect(),rc=c.getBoundingClientRect(),cs=getComputedStyle(g);
+  check(g.nextElementSibling===c&&g.classList.contains('bxif-play-canvas')&&g.getAttribute('aria-hidden')==='true','WebGPU canvas sits under the WebGL2 canvas with its classes and aria-hidden');
+  check(cs.position==='absolute'&&cs.pointerEvents==='none'&&rg.width>100&&['left','top','width','height'].every(k=>Math.abs(rg[k]-rc[k])<1),`WebGPU canvas covers the WebGL2 canvas rectangle (${rg.width}×${rg.height} at ${rg.left},${rg.top})`);
+  check(api.status.renderer.state==='starting'&&api.status.renderer.active==='webgl2'&&g.style.visibility==='hidden','WebGL2 keeps drawing while WebGPU starts');
+  c.classList.add('bxif-probe');await until(()=>g.classList.contains('bxif-probe'),2000,'class added on the WebGPU canvas');
+  c.classList.remove('bxif-probe');await until(()=>!g.classList.contains('bxif-probe'),2000,'class removed from the WebGPU canvas');
+  check(true,'Class changes on the WebGL2 canvas reach the WebGPU canvas');
+  api.update({renderer:'auto'});await until(()=>!gpuCanvas(),3000,'WebGPU canvas removed');
+  check(document.querySelectorAll('canvas.bxif-play-canvas').length===1&&api.status.renderer.state==='webgl2','Back to Auto removes the WebGPU canvas');
+  Object.assign(gpu,real);}
  running=false;video.srcObject=null;video.remove();await until(()=>!host.player(),3000,'final detach');
  a.close();b.close();
  document.getElementById('result').textContent=JSON.stringify({passed:checks});

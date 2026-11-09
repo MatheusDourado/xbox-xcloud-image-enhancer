@@ -27,7 +27,7 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 - `api.update(patch)` (ignora valores iguais; grava no armazenamento após 400 ms sem mudanças), `api.reset()` (restaura o tratamento; mantém o HUD), `api.applyPreset(key)`, `api.preset()` → chave do perfil atual ou `custom`.
 - `api.presets`: `{natural, console, sharp, clean, light}`, cada um com `{label, description, values}`.
 - `api.diagnostic` (booleano, não salvo): colore a imagem para confirmar que o tratamento roda.
-- `api.startMeasurement()` → `Promise<boolean>`; `api.measuring`; `api.exportMeasurement()` → baixa o JSON e devolve o relatório (formato abaixo).
+- `api.startMeasurement()` → `Promise<boolean>`; `api.measuring`; `api.exportMeasurement()` → baixa o JSON e devolve o relatório (formato abaixo) com `saved`. A medição é do player e é compartilhada pelos dois renderizadores: trocar de renderizador durante a gravação só abre outro segmento. Sem nenhum quadro tratado (`segments` vazio) nada é gravado e `saved` é `false`.
 - `api.configText()` → JSON para "Copiar configuração".
 - `api.copyText(text)` → `Promise<boolean>`: copia pela ponte do app Android ou pelo clipboard do navegador.
 - `api.nativePref(key)`: lê preferências do Better xCloud.
@@ -60,7 +60,7 @@ Arquivo `bx-v9.7.1-diagnostics-<timestamp>.json`. No app Android vai para Downlo
 
 - `metadata`: `userAgent`, `renderer`, `timer` (cronômetro de GPU), `gpuMethod` (`timer`, `fence` ou `null`), `floatTargets`, `screen` (`width`, `height`, `dpr`, `refreshPref` do app), `refreshMeasuredHz` (mediana de 30 quadros de animação no início), `app`, `betterXcloud` (preferências do stream), `capture`, `smoothing`, `initial` (contadores do vídeo e do WebRTC).
 - `segments`: um por configuração distinta (voltar a uma configuração continua o segmento). Campos de cada um:
-  - `config`, `frames`, `durationMs`, `drawFps`, `pacerDropped` (quadros descartados pela Fluidez) e `videoSkipped` (quadros que o `<video>` não apresentou, no caminho de vídeo);
+  - `config` (ajustes, `effective`, `source`, `output` e `renderer`: `webgl2` ou `webgpu`), `frames`, `durationMs`, `drawFps`, `pacerDropped` (quadros descartados pela Fluidez) e `videoSkipped` (quadros que o `<video>` não apresentou, no caminho de vídeo);
   - `gpu` (`{count, p50, p95, p99, samplesMs}`; com `gpuMethod: 'fence'`, as amostras são o tempo até concluir);
   - intervalos, cada um com `{count, meanMs, p50, p95, p99, maxMs, deviationMs, hitches, samplesMs, samplesTruncated}`:
     - contagem, média, desvio e máximo são exatos; os percentis vêm de faixas de 0,1 ms;

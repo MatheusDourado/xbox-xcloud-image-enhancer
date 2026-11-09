@@ -236,7 +236,7 @@
  function probeAdapter(){if(probing||status.renderer.probe||!BxRestoration.AUTO_WEBGPU.length||!globalThis.BxWebGPU?.supported())return;probing=true;
   BxWebGPU.probe({powerPreference:powerPreference()}).then(info=>{status.renderer.probe=adapterKey(info);},()=>{status.renderer.probe=adapterKey(null);});}
  function powerPreference(){let power;try{power=typeof getStreamPref==='function'?getStreamPref('video.player.powerPreference'):undefined;}catch{}return power==='low-power'?'low-power':'high-performance';}
- function wantsWebGPU(){if(settings.renderer==='auto')probeAdapter();return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
+ function wantsWebGPU(){return settings.renderer==='webgpu'||settings.renderer==='auto'&&BxRestoration.autoRenderer(status.renderer.probe)==='webgpu';}
  // Better xCloud still draws or reads the WebGL2 canvas when WebGPU is off: only the GL context matters then.
  function renderable(player){return player.bxRender!==player.bxEngine||!!player.gl&&!player.gl.isContextLost();}
  function setRenderer(player,engine){
@@ -274,6 +274,7 @@
  function chooseRenderer(player,renderSettings,w,h){
   status.renderer.setting=settings.renderer;
   if(player.bxRendererEpoch!==rendererEpoch){player.bxRendererEpoch=rendererEpoch;player.bxGpuFailed=false;if(status.renderer.state==='fallback')Object.assign(status.renderer,{state:'webgl2',reason:''});}
+  if(settings.renderer==='auto')probeAdapter();
   if(!wantsWebGPU()){stopGpu(player);setRenderer(player,player.bxEngine);return;}
   if(!player.bxGpu&&!player.bxGpuFailed){if(globalThis.BxWebGPU?.supported())startGpu(player);else{player.bxGpuFailed=true;Object.assign(status.renderer,{state:'fallback',reason:'WebGPU indisponível neste navegador: usando WebGL2'});}}
   const g=player.bxGpu,ready=g?.state==='ready'&&!g.engine.failed,ok=ready&&g.engine.supports(renderSettings,w,h,w,h);
