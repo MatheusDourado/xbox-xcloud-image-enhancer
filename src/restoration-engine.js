@@ -133,12 +133,14 @@
         if(current?.key!==key){if(current)current.activeMs+=current.last-current.since;
           let segment=byKey.get(key);
           if(!segment){if(segments.length>=256){this.stop('limite de 256 configurações');return null;}
-            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],display:series(),arrival:series(),server:series(),wait:series()};segments.push(segment);byKey.set(key,segment);}
+            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,display:series(),arrival:series(),server:series(),wait:series()};segments.push(segment);byKey.set(key,segment);}
           segment.visits++;segment.since=segment.last=time;current=segment;}
         current.frames++;current.last=time;return current;
       },
-      sample(segment,ms){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
-        if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;
+      // method: how the engine timed the frame ('timer', 'timestamp' or 'fence'); kept per segment, so
+      // the report says what each gpu series is (audit R9: a fence is an upper bound, not GPU time).
+      sample(segment,ms,method=null){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
+        if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;if(method)segment.gpuMethod=method;
       },
       // Interval (ms) of the configuration being rendered: 'display', 'arrival', 'server' or 'wait'.
       interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0)return;push(current[kind],ms);},
@@ -153,7 +155,7 @@
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||segments.length>=256,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
           const sorted=[...gpu].sort((a,b)=>a-b);return {config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
-            gpu:{count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]},
+            gpu:{method:segment.gpuMethod,count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]},
             display:summary(segment.display),arrival:summary(segment.arrival),server:summary(segment.server),wait:summary(segment.wait,false)};}),
         timeline};}
     };
@@ -478,7 +480,7 @@
       if(gl.getParameter(this.ext.GPU_DISJOINT_EXT)){for(const item of this.queries)this.dropQuery(item);this.queries=[];this.diagnostics.disjoint();return;}
       // A deferred frame (render + present) is one sample made of two queries.
       while(this.queries.length&&[].concat(this.queries[0].q).every(q=>gl.getQueryParameter(q,gl.QUERY_RESULT_AVAILABLE))){
-        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=[].concat(item.q).reduce((a,q)=>a+gl.getQueryParameter(q,gl.QUERY_RESULT),0)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms);}this.dropQuery(item);}
+        const item=this.queries.shift();if(item.revision===this.budget.revision){const ms=[].concat(item.q).reduce((a,q)=>a+gl.getQueryParameter(q,gl.QUERY_RESULT),0)/1e6;this.budget.sample(ms,item.mode);this.diagnostics.sample(item.segment,ms,'timer');}this.dropQuery(item);}
     }
     // Without the timer query (Android WebView), every 0.5 s a fence after a frame, polled on later tasks,
     // times it from its first command until the GPU finished it: an upper bound of the GPU time (it also
@@ -492,7 +494,7 @@
       // A late reading measures the delay, not the GPU: a hidden page throttles timers, and a long task
       // between two polls hides when the fence finished. The first poll waits for the rendering update.
       gl.deleteSync(f.sync);this.fence=null;if(!signaled||now-f.start>=250||gap>20)return;
-      const ms=now-f.start;this.diagnostics.sample(f.segment,ms);
+      const ms=now-f.start;this.diagnostics.sample(f.segment,ms,'fence');
       if(f.mode!=='filtered'||f.generation!==this.fenceGeneration)return;
       this.fenceValues.push(ms);if(this.fenceValues.length>30)this.fenceValues.shift();
       const sorted=[...this.fenceValues].sort((a,b)=>a-b);this.gpuEstimate={p50:sorted[(sorted.length-1)>>1],p95:sorted[Math.ceil(sorted.length*.95)-1],count:sorted.length};

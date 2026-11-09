@@ -220,6 +220,8 @@
   if (layoutDirty) relayout();
   G.tick();
   const x = snapshot(), on = x.on, p = x.p, w = stateWord(), net = x.net;
+  // Neural restoration asked for but not drawn (cut by the adaptation or no float targets): a short mark.
+  const neuralOff = on && (status.neural === 'cut' || status.neural === 'no-float'), fence = x.gpu === null && x.gpuEst !== null;
   const overall = G('overall', x.overall), fpsG = G('fps', x.gFpsAny), devG = on && p ? G('dev', x.gDev) : 'none', hitG = on && p ? G('hit', x.gHit) : 'none';
   const totalG = G('total', x.gTotal), missG = G('miss', x.gMiss), warnG = x.warnCount ? G('warn', x.gWarn) : 'none';
   f.dot.set(f.kind === 'full' ? w.grade : fpsG);
@@ -227,12 +229,13 @@
   put(f.fps, fmtInt(x.fpsAny), fpsG);
   drawSparkline(f.cv, status.intervals, {count: f.spark.count, T: x.T, dim: !on, scale: s, ok: '#ffd666', bad: '#ff7b86'});
   const rate = drops.push(x.fl ? x.fl.dropped : null);
-  let look = RANK(overall) > 1 || x.warnCount > 0 || [devG, hitG, totalG, fpsG, missG].some(v => RANK(v) > 1);
+  let look = RANK(overall) > 1 || x.warnCount > 0 || neuralOff || [devG, hitG, totalG, fpsG, missG].some(v => RANK(v) > 1);
   if (f.kind !== 'full') {
    put(f.rit, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.trav, on && p ? String(p.hitches) : '—', hitG);
    put(f.lat, x.lat.total === null ? '—' : fmtInt(x.lat.total), totalG);
-   put(f.tag, w.tag, w.grade); off(f.tagEl || f.tag.e, !w.tag);
+   const tag = w.tag || (neuralOff ? 'SEM NEURAL' : '');
+   put(f.tag, tag, w.tag ? w.grade : 'ok'); off(f.tagEl || f.tag.e, !tag);
    put(f.badge, x.warnCount ? '!' + x.warnCount : '', warnG); off(f.badgeEl || f.badge.e, !x.warnCount);
    // Line 3: at most two alerts, bad ones only, in priority order. An alert needs the bad grade on two
    // ticks to appear and leaves as soon as the value is back to good (never "PERDA 0,0%" in red).
@@ -253,12 +256,12 @@
    add('decoder', x.gDecoder, 'DECOD CPU');
    add('height', x.gHeight, net?.height + 'p');
    add('wait', x.gWait, 'ESP +' + fmtInt(x.fl?.extraMs));
-   add('gpu', x.gGpuShow, (x.gpu !== null ? 'GPU ' : 'GPU ≈') + fmt(x.gpuShow, 1));
+   add('gpu', x.gGpuShow, (x.gpu !== null ? 'GPU ' : 'GPU ≈fence ') + fmt(x.gpuShow, 1));
    for (let i = 0; i < CHIPS; i++) { put(f.chips[i], alerts[i] || '', null); off(f.chipEls[i], !alerts[i]); }
    if (f.l3) off(f.l3, !alerts.length);
    look = look || alerts.length > 0;
   } else {
-   put(f.word, w.word, w.grade === 'good' ? null : w.grade);
+   put(f.word, w.word + (neuralOff ? ' · SEM NEURAL' : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
    put(f.dev, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.p95, on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', x.gP95) : 'none');
    put(f.hit, on && p ? String(p.hitches) : '—', hitG);
@@ -277,6 +280,7 @@
    for (let i = 0; i < 5; i++) prop(f.bar.children[i], 'flex-grow', String(num(segs[i]) ? Math.max(0, +segs[i].toFixed(1)) : 0));
    const legend = [[l.rtt, x.gRtt, 'rtt'], [l.buffer, x.gBuf, 'buf'], [l.decode, x.gDec, 'dec'], [x.gpu !== null ? x.gpu : x.gpuEst !== null ? l.gpu : null, x.gGpuShow, x.gpu !== null ? 'gpu' : 'gpu-est'], [x.fl ? x.fl.extraMs : null, x.gWait, 'wait']];
    legend.forEach(([v, gr, k], i) => put(f.leg[i].v, num(v) ? fmtMs(v) : '—', num(v) ? G(k, gr) : 'none'));
+   if (f.fence !== fence) { f.fence = fence; f.leg[3].k.textContent = fence ? ' · T≈fence ' : ' · T '; }
    off(f.leg[4].k, !flOn); off(f.leg[4].v.e, !flOn);
    const r = on ? /(\d+)\s*×\s*(\d+)\s*→\s*(\d+)\s*×\s*(\d+)/.exec(status.resolution || '') : null, inH = r ? +r[2] : net?.height || null;
    put(f.vin, inH ? inH + 'p' : '—', net?.height ? G('height', x.gHeight) : 'none');

@@ -55,6 +55,10 @@ probe=r'''
  let leaked=0;const spy=()=>leaked++;window.addEventListener('keydown',spy);
  dialog.querySelector('.bxif-panel button')?.dispatchEvent(new KeyboardEvent('keydown',{key:'a',bubbles:true}));
  window.removeEventListener('keydown',spy);check(leaked===0,'Keys typed in the panel do not reach the game');
+ // Método Nativo on the new site (audit 12.1): no Better xCloud menu, the saved processing (CAS by default) applies.
+ {const m=dialog.querySelector('input[data-bxif-key=sharpening]'),hint=m.closest('.bxif-row').querySelector('.bxif-hint'),pick=i=>{m.value=String(i);m.dispatchEvent(new InputEvent('input'));};
+  pick(3);check(api.settings.sharpening==='native'&&/Sem menu do Better xCloud neste site: aplica o processamento salvo \(CAS; CAS por padrão\)/.test(hint.textContent)&&!/Segue o Processamento/.test(hint.textContent),'Nativo hint says the saved processing applies on the new site');
+  pick(0);check(api.settings.sharpening==='usm','Método back to USM');}
  await until(()=>api.status.net&&api.status.net.fpsReceived>0,5000,'telemetry from getStats');
  check(true,`Stream telemetry reads the tracked connection (${api.status.net.codec}, ${Math.round(api.status.net.fpsReceived)} FPS)`);
  dialog.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));

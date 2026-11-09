@@ -65,6 +65,13 @@ test('diagnostics are opt-in, segment settings and compute percentiles without m
  const r=d.report();assert.equal(r.segments.length,2);assert.equal(r.segments[0].gpu.p95,95);assert.equal(r.segments[1].gpu.count,1);assert.equal(r.disjoints,1);assert.equal(d.frame({},2000),null);
  d.start();d.sample(a,123);assert.equal(d.report().segments.length,0);
 });
+// Audit R9: each segment names how its gpu series was timed (timer, timestamp or fence); null without a sample.
+test('diagnostics keep the timing method of each segment',()=>{
+ const d=api().createDiagnostics();d.start();const a=d.frame({r:'webgl2'},0),b=d.frame({r:'webgpu'},10),c=d.frame({r:'none'},20);
+ d.sample(a,4,'fence');d.sample(b,2,'timestamp');d.sample(c,1);d.stop();
+ const [x,y,z]=d.report().segments;assert.equal(x.gpu.method,'fence');assert.equal(y.gpu.method,'timestamp');assert.equal(z.gpu.method,null);assert.equal(z.gpu.count,1);
+ const e=api().createDiagnostics();e.start();const f=e.frame({},0);e.sample(f,3,'timer');assert.equal(e.report().segments[0].gpu.method,'timer');
+});
 test('video stats export only allowlisted video counters, no addresses',async()=>{
  const a=api(),rows=new Map([['v',{id:'v',type:'inbound-rtp',kind:'video',framesDecoded:20,powerEfficientDecoder:true,decoderImplementation:'MediaCodec',codecId:'c',address:'private'}],['c',{mimeType:'video/H264',sdpFmtpLine:'profile-level-id=42e01f'}],['ip',{type:'candidate-pair',address:'private'}]]);
  const r=await a.captureVideoStats({videoWidth:1920,videoHeight:1080,currentTime:1,getVideoPlaybackQuality:()=>({totalVideoFrames:20,droppedVideoFrames:1})},{getStats:async()=>rows});

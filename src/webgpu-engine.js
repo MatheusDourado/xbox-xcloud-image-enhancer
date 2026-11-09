@@ -133,7 +133,7 @@
     mapPending(item){item.read.mapAsync(GPUMapMode.READ).then(()=>{const v=new BigUint64Array(item.read.getMappedRange());let ns=0;for(let i=0;i<item.parts;i++)ns+=Number(v[i*2+1]-v[i*2]);item.read.unmap();
         item.ms=ns/1e6;item.done=true;this.free.push(item.read);},()=>{item.done=true;item.ms=null;});}
     poll(){while(this.pending.length&&this.pending[0].done){const item=this.pending.shift();
-      if(item.ms!=null&&item.ms>=0&&item.revision===this.budget.revision){this.budget.sample(item.ms,item.mode);this.diagnostics.sample(item.segment,item.ms);}}}
+      if(item.ms!=null&&item.ms>=0&&item.revision===this.budget.revision){this.budget.sample(item.ms,item.mode);this.diagnostics.sample(item.segment,item.ms,'timestamp');}}}
     render(source,outW,outH,rawSettings,time,diagnostic=false,outputTarget=null,deferFinal=false){
       if(this.failed)return false;
       const s=R.normalize(rawSettings),w=source.videoWidth||source.displayWidth||source.width,h=source.videoHeight||source.displayHeight||source.height;

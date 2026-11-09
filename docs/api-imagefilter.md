@@ -40,6 +40,7 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 
 - `mode` (`waiting`, `ready`, `filtered`, `cas`, `original`, `diagnostic`, `error`), `error`, `frames`, `lastFrame` (Date.now), `resolution` (`"1920×1080 → 2276×1280"`), `display` (altura física do vídeo na tela), `fps`.
 - `gpuP95` (ms ou `null`), `measurement` (`gpu` ou `cadence`), `adaptation` (motivo da última redução automática).
+- `neural` — estado da Reconstrução neural no motor que desenha: `off` (valor 0 ou Comparação fora de Tratada), `running`, `no-float` (sem `EXT_color_buffer_float`: a rede nunca roda), `cut` (desligada pela redução automática de GPU). Em `no-float` e `cut` há um aviso (`neural-float`, `neural-cut`).
 - `gpuEstimate` — sem cronômetro de GPU (`measurement: 'cadence'`, ex.: WebView do Android): `{p50, p95, count}` em ms, do início dos comandos de um quadro até a GPU concluí-lo (fence a cada 0,5 s, últimos 30). É um limite superior (inclui trabalho na fila), só para exibição; a redução automática continua pela cadência. `null` com cronômetro ou antes da primeira leitura.
 - `pacing` — ritmo na tela (2 s): `{meanMs, deviationMs, p95Ms, hitches, frames}`.
 - `intervals` — intervalos entre quadros exibidos (ms), últimos 240, para gráficos.
@@ -52,7 +53,7 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 - `adaptive` — `null` ou, conforme a origem:
   - `{source: 'qp', qp, qpMean, level (0–1), scales:{cleanup, deband, detail}}`;
   - `{source: 'bitrate', qp: null, qpMean: null, qpEstimate, bitsPerPixel, level, scales}`: sem QP no navegador. Usa o percentil 80 dos bits por pixel do último minuto (mínimo 5 s; segundos com menos de 10 quadros ficam de fora). 0,12 bit/pixel equivale ao QP 28 (neutro) e cada dobro, a 4 QP a menos (`BxRestoration.qpFromBitsPerPixel`).
-- `warnings` — lista `{level: 'error'|'warn'|'info', key, text}` (renderizador, bitrate limitado, resolução, decodificação por software, perda de pacotes, saída acima da tela, erro do motor).
+- `warnings` — lista `{level: 'error'|'warn'|'info', key, text}` (renderizador, bitrate limitado, resolução, decodificação por software, perda de pacotes, saída acima da tela, rede neural pedida e não rodando, erro do motor).
 
 ## Medição — relatório de `api.exportMeasurement()` (`schema: 2`)
 
@@ -61,7 +62,7 @@ Arquivo `bx-v9.7.1-diagnostics-<timestamp>.json`. No app Android vai para Downlo
 - `metadata`: `userAgent`, `renderer`, `timer` (cronômetro de GPU), `gpuMethod` (`timer`, `fence` ou `null`), `floatTargets`, `screen` (`width`, `height`, `dpr`, `refreshPref` do app), `refreshMeasuredHz` (mediana de 30 quadros de animação no início), `app`, `betterXcloud` (preferências do stream), `capture`, `smoothing`, `initial` (contadores do vídeo e do WebRTC).
 - `segments`: um por configuração distinta (voltar a uma configuração continua o segmento). Campos de cada um:
   - `config` (ajustes, `effective`, `source`, `output` e `renderer`: `webgl2` ou `webgpu`), `frames`, `durationMs`, `drawFps`, `pacerDropped` (quadros descartados pela Fluidez) e `videoSkipped` (quadros que o `<video>` não apresentou, no caminho de vídeo);
-  - `gpu` (`{count, p50, p95, p99, samplesMs}`; com `gpuMethod: 'fence'`, as amostras são o tempo até concluir);
+  - `gpu` (`{method, count, p50, p95, p99, samplesMs}`; `method` é como o motor do segmento mediu: `timer` (WebGL2 com cronômetro), `timestamp` (WebGPU) ou `fence` (WebGL2 sem cronômetro: tempo até concluir, limite superior que inclui a fila), `null` sem amostra);
   - intervalos, cada um com `{count, meanMs, p50, p95, p99, maxMs, deviationMs, hitches, samplesMs, samplesTruncated}`:
     - contagem, média, desvio e máximo são exatos; os percentis vêm de faixas de 0,1 ms;
     - `hitches` conta intervalos acima de 1,5× a mediana e é `null` em `wait`;
@@ -71,5 +72,5 @@ Arquivo `bx-v9.7.1-diagnostics-<timestamp>.json`. No app Android vai para Downlo
     - `server`: entre os tempos de captura no servidor (RTP no vídeo, timestamp do `VideoFrame` na captura direta);
     - `wait`: espera de cada quadro na Fluidez.
 - `timeline`: uma linha por segundo, até 1 hora. Campos: `t` (s desde o início), `fpsReceived`, `fpsShown`, `bitrateMbps`, `lossPct`, `rttMs`, `decodeMs`, `bufferMs`, `qp`, `bitsPerPixel`, `level`, `gpuMs`, `waitMs`, `decoderDropped`, `freezes` e `capture` (`direct`/`video`).
-- `final` (contadores no fim), `net` e `status` (`capture`, `fluidity`, `adaptive`, `smoothing`, `pacing`, `origin`, `gpuP95`, `gpuEstimate`, `warnings`).
+- `final` (contadores no fim), `net` e `status` (`capture`, `fluidity`, `adaptive`, `smoothing`, `pacing`, `origin`, `gpuP95`, `gpuEstimate`, `measurement`, `neural`, `warnings`).
 - Limites (`sampleLimit`): até 300 mil amostras brutas de intervalos no total, 120 mil de GPU, 3.600 linhas na linha do tempo e 256 configurações. Os resumos continuam além do corte; `truncated` indica que algum limite foi atingido.

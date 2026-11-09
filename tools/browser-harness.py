@@ -42,6 +42,17 @@ probe=r'''
   check(player.bxEngine.frames===before+1,'A newly presented frame renders even when the decoded-frame counter did not advance');
   player.updateFrame();check(player.bxEngine.frames===before+1,'The same presented frame is not processed twice');}
  player.bxEngine.budget.temporalAllowed=false;BxImageFilter.reset();check(player.bxEngine.budget.temporalAllowed,'Panel reset clears adaptation');
+ // status.neural follows the engine that draws: cut by its budget, never without float targets, off at 0.
+ {const st=BxImageFilter.status,eng=player.bxEngine;check(st.neural==='off','Neural state is off while the slider is at 0');
+  BxImageFilter.settings.neural=.5;player.updateFrame();
+  check(st.neural===(eng.floatTargets?'running':'no-float')&&player.gl.getError()===player.gl.NO_ERROR,'Neural runs with float targets ('+st.neural+', floatTargets '+eng.floatTargets+')');
+  // The first render after reset() rebuilt the budget for the saved limit: cut the one in use now.
+  eng.budget.neuralAllowed=false;adapterInput.currentTime+=.016;player.updateFrame();
+  check(st.neural==='cut'&&player.gl.getError()===player.gl.NO_ERROR,'Neural asked for but cut by the budget reads cut');
+  eng.budget.neuralAllowed=true;adapterInput.currentTime+=.016;player.updateFrame();check(st.neural!=='cut','Allowed again, the state leaves cut');
+  const ft=eng.floatTargets;eng.floatTargets=false;adapterInput.currentTime+=.016;player.updateFrame();check(st.neural==='no-float','Without float targets the neural state reads no-float');eng.floatTargets=ft;
+  BxImageFilter.settings.mode='cas';player.updateFrame();check(st.neural==='off','Comparison modes read off');BxImageFilter.settings.mode='filtered';
+  BxImageFilter.settings.neural=0;player.updateFrame();check(st.neural==='off','Back to 0 reads off');}
  
  const prevCount=player.bxEngine.frames;
  BxImageFilter.settings.mode='filtered';player.updateFrame();
@@ -69,6 +80,14 @@ probe=r'''
  check([...menu.querySelectorAll('input[data-bxif-key]')].every(i=>i.tabIndex>=0&&i.getAttribute('aria-label')&&i.type==='range'&&/^\d+$/.test(i.step)&&i.hasAttribute('aria-valuetext')),'Every setting is a focusable integer-step range with aria-label and aria-valuetext');
  check(menu.querySelectorAll("input[data-bxif-kind=slider]").length===8,"Sharpness, neural, compression, gradient, chroma, detail, temporal and AA sliders added");
  {const sh=menu.querySelector("input[data-bxif-key=sharpness]");check(sh?.max==="20"&&sh.step==="1"&&sh.value===String(Math.round(BxImageFilter.settings.sharpness*2)),"Panel sharpness slider maps 0-10 in half steps to an integer 0-20 range");}
+ {const hintOf=k=>menu.querySelector(`input[data-bxif-key=${k}]`).closest('.bxif-row').querySelector('.bxif-hint').textContent;
+  check(/\+45% de GPU em sessão a 30 FPS/.test(hintOf('neural'))&&/qualquer valor acima de 0 custa o mesmo/.test(hintOf('neural'))&&!/30%/.test(menu.querySelector('.bxif-panel').textContent)&&!/2,5/.test(hintOf('sharpness')),'Neural hint gives the measured +45% and no sharpness advice');
+  check(/degraus de bloco/.test(hintOf('cleanup'))&&/não remove ringing nem mosquito/.test(hintOf('cleanup'))&&/~10 Mb\/s/.test(hintOf('cleanup')),'Compression hint says what it does not remove');
+  check(/mesmas frequências finas que a Nitidez/.test(hintOf('detail'))&&/35%/.test(hintOf('detail'))&&/halo e cintilação/.test(hintOf('detail')),'Detail hint warns about the overlap with sharpening and the preset ceiling');
+  check(/apaga textura/.test(hintOf('deband'))&&/borra bordas suaves de baixo contraste/.test(hintOf('deband')),'Deband hint keeps the texture warning and adds low-contrast edges');
+  const timer=BxImageFilter.status.measurement==='gpu';await new Promise(r=>setTimeout(r,700));const text=menu.querySelector('.bxif-panel').textContent;
+  check(timer?/Equilíbrio padrão/.test(hintOf('gpuBudget'))&&/Acima do limite \(p95\)/.test(hintOf('gpuBudget'))&&/Tratamento \(GPU p95\)/.test(text):/3, 6 e 10 ms se comportam igual/.test(hintOf('gpuBudget'))&&!/Equilíbrio padrão/.test(hintOf('gpuBudget'))&&/Tratamento \(GPU ≈ fence, p95\)/.test(text),'Budget hint and GPU label follow the measurement kind ('+BxImageFilter.status.measurement+')');
+  const m=menu.querySelector('input[data-bxif-key=sharpening]');m.value='3';m.dispatchEvent(new InputEvent('input'));check(/Segue o Processamento do menu do Better xCloud/.test(hintOf('sharpening')),'Nativo hint follows the Better xCloud menu on the old site');m.value='0';m.dispatchEvent(new InputEvent('input'));}
  const sharpening=menu.querySelector('input[data-bxif-key=sharpening]');choose(sharpening,2);player.updateFrame();
  check(BxImageFilter.settings.sharpening==='rcas'&&player.gl.getError()===player.gl.NO_ERROR,'RCAS selector renders through native adapter');
  const measure=[...menu.querySelectorAll('button')].find(b=>b.textContent==='Iniciar medição');await measure.onclick();
@@ -77,6 +96,7 @@ probe=r'''
  let exported=null;const download=BxRestoration.downloadReport;BxRestoration.downloadReport=r=>exported=r;
  await [...menu.querySelectorAll('button')].find(b=>b.textContent==='Encerrar e exportar medição').onclick();BxRestoration.downloadReport=download;
  check(exported?.segments.length===1&&!exported.recording&&exported.final,'Menu exports a stopped diagnostic report');
+ check(exported.status.neural==='off'&&['gpu','cadence'].includes(exported.status.measurement)&&[null,'timer','fence'].includes(exported.segments[0].gpu.method)&&exported.segments[0].gpu.method!=='timestamp','Report carries the neural state, the measurement kind and the gpu method of the segment ('+exported.segments[0].gpu.method+')');
  choose(sharpening,3);check(BxImageFilter.settings.sharpening==='native','Method choice cycles to the native processing');
  const slider=menu.querySelector('input[data-bxif-key=cleanup]');slider.value='70';slider.dispatchEvent(new InputEvent('input'));check(BxImageFilter.settings.cleanup===.7,'Native menu controls persist settings');
  const menu2=document.createElement('section');document.body.append(menu2);BxImageFilter.mountControls(menu2);check(menu2.querySelector('input[data-bxif-key=cleanup]').value==='70'&&!menu.querySelector('[data-bx-restoration]')&&menu2.querySelector('.bxif-panel')===root,'Rebuilt menu retains controls and settings');
@@ -146,6 +166,7 @@ probe=r'''
   const copyButton=[...menu2.querySelectorAll('button')].find(b=>b.textContent==='Copiar configuração');copyButton.click();await new Promise(r=>setTimeout(r,200));
   const exported=JSON.parse(menu2.querySelector('textarea').value);
   check(exported.treatment&&'smoothing' in exported.treatment&&'stream.video.resolution' in exported.betterXcloud&&exported.build==='6.7.12-imagefilter.10.0.0','Copy configuration exports treatment and Better xCloud settings');
+  check(exported.status.neural==='off'&&['gpu','cadence'].includes(exported.status.measurement),'Copy configuration carries the neural state and the measurement kind');
   check(!menu2.querySelector('[aria-label="Codec (teste)"]')&&!menu2.querySelector('[data-bxif-key=refreshRate]'),'No codec test; refresh-rate control only inside the Android app');
   delete window.STATES;}
  // Exercise the browser's actual receiver setter, without media permissions or a remote service.
@@ -174,6 +195,9 @@ probe=r'''
   check(/\d/.test(hud.textContent)&&hud.querySelector('canvas').width>0,'HUD shows live values and a sparkline');
   choose(menu2.querySelector('input[data-bxif-key=hud]'),2);
   check(hud.dataset.layout==='full'&&hud.dataset.mode==='full'&&/RITMO|Ritmo/.test(hud.textContent),'HUD full layout');
+  BxImageFilter.status.neural='cut';await sleep(600);check(/SEM NEURAL/.test(hud.textContent),'HUD full marks a neural restoration asked for and not drawn');
+  choose(menu2.querySelector('input[data-bxif-key=hud]'),1);await sleep(600);check(hud.dataset.layout==='card'&&/SEM NEURAL/.test(hud.textContent),'HUD compact shows the same mark as a tag');
+  BxImageFilter.status.neural='off';await sleep(600);check(!/SEM NEURAL/.test(hud.textContent),'The mark leaves with the state');choose(menu2.querySelector('input[data-bxif-key=hud]'),2);await sleep(100);
   choose(menu2.querySelector('input[data-bxif-key=hudPosition]'),3);check(hud.dataset.pos==='bottom-right','HUD follows the chosen corner');
   BxImageFilter.status.lastFrame=Date.now()-5000;await sleep(1400);
   check(!hud.hasAttribute('data-show')&&getComputedStyle(hud).display==='none','HUD hides when the stream stops');
@@ -210,7 +234,13 @@ probe=r'''
    st.measurement='cadence';st.gpuEstimate={p50:4.2,p95:6.8,count:20};st.lastFrame=Date.now();
    await sleep(1200);const text=menu2.querySelector('.bxif-panel').textContent;
    check(/Estimado pela taxa de bits/.test(text)&&/0,18 bit\/pixel/.test(text)&&/QP ≈26 \(pela taxa de bits\)/.test(text),'Missing QP shows the bitrate estimate, marked as such');
-   check(/≈6,8 ms de \d+ ms por quadro/.test(text)&&/Estimado \(sem cronômetro/.test(text),'Missing GPU timer shows the fence estimate against the frame interval');
+   check(/≈6,8 ms de \d+ ms por quadro/.test(text)&&/Estimado por fence \(sem cronômetro/.test(text)&&/limite superior/.test(text)&&/Tratamento \(GPU ≈ fence, p95\)/.test(text),'Missing GPU timer shows the fence estimate against the frame interval, labelled as a fence upper bound');
+   check(/3, 6 e 10 ms se comportam igual/.test(menu2.querySelector('input[data-bxif-key=gpuBudget]').closest('.bxif-row').querySelector('.bxif-hint').textContent),'Without a GPU timer the budget hint says 3, 6 and 10 ms behave the same');
+   st.neural='cut';await sleep(1700);const warn=menu2.querySelector('[data-bxif-out=warnings]');
+   check(/Reconstrução neural pedida, mas não está rodando: desligada pela redução automática/.test(warn.textContent)&&/Restaurar tratamento, ou Aliviar GPU = Nunca/.test(warn.textContent),'Neural cut by the adaptation shows a warning with the way back');
+   check(menu2.querySelector('input[data-bxif-key=neural]').closest('.bxif-row').querySelector('.bxif-tag').textContent==='Cortada','Neural slider is tagged Cortada');
+   st.neural='no-float';await sleep(1700);check(/não renderiza em ponto flutuante/.test(warn.textContent)&&!/redução automática/.test(warn.textContent)&&menu2.querySelector('input[data-bxif-key=neural]').closest('.bxif-row').querySelector('.bxif-tag').textContent==='Sem float','Neural without float targets shows its own warning and tag');
+   st.neural='off';await sleep(1700);check(!/Reconstrução neural pedida/.test(warn.textContent)&&menu2.querySelector('input[data-bxif-key=neural]').closest('.bxif-row').querySelector('.bxif-tag').textContent==='EXP','Neural off: no warning, EXP tag back');
    st.adaptive=null;await sleep(700);check(/não informa o QP/.test(menu2.querySelector('.bxif-panel').textContent),'Before the first estimate the panel says the device reports no QP');
    st.net=saved.net;st.adaptive=saved.adaptive;st.gpuEstimate=saved.gpu;st.measurement=saved.m;}
   menu2.remove();await sleep(700);check(BxImageFilter.panel.timers()===0&&BxImageFilter.panelOpen===false,'Removed panel leaves no timers and closes telemetry');}

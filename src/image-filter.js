@@ -11,7 +11,7 @@
  const settings=BxRestoration.normalize(saved);
  // Native image controls own sharpening; removed experimental color overrides stay neutral.
  settings.contrast=1;settings.saturation=1;settings.shadows=0;
- const status={mode:'waiting',frames:0,lastFrame:0,resolution:'',error:'',gpuP95:null,measurement:'cadence',adaptation:'',fps:null,
+ const status={mode:'waiting',frames:0,lastFrame:0,resolution:'',error:'',gpuP95:null,measurement:'cadence',adaptation:'',neural:'off',fps:null,
   // Display intervals (ms) of the last ~8 s at 30 FPS, oldest first: the HUD's pacing graph.
   intervals:[],intervalsTotal:0,net:null,warnings:[],adaptive:null,capture:{active:false,frames:0,reason:''},
   // GPU time estimate {p50, p95, count} from fences when the browser has no GPU timer (see Engine.startFence).
@@ -68,7 +68,7 @@
   // saved: the report comes back with saved false, so the panel can say why there is no file.
   async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
    const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
-   report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,warnings:status.warnings.map(w=>w.text)};
+   report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,neural:status.neural,warnings:status.warnings.map(w=>w.text)};
    const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
    report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
@@ -77,7 +77,7 @@
   configText(){const native=nativePrefs();
    const o=status.origin,round=v=>typeof v==='number'?Math.round(v*10)/10:v;
    return JSON.stringify({build:globalThis.BxBuild?.version,app:window.BxAndroid?.getAppInfo?.()??null,screen:`${screen.width}×${screen.height} @${window.devicePixelRatio}`,
-    status:{resolution:status.resolution,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,adaptation:status.adaptation,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
+    status:{resolution:status.resolution,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
     pacing:status.pacing&&{meanMs:round(status.pacing.meanMs),deviationMs:round(status.pacing.deviationMs),p95Ms:round(status.pacing.p95Ms),hitches:status.pacing.hitches},
     origin:o&&{server:o.server&&[round(o.server.meanMs),round(o.server.deviationMs)],arrival:o.arrival&&[round(o.arrival.meanMs),round(o.arrival.deviationMs)],missed:o.missed,presented:o.presented},
     net:status.net&&Object.fromEntries(Object.entries(status.net).map(([k,v])=>[k,k==='bitsPerPixel'&&typeof v==='number'?Math.round(v*1000)/1000:round(v)])),warnings:status.warnings.map(w=>w.text),
@@ -161,6 +161,8 @@
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
   if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
+  if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:'Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).'});
+  if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:'Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   status.warnings=w;
  }
@@ -336,6 +338,9 @@
   status.mode=api.diagnostic?'diagnostic':settings.mode;status.frames=engine.frames;status.lastFrame=Date.now();status.resolution=`${w}×${h} → ${ow}×${oh}`;
   status.gpuP95=engine.budget.p95;status.measurement=engine.ext?'gpu':'cadence';status.adaptation=engine.budget.reason;
   status.gpuEstimate=engine.ext?null:engine.gpuEstimate;
+  // Whether the neural restoration asked for is drawn: the engine drawing decides (WebGPU draws with
+  // neural > 0 only after its budget cut it); without float targets it never runs (audit N5, item 4).
+  status.neural=settings.mode!=='filtered'||!(settings.neural>0)?'off':!engine.floatTargets?'no-float':!engine.budget.neuralAllowed?'cut':'running';
   status.display=shown;
   const now=performance.now();if(newFrame)player.bxTimes.push(now);while(player.bxTimes.length>1&&now-player.bxTimes[0]>2000)player.bxTimes.shift();
   status.fps=player.bxTimes.length>1?(player.bxTimes.length-1)*1000/(player.bxTimes.at(-1)-player.bxTimes[0]):null;status.pacing=statsOf(timing.display)||BxRestoration.frameStats(player.bxTimes);
@@ -471,7 +476,7 @@
   stopDirect(this,'');stopTiming(this);
   if(activePlayer===this)activePlayer=null;if(activeEngine===this.bxEngine||activeEngine===this.bxRender)activeEngine=null;stopGpu(this);this.bxEngine?.destroy();this.bxEngine=this.bxRender=null;
   if(this.bxListeners){const {reset,lost,restored}=this.bxListeners;for(const name of ['seeking','pause','emptied'])this.$video.removeEventListener(name,reset);this.$canvas.removeEventListener('webglcontextlost',lost);this.$canvas.removeEventListener('webglcontextrestored',restored);this.bxListeners=null;}
-  status.mode='waiting';status.lastFrame=0;api.diagnostic=false;destroy.call(this);
+  status.mode='waiting';status.lastFrame=0;status.neural='off';api.diagnostic=false;destroy.call(this);
  };
  api.mountControls=parent=>api.panel?.mount(parent);
 })();

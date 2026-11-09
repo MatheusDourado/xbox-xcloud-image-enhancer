@@ -714,7 +714,8 @@
  const FLU = {off: 'Desligada', balanced: 'Equilibrada', max: 'Máxima'};
  const CORNER = {'top-left': 'Superior esquerdo', 'top-right': 'Superior direito', 'bottom-left': 'Inferior esquerdo', 'bottom-right': 'Inferior direito'};
  const SMOOTH_STATE = {waiting: 'aguardando vídeo', unsupported: 'não suportado', requested: 'aceito', partial: 'parcial', error: 'falhou'};
- const WARN_HINT = {bitrate: 'Better xCloud › Stream: Bitrate máximo → Ilimitado.', resolution: 'Better xCloud › Stream: escolha 1080p.', loss: 'Prefira Wi-Fi 5 GHz ou cabo.'};
+ const WARN_HINT = {bitrate: 'Better xCloud › Stream: Bitrate máximo → Ilimitado.', resolution: 'Better xCloud › Stream: escolha 1080p.', loss: 'Prefira Wi-Fi 5 GHz ou cabo.',
+  'neural-cut': 'Para voltar: Restaurar tratamento, ou Aliviar GPU = Nunca (a GPU pode não acompanhar).', 'neural-float': 'A rede precisa de EXT_color_buffer_float; deixe Reconstrução neural em 0 neste aparelho.'};
  const natural = api.presets?.natural?.values || {};
 
  function kpi(name, cap) {
@@ -789,7 +790,8 @@
   const presetRow = h('div', {class: 'bxif-row bxif-stack bxif-has-val', 'data-bxif-row': 'preset'}, els.presetLab.el, h('div', {class: 'bxif-ctl'}, els.chipBox, els.presetDesc), els.presetPick);
   els.sharp = slider({key: 'sharpness', label: 'Nitidez', max: 20, step: 1, scale: 2, notch: 3, fmt: s => s === 0 ? 'Desl.' : fmt(s, 1)});
   els.method = choice({key: 'sharpening', label: 'Método', opts: [['usm', 'USM'], ['cas', 'CAS'], ['rcas', 'RCAS'], ['native', 'Nativo']], hint: v => (({
-   usm: 'Recomendado: contorno limpo.', cas: 'AMD FidelityFX CAS.', rcas: 'AMD FidelityFX RCAS.', native: 'Segue o Processamento do menu do Better xCloud (CAS/USM).'})[v] || '') + ' Vale também para a referência Só nitidez.'});
+   usm: 'Recomendado: contorno limpo.', cas: 'AMD FidelityFX CAS.', rcas: 'AMD FidelityFX RCAS.', native: ['cas', 'usm'].includes(api.nativePref('video.processing')) ? 'Segue o Processamento do menu do Better xCloud (CAS/USM).'
+    : 'Sem menu do Better xCloud neste site: aplica o processamento salvo (' + (settings.processing === 'usm' ? 'USM' : 'CAS') + '; CAS por padrão).'})[v] || '') + ' Vale também para a referência Só nitidez.'});
   // Spec 3 item 5: SGSR 1 replaces EASU + sharpening with one pass when the output is larger than the stream.
   els.scaler = choice({key: 'scaler', label: 'Escalador/nitidez', opts: [['easu', 'EASU + nitidez'], ['sgsr', 'SGSR (menos GPU)']], hint: v => (({
    easu: 'Atual: FSR 1 EASU amplia e o Método aplica a nitidez.', sgsr: 'Snapdragon GSR 1 amplia e dá nitidez numa passada só: menos GPU, um pouco menos de detalhe. Substitui o Método só quando a saída é maior que o stream; em saída nativa fica a nitidez atual.'})[v] || '')});
@@ -809,9 +811,11 @@
   s2.update = updateNitidez;
   // [F] 03 Ajuste fino
   const s3 = section('ajuste', '03', 'Ajuste fino');
-  const TREAT_UI = [['Compressão', 'cleanup', 'Remove blocos e ruído de compressão.'], ['Degradês', 'deband', 'Suaviza faixas em céus e sombras; alto demais apaga textura.'],
-   ['Cor nas bordas', 'chroma', 'Corrige cor borrada nas bordas (vídeo 4:2:0).'], ['Detalhe', 'detail', 'Realça microtextura.'], ['Estabilidade em movimento', 'temporal', 'Reduz cintilação entre quadros. Custa GPU.'],
-   ['Antialiasing', 'antialias', 'Suaviza serrilhado; também suaviza textura.'], ['Reconstrução neural', 'neural', 'Rede treinada em streams H.264 limpa blocos antes da nitidez. ~30% mais GPU; use Nitidez ~2,5.']];
+  const TREAT_UI = [['Compressão', 'cleanup', 'Suaviza degraus de bloco em áreas lisas; não remove ringing nem mosquito. Pouco efeito acima de ~10 Mb/s.'],
+   ['Degradês', 'deband', 'Suaviza faixas em céus e sombras; alto demais apaga textura e borra bordas suaves de baixo contraste.'],
+   ['Cor nas bordas', 'chroma', 'Corrige cor borrada nas bordas (vídeo 4:2:0).'], ['Detalhe', 'detail', 'Realça as mesmas frequências finas que a Nitidez. Os perfis vão até 35%; excesso vira halo e cintilação.'],
+   ['Estabilidade em movimento', 'temporal', 'Reduz cintilação entre quadros. Custa GPU.'], ['Antialiasing', 'antialias', 'Suaviza serrilhado; também suaviza textura.'],
+   ['Reconstrução neural', 'neural', 'Rede treinada em streams H.264 limpa blocos antes da nitidez. +45% de GPU em sessão a 30 FPS na bancada do Poco; qualquer valor acima de 0 custa o mesmo.']];
   els.treat = {};
   for (const [label, key, hint] of TREAT_UI) {
    const c = els.treat[key] = slider({key, label, max: 100, step: 5, scale: 100, notch: natural[key], tag: key === 'neural' ? 'EXP' : null, ghost: ['cleanup', 'deband', 'detail'].includes(key), fmt: s => Math.round(s * 100) + '%'});
@@ -823,14 +827,16 @@
   s3.update = updateAjuste;
   // [G] 04 Desempenho e rede
   const s4 = section('desempenho', '04', 'Desempenho e rede');
-  const budgetTail = ' Acima do limite (p95) desliga nesta ordem: estabilidade, saída, antialiasing, neural, degradês, limpeza, detalhe.';
-  const budget = choice({key: 'gpuBudget', label: 'Aliviar GPU acima de', opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, 'Nunca']], hint: v => (({
-   3: 'Corta etapas cedo; prioriza a fluidez.', 6: 'Equilíbrio padrão.', 10: 'Mantém mais etapas; risco de queda de quadros.', 0: 'Nunca reduz o tratamento automaticamente.'})[v] || '') + budgetTail});
+  const budgetOrder = 'desliga nesta ordem: estabilidade, saída, antialiasing, neural, degradês, limpeza, detalhe.';
+  els.budget = choice({key: 'gpuBudget', label: 'Aliviar GPU acima de', opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, 'Nunca']], hint: v => v !== 0 && status.measurement === 'cadence'
+   ? 'Sem cronômetro de GPU neste navegador, 3, 6 e 10 ms se comportam igual: a redução segue a cadência (quadros na tela × recebidos) e só Nunca a desliga. Quando reduz, ' + budgetOrder
+   : (({3: 'Corta etapas cedo; prioriza a fluidez.', 6: 'Equilíbrio padrão.', 10: 'Mantém mais etapas; risco de queda de quadros.', 0: 'Nunca reduz o tratamento automaticamente.'})[v] || '') + ' Acima do limite (p95) ' + budgetOrder});
+  const budget = els.budget;
   els.gpuText = h('b'); els.gpuFill = h('i', {class: 'bxif-meter-fill'}); els.gpuTick = h('span', {class: 'bxif-meter-pos'}, h('i', {class: 'bxif-meter-tick'}));
   els.gpuMeter = h('div', {class: 'bxif-meter bxif-x'}, els.gpuFill, h('span', {class: 'bxif-meter-clip'}, els.gpuTick));
   els.gpuNote = h('div', {class: 'bxif-out', 'data-hide': ''}); els.adaptation = h('div', {class: 'bxif-out', 'data-bxif-out': 'adaptation'});
   els.gpu = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-out': 'gpu'},
-   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Tratamento (GPU p95)'}), els.gpuText), els.gpuMeter, els.gpuNote, els.adaptation);
+   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, els.gpuCap = h('span', {text: 'Tratamento (GPU p95)'}), els.gpuText), els.gpuMeter, els.gpuNote, els.adaptation);
   els.latTotal = h('b'); els.latBar = h('div', {class: 'bxif-stackbar'}, h('span'), h('span'), h('span'), h('span'), h('span'));
   const legend = key => { const v = h('span'); return {row: h('div', null, h('i', {class: 'bxif-sw-i'}), h('span', {text: key + ' '}), v), v}; };
   els.leg = [legend('Rede (RTT)'), legend('Buffer'), legend('Decodificação'), legend('Tratamento'), legend('Espera da Fluidez')];
@@ -889,7 +895,7 @@
    'Fluidez: processa cada quadro ao chegar e o exibe num relógio constante. Equilibrada segue o servidor; Máxima impõe 30/60 fixo.',
    'Captura direta: recebe os quadros do decodificador sem passar pelo elemento de vídeo, que mostra no máximo um quadro por atualização da tela.',
    'Suavidade: pede um alvo de buffer ao navegador, que pode ajustá-lo; mais regularidade com mais latência, sem atraso máximo garantido.',
-   'Reconstrução neural (experimental): limpa blocos antes da nitidez; ~30% mais GPU. Degradês altos e Antialiasing suavizam textura.',
+   'Reconstrução neural (experimental): limpa blocos antes da nitidez; +45% de GPU em sessão a 30 FPS (bancada do Poco), com qualquer valor acima de 0. Degradês altos e Antialiasing suavizam textura.',
    'v9: padrões medidos em streams H.264 tipo xCloud. Tudo fica salvo para todos os jogos.'].map(t => h('p', {text: t})));
   s5.body.append(hud.row, els.corner.row, els.diag.row, measureRow, toolRow, about);
   s5.update = updateMeasure;
@@ -943,7 +949,7 @@
   els.capture.setReason(fl === 'off' ? 'Disponível com a Fluidez ligada.' : !direct ? 'Este navegador não permite a captura direta.' : '');
   setHidden(els.corner.row, valueOf('hud') === 'off');
   els.mode.lab.setTag(settings.mode !== 'filtered' ? 'Comparando' : '', 'ok');
-  setT(els.sharp.hint, '0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.' + (settings.neural > 0 ? ' Com Reconstrução neural, use ~2,5.' : '') + (valueOf('scaler') === 'sgsr' ? ' Com SGSR, define a força dele (2 → 1,0).' : ''));
+  setT(els.sharp.hint, '0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.' + (valueOf('scaler') === 'sgsr' ? ' Com SGSR, define a força dele (2 → 1,0).' : ''));
   const o = valueOf('output');
   setT(els.output.lab.tx, 'Resolução de saída' + (['auto', 'native', '1440', '2160'].includes(o) ? '' : ` (${o}p)`));
   setA(els.qp, 'data-hide', valueOf('adaptive') ? null : '');
@@ -1115,8 +1121,10 @@
   if (pos !== null) { setA(els.qpPos, 'data-hide', null); setS(els.qpPos, 'transform', `translateX(${(Math.min(1, Math.max(0, (pos - 20) / 16)) * 100).toFixed(1)}%)`); }
   else setA(els.qpPos, 'data-hide', '');
  }
+ const NEURAL_TAG = {cut: ['Cortada', 'ok'], 'no-float': ['Sem float', 'ok'], running: ['Rodando', 'good']};
  function updateAjuste() {
-  const applying = adaptiveApplying(), k = status.adaptive?.scales || {};
+  const applying = adaptiveApplying(), k = status.adaptive?.scales || {}, nt = NEURAL_TAG[status.neural] || ['EXP', null];
+  els.treat.neural.lab.setTag(nt[0], nt[1]);
   for (const key of ['cleanup', 'deband', 'detail']) {
    const c = els.treat[key];
    if (applying && num(k[key])) {
@@ -1129,6 +1137,8 @@
  }
  function updateDesempenho(s) {
   const L = settings.gpuBudget || 10, gpuG = G('gpu', s.gGpu);
+  els.budget.updateHint();
+  setT(els.gpuCap, status.measurement === 'cadence' ? 'Tratamento (GPU ≈ fence, p95)' : 'Tratamento (GPU p95)');
   if (status.measurement === 'cadence' && s.on && s.gpuEst !== null) {
    // Fence estimate against the frame interval (33 ms at 30 FPS): an upper bound, it includes queued work.
    const T = 1000 / s.N, scaleMax = Math.max(2 * T, s.gpuEst), g = G('gpu-est', s.gGpuEst);
@@ -1136,10 +1146,10 @@
    setT(els.gpuText, `≈${fmtMs(s.gpuEst)} ms de ${fmtInt(T)} ms por quadro`); setA(els.gpuText, 'data-g', g);
    setS(els.gpuFill, 'transform', `scaleX(${(s.gpuEst / scaleMax).toFixed(3)})`); setA(els.gpuFill, 'data-g', g);
    setS(els.gpuTick, 'transform', `translateX(${(T / scaleMax * 100).toFixed(1)}%)`);
-   setT(els.gpuNote, 'Estimado (sem cronômetro de GPU neste navegador): até a GPU concluir o quadro, com a fila. A redução automática segue a cadência.'); setA(els.gpuNote, 'data-hide', null);
+   setT(els.gpuNote, 'Estimado por fence (sem cronômetro de GPU neste navegador): limite superior, até a GPU concluir o quadro, com a fila. A redução automática segue a cadência.'); setA(els.gpuNote, 'data-hide', null);
   } else if (status.measurement === 'cadence' && s.on) {
    setT(els.gpuText, '—'); setA(els.gpuText, 'data-g', 'none'); setS(els.gpuFill, 'transform', 'scaleX(0)'); setA(els.gpuMeter, 'data-hide', '');
-   setT(els.gpuNote, 'Sem cronômetro de GPU neste navegador: adapta pela cadência.'); setA(els.gpuNote, 'data-hide', null);
+   setT(els.gpuNote, 'Sem cronômetro de GPU neste navegador: o valor virá de um fence (limite superior); a redução automática segue a cadência.'); setA(els.gpuNote, 'data-hide', null);
   } else {
    const p95 = s.gpu, scaleMax = Math.max(2 * L, p95 || 0);
    setA(els.gpuMeter, 'data-hide', null);
