@@ -202,7 +202,7 @@
    if(player.bxDirect?.frames>0)return;
    const at=performance.now(),presented=meta?.presentedFrames;
    // Measurement only: the frame's expected display time and its receive/presentation times, read by updateFrame
-   // (the draw callback of the same frame) for the slack and pipeline series. Field writes, no allocation.
+   // (the draw callback of the same frame) for the late and pipeline series. Field writes, no allocation.
    if(player.bxDiagnostics?.active){t.vfAt=at;t.vfExpected=meta?.expectedDisplayTime;t.vfPresentation=meta?.presentationTime;t.vfReceive=meta?.receiveTime;}
    // Frames the browser presented between two callbacks never reached the treatment (nor the canvas).
    if(Number.isFinite(presented)){if(presented>t.presented){keep(t.presentedLog,presented-t.presented,at);player.bxRender?.diagnostics.skipped(presented-t.presented-1);}t.presented=presented;}
@@ -436,7 +436,7 @@
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
    publish(player,{w,h,ow,oh,shown,newFrame:true,timing});
-   // Main-thread cost of this frame (measurement only; the slack needs the rVFC metadata, video path only).
+   // Main-thread cost of this frame (measurement only; the late series needs the rVFC metadata, video path only).
    if(player.bxDiagnostics?.active)player.bxDiagnostics.interval('cpu',performance.now()-at);
   }catch(error){fail(player,error);}
   finally{if(player.gl&&!player.gl.isContextLost())player.gl.useProgram(player.program);}
@@ -489,9 +489,11 @@
    this.bxLastFrame=token;this.bxLastSettings=controls;
    publish(this,{w,h,ow,oh,shown,newFrame,timing});
    if(t0){const d=this.bxDiagnostics,end=performance.now();d.interval('cpu',end-t0);
-    // Slack to the expected display time and receive-to-presentation latency of the frame whose rVFC metadata
-    // arrived just before this draw (same task, under 50 ms); each metadata set is used once.
-    if(newFrame&&timing.vfAt!=null&&end-timing.vfAt<50){if(Number.isFinite(timing.vfExpected))d.interval('slack',timing.vfExpected-end);
+    // Lateness against the expected display time and receive-to-presentation latency of the frame whose rVFC
+    // metadata arrived just before this draw (same task, under 50 ms); each metadata set is used once. The rVFC
+    // runs in the rendering step of the vsync the frame was expected on, or one later, so the lateness is 0 or
+    // about one vsync, more when the main thread is behind; its upper tail (p95/p99/max) is the one to read.
+    if(newFrame&&timing.vfAt!=null&&end-timing.vfAt<50){if(Number.isFinite(timing.vfExpected))d.interval('late',end-timing.vfExpected);
      if(Number.isFinite(timing.vfPresentation)&&Number.isFinite(timing.vfReceive))d.interval('pipeline',timing.vfPresentation-timing.vfReceive);timing.vfAt=null;}}
   }catch(error){fail(this,error);}
   finally{if(this.gl&&!this.gl.isContextLost())this.gl.useProgram(this.program);}

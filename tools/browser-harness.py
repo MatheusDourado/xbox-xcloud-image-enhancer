@@ -100,7 +100,7 @@ probe=r'''
  // Audit 3.5: the passes each frame ran, the last pass, the cpu series, the events and the GPU metadata.
  {const seg=exported.segments[0],seq=seg.passes[0]?.sequence||'',last=seq.split(',').pop().replace(/[#@].*$/,'');
   check(exported.schema===3&&seg.passes.length>=1&&seq.startsWith('upload,')&&seg.passes[0].frames>=1&&seg.final&&seg.final.name===last,'Report lists the pass sequence and the last pass of the segment ('+seq+')');
-  check(seg.cpu.count>=1&&seg.cpu.hitches===null&&seg.cpu.p50>=0&&'slack' in seg&&'pipeline' in seg&&seg.slack.hitches===null,'Report keeps the main-thread cost per frame with slack and pipeline series');
+  check(seg.cpu.count>=1&&seg.cpu.hitches===null&&seg.cpu.p50>=0&&'late' in seg&&'pipeline' in seg&&!('slack' in seg)&&seg.late.hitches===null,'Report keeps the main-thread cost per frame with late and pipeline series');
   check(Array.isArray(exported.events)&&exported.eventsTruncated===false&&exported.sampleLimit.events===500,'Report has a bounded event list');
   check(exported.status.resolution===BxImageFilter.status.resolution&&'adaptation' in exported.status&&'display' in exported.status&&exported.status.renderer.active==='webgl2','Report status carries adaptation, display, resolution and the renderer');
   check('gpu' in exported.metadata&&typeof exported.metadata.parallelCompile==='boolean'&&['highp','mediump'].includes(exported.metadata.spatialPrecision)&&Number.isFinite(exported.metadata.warmMs),'Report metadata names the GPU, the spatial precision, parallel compilation and the warm-up time');}

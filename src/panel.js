@@ -828,7 +828,7 @@
   // [G] 04 Desempenho e rede
   const s4 = section('desempenho', '04', 'Desempenho e rede');
   const budgetOrder = 'desliga nesta ordem: estabilidade, saída, antialiasing, neural, degradês, limpeza, detalhe.';
-  els.budget = choice({key: 'gpuBudget', label: 'Aliviar GPU acima de', opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, 'Nunca']], hint: v => v !== 0 && status.measurement === 'cadence'
+  els.budget = choice({key: 'gpuBudget', label: 'Aliviar GPU acima de', opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, 'Nunca']], hint: v => v !== 0 && status.measurement === 'cadence' && api.active
    ? 'Sem cronômetro de GPU neste navegador, 3, 6 e 10 ms se comportam igual: a redução segue a cadência (quadros na tela × recebidos) e só Nunca a desliga. Quando reduz, ' + budgetOrder
    : (({3: 'Corta etapas cedo; prioriza a fluidez.', 6: 'Equilíbrio padrão.', 10: 'Mantém mais etapas; risco de queda de quadros.', 0: 'Nunca reduz o tratamento automaticamente.'})[v] || '') + ' Acima do limite (p95) ' + budgetOrder});
   const budget = els.budget;
@@ -1138,7 +1138,8 @@
  function updateDesempenho(s) {
   const L = settings.gpuBudget || 10, gpuG = G('gpu', s.gGpu);
   els.budget.updateHint();
-  setT(els.gpuCap, status.measurement === 'cadence' ? 'Tratamento (GPU ≈ fence, p95)' : 'Tratamento (GPU p95)');
+  // status.measurement starts as 'cadence' and is only known once a frame is published: before that, the neutral texts.
+  setT(els.gpuCap, status.measurement === 'cadence' && s.on ? 'Tratamento (GPU ≈ fence, p95)' : 'Tratamento (GPU p95)');
   if (status.measurement === 'cadence' && s.on && s.gpuEst !== null) {
    // Fence estimate against the frame interval (33 ms at 30 FPS): an upper bound, it includes queued work.
    const T = 1000 / s.N, scaleMax = Math.max(2 * T, s.gpuEst), g = G('gpu-est', s.gGpuEst);

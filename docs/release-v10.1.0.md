@@ -28,11 +28,20 @@ Userscripts `6.7.12-imagefilter.10.1.0` (www.xbox.com, sobre o Better xCloud 6.7
 ### Medição e pré-aquecimento (grupo 3: `feat(medicao)`) — schema 2 → 3
 
 - **Passes por segmento** (3.5 item 4, 2.9): cada quadro registra os passes na ordem (ex.: `upload, nnFeatures, nnApply, spatial@mediump.1.1.4.1.0.0.1.1, casFiltered#1`); o segmento conta quadros por sequência distinta (`segment.passes`) e guarda o passe final com `filterId` (`segment.final`). O `spatial` genérico, usado enquanto a variante compila, conta à parte sem abrir segmento. Com Fluidez o passe final roda em `present()` e termina em `@present`. O WebGPU registra o equivalente (`import`/`upload`, `spatialCompute`, variante ou genérico).
-- **Séries novas por segmento** (3.5 itens 1 e 2), com p50/p95/p99: `cpu` (tempo de `updateFrame`/`renderDirect` na thread principal), `slack` (`expectedDisplayTime` − fim do processamento; pode ser negativa) e `pipeline` (`presentationTime` − `receiveTime`), a partir dos metadados do rVFC, guardados só durante a medição.
+- **Séries novas por segmento** (3.5 itens 1 e 2), com p50/p95/p99: `cpu` (tempo de `updateFrame`/`renderDirect` na thread principal), `late` (fim do processamento − `expectedDisplayTime`: ≈ 0 na mesma vsync, ≈ 16,7 ms uma vsync atrasada a 60 Hz; ler a cauda superior) e `pipeline` (`presentationTime` − `receiveTime`), a partir dos metadados do rVFC, guardados só durante a medição.
 - **`events[]`** (3.5 item 3), até 500 com `eventsTruncated`: `compile` (variante do `spatial`, com a duração do `finishProgram`), `compile-failed`, `target` (alocação/realocação com bytes), `degrade` (`reason` e `revision`), `renderer`, `renderer-failed`, `fluidity`, `capture` e `resize`.
 - **`status`/`metadata`/timeline:** `report.status` leva `adaptation` (`budget.reason`), `display`, `resolution`, `renderer` e `neural`; `metadata` ganha `gpu {renderer, vendor}` (via `WEBGL_debug_renderer_info`, `null` sem a extensão), `spatialPrecision`, `parallelCompile` e `warmMs`; a timeline leva `width`/`height` da fonte, `display` e `refreshHz` (F10).
 - **F8 — pré-aquecimento da variante dos ajustes salvos.** `Engine` e `BxWebGPU.create` recebem os ajustes atuais e compilam, além da variante dos padrões, a variante do `spatial` que o `framePlan` desses ajustes vai usar (com `wait = true` no WebGL2). Antes, no Poco (sem `KHR_parallel_shader_compile`), essa variante era finalizada de forma bloqueante no 2º quadro.
 - Fora da medição o custo por quadro é uma checagem booleana; rastro de passes, séries e eventos só existem com a gravação ativa. `docs/api-imagefilter.md` descreve os campos novos.
+
+### Correções da revisão (`fix(v10.1.0)`)
+
+Revisão independente da build acima (lentes ui-api e medição), sem mudança de imagem nem de padrões:
+
+- **Painel sem jogo**: antes do primeiro quadro `status.measurement` ainda é o valor inicial (`cadence`); o rótulo "Tratamento (GPU ≈ fence, p95)" e a dica "Sem cronômetro de GPU neste navegador…" agora só aparecem com o tratamento ativo (`api.active`); fora do jogo ficam "Tratamento (GPU p95)" e "Equilíbrio padrão…".
+- **Série `late` no lugar de `slack`**: o callback do rVFC roda na vsync prevista do quadro ou na seguinte, então `expectedDisplayTime − fim` era sempre ≤ 0 e o resumo (p50/p95/p99/`maxMs`) mostrava só o modo "bom" (≈ −1,3 ms), escondendo o modo uma vsync atrasado (≈ −18 ms). A série passou a medir `fim − expectedDisplayTime` (≈ 0 ou ≈ 16,7 ms), com a cauda ruim em p95/p99/`maxMs`; negativos continuam aceitos.
+- **Amostras brutas em dois grupos**: `cpu`/`late`/`pipeline` entravam no mesmo limite de 300 mil amostras de `display`/`arrival`/`server`/`wait` e o corte caía em ~12 min a 60 FPS com Fluidez (era ~21 min no schema 2), dentro da série de 10–20 min do protocolo. Cada grupo tem agora o seu limite de 300 mil (`sampleLimit.intervals` por grupo).
+- `docs/api-imagefilter.md`: nome do arquivo do relatório (`bx-v<versão>-diagnostics-…`, hoje 10.1.0), descrição de `late` e dos limites.
 
 ## O que NÃO mudou
 
@@ -61,15 +70,16 @@ Via adb por Wi-Fi (Opções do desenvolvedor → Depuração por Wi-Fi) e `chrom
 4. Perfetto longo (frametimeline + `gpu_work_period`): no WebGL2 do Poco o `gpu.*` por segmento é fence (`gpu.method: 'fence'`), não tempo de GPU.
 5. Painel → **Iniciar medição**; fechar o painel; HUD desligado ou compacto; **desconectar o DevTools** (divide o rádio com o stream).
 6. Série de 10–20 min, uma variável por vez, ABAB a cada 2–3 min, anotando horários e engasgos percebidos: (a) rede 100% × 0%; (b) Fluidez desligada × Equilibrada × Equilibrada + Direta; (c) 60 × 120 Hz; (d) Original × Tratada; (e) Aliviar GPU Nunca × 6 ms; (f) Nativa × Auto e, em Auto, EASU × SGSR. Um jogo a 30 FPS e outro a 60 FPS.
-7. **Encerrar e exportar medição** e **Copiar configuração**; conferir `segments.length > 0`, `config.renderer`, `segment.passes`/`final`, as séries `cpu`/`slack`/`pipeline`, `events[]` (compilações, realocações, `degrade`) e a timeline (`refreshHz`, `width`/`height`).
-8. Janela curta (18 s) num engasgo: Perfetto curto + DevTools Performance; cruzar com `events[]` e `slack` do export.
+7. **Encerrar e exportar medição** e **Copiar configuração**; conferir `segments.length > 0`, `config.renderer`, `segment.passes`/`final`, as séries `cpu`/`late`/`pipeline`, `events[]` (compilações, realocações, `degrade`) e a timeline (`refreshHz`, `width`/`height`).
+8. Janela curta (18 s) num engasgo: Perfetto curto + DevTools Performance; cruzar com `events[]` e `late` do export.
 9. Com Renderizador **WebGPU** no play.xbox.com: o canvas tratado deve cobrir o vídeo (R3), e o export deve seguir ao voltar para Auto (R10).
 10. Observar as dicas e avisos novos: etiqueta da rede no slider, aviso "Reconstrução neural pedida, mas não está rodando", "GPU ≈ fence" no painel/HUD, dica de Aliviar GPU sem cronômetro.
 
 ## Testes executados (esta build)
 
-- Node (`node --test tests/*.cjs`): **76 de 76**; `node --check` nos dois userscripts e em `player/player.js`.
-- Playwright no Chromium com SwiftShader (`tools/run-browser-tests.py`): painel e HUD **145**, regressões de pixel **68**, movimento **11**, captura **30**, play.xbox.com **31**, equivalência WebGPU × WebGL2 **26** e integração do renderizador **33**, todos PASS (a suíte WebGPU cai sozinha para os flags do SwiftShader; o `FAIL (0 checks)` seguido do PASS é esperado).
+- Node (`node --test tests/*.cjs`): **77 de 77**; `node --check` nos dois userscripts e em `player/player.js`.
+- Playwright no Chromium com SwiftShader (`tools/run-browser-tests.py`): painel e HUD **145**, regressões de pixel **68**, movimento **11**, captura **30**, play.xbox.com **32**, equivalência WebGPU × WebGL2 **26** e integração do renderizador **33**, todos PASS (a suíte WebGPU cai sozinha para os flags do SwiftShader; o `FAIL (0 checks)` seguido do PASS é esperado).
+- Revisão adversarial (Fable, três lentes) sobre esta build: imagem byte a byte idêntica à v10.0.0 com AA 0 em 36 configurações WebGL2 e 19 WebGPU; instrumentação sem custo com a medição desligada; quatro achados (dois médios, dois baixos) corrigidos: a série `slack` virou `late` (positiva, cauda superior), as séries novas têm limite de amostras próprio, a dica/rótulo sem cronômetro só aparecem com o tratamento ativo e o nome do arquivo na doc da API.
 - A CI regenera os arquivos (`tools/build.py`), repete os testes e gera o APK `android/dist/xcloud-imagefilter-10.1.0.apk` com a mesma chave de teste da série 9.x/10.0.0 (instala por cima). O APK não foi instalado no Poco antes de publicar.
 
 ## Pendências

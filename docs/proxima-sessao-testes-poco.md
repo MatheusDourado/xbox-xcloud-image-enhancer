@@ -72,9 +72,9 @@ Puxe o arquivo com `adb pull "/sdcard/Download/xCloud ImageFilter/"` e leia:
 - **`segments[].passes`:** sequências como `upload,nnFeatures,nnApply,spatial@…,casFiltered#1`. Provam se a rede, o SGSR ou o EASU rodaram de fato.
 - **`segments[].gpu`:** `method: 'fence'` significa limite superior. Para a ocupação real da GPU, use o Perfetto (`gpu_work_period`).
 - **`display`:** p95, p99 e hitches.
-- **`cpu`, `slack` e `pipeline`:**
+- **`cpu`, `late` e `pipeline`:**
   - `cpu` alto aponta para o main thread;
-  - `slack` negativo indica quadro pronto depois do vsync;
+  - `late` é quanto o tratamento terminou depois da exibição prevista do quadro: ≈ 0 na mesma vsync, ≈ 16,7 ms uma vsync atrasada (60 Hz); leia p95/p99/`maxMs`;
   - `pipeline` é o tempo de rede + decodificação até a tela.
 - **`videoSkipped`, `pacerDropped`.**
 - **`events`:** `degrade` com o motivo (não deve aparecer com "Nunca"), `compile`, `target` e `renderer`.

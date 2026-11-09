@@ -17,6 +17,10 @@ probe=r'''
  check(launch&&launch.isConnected&&!launch.hasAttribute('data-stream')&&getComputedStyle(launch).opacity>0.5,'Panel button is visible without a game');
  launch.click();await until(()=>api.panelOpen,2000,'panel visible without a game');
  check(/Nenhum jogo em andamento/.test(document.querySelector('.bxif-play-diag').textContent)&&document.querySelector('.bxif-play-dialog .bxif-panel'),'Panel opens without a game and says none is running');
+ // Review of v10.1.0: before the first frame the measurement kind is unknown, so the GPU label and the Aliviar GPU
+ // hint stay neutral instead of claiming the browser has no GPU timer.
+ {const dialog=document.querySelector('.bxif-play-dialog');await wait(700);const hint=dialog.querySelector('input[data-bxif-key=gpuBudget]').closest('.bxif-row').querySelector('.bxif-hint').textContent;
+  check(api.status.mode==='waiting'&&!/Sem cronômetro/.test(hint)&&/Equilíbrio padrão/.test(hint)&&/Tratamento \(GPU p95\)/.test(dialog.textContent)&&!/≈ fence/.test(dialog.textContent),'Without a game the GPU label and the budget hint do not claim the browser lacks a GPU timer');}
  launch.click();await until(()=>!api.panelOpen,2000,'panel closed');
  // React hydration may drop nodes it did not render: the button comes back.
  launch.remove();await wait(1200);launch=document.querySelector('.bxif-play-launch');check(launch&&launch.isConnected,'Removed button is put back');

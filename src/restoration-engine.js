@@ -112,17 +112,18 @@
     // element skipped; the report adds a per-second stream timeline, so pacing can be read from the
     // file, not only the average FPS.
     // Audit 3.5: each segment also counts the pass sequences it ran (passes), names its last pass (final) and
-    // keeps the main-thread cost (cpu), the slack to the expected display time (slack, may be negative) and
-    // the receive-to-presentation latency (pipeline); events[] dates compilations, allocations and switches.
-    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw=0,disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false;
-    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,INTERVALS=['display','arrival','server','wait','cpu','slack','pipeline'],HITCHES=['display','arrival','server'];
+    // keeps the main-thread cost (cpu), how late the processing ended against the frame's expected display time
+    // (late) and the receive-to-presentation latency (pipeline); events[] dates compilations, allocations and switches.
+    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw={frame:0,cost:0},disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false;
+    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,INTERVALS=['display','arrival','server','wait','cpu','late','pipeline'],HITCHES=['display','arrival','server'],COST=['cpu','late','pipeline'];
     const percentile=(a,p)=>a.length?a[Math.ceil(a.length*p)-1]:null,round=v=>Math.round(v*100)/100;
     // Interval series: count, mean, deviation and maximum are exact and percentiles come from 0.1 ms bins,
-    // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT in
-    // total (samplesTruncated).
-    const series=()=>({n:0,sum:0,sq:0,max:null,bins:new Map(),samples:[],cut:false});
+    // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT per pool
+    // (samplesTruncated). Two pools: the frame intervals (display/arrival/server/wait, as in schema 2) and the
+    // per-frame costs (cpu/late/pipeline), so the new series do not shorten the raw record of the old ones.
+    const series=pool=>({pool,n:0,sum:0,sq:0,max:null,bins:new Map(),samples:[],cut:false});
     function push(x,v){x.n++;x.sum+=v;x.sq+=v*v;if(x.max===null||v>x.max)x.max=v;const b=Math.round(v*10);x.bins.set(b,(x.bins.get(b)||0)+1);
-      if(raw<RAW_LIMIT){x.samples.push(round(v));raw++;}else x.cut=true;}
+      if(raw[x.pool]<RAW_LIMIT){x.samples.push(round(v));raw[x.pool]++;}else x.cut=true;}
     // Hitches (display/arrival/server): intervals over 1.5x the median, i.e. a frame shown late. Not for waits.
     function summary(x,hitches=true){
       if(!x.n)return {count:0,meanMs:null,p50:null,p95:null,p99:null,maxMs:null,deviationMs:null,hitches:hitches?0:null,samplesMs:[],samplesTruncated:false};
@@ -133,13 +134,13 @@
         hitches:hitches?bins.reduce((a,[b,c])=>b/10>median*1.5?a+c:a,0):null,samplesMs:x.samples,samplesTruncated:x.cut};}
     return {
       get active(){return recording;},get startedAt(){return started;},
-      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=raw=0;disjoints=0;started=Date.now();startedAt=clock();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;},
+      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=0;raw={frame:0,cost:0};disjoints=0;started=Date.now();startedAt=clock();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;},
       stop(reason=null){if(!recording)return;recording=false;ended=Date.now();stopReason=reason;},
       frame(config,time){if(!recording)return null;const key=JSON.stringify(config);
         if(current?.key!==key){if(current)current.activeMs+=current.last-current.since;
           let segment=byKey.get(key);
           if(!segment){if(segments.length>=256){this.stop('limite de 256 configurações');return null;}
-            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null};for(const k of INTERVALS)segment[k]=series();segments.push(segment);byKey.set(key,segment);}
+            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null};for(const k of INTERVALS)segment[k]=series(COST.includes(k)?'cost':'frame');segments.push(segment);byKey.set(key,segment);}
           segment.visits++;segment.since=segment.last=time;current=segment;}
         current.frames++;current.last=time;return current;
       },
@@ -158,9 +159,10 @@
         if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;if(method)segment.gpuMethod=method;
       },
       // Interval (ms) of the configuration being rendered: 'display', 'arrival', 'server' or 'wait'.
-      // 'cpu' (main-thread time of the frame), 'slack' (expected display time minus the end of the processing: negative
-      // when late) and 'pipeline' (presentation minus receive time) are only fed while a measurement is active.
-      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='slack')return;push(current[kind],ms);},
+      // 'cpu' (main-thread time of the frame), 'late' (end of the processing minus the frame's expected display time:
+      // 0 = same vsync, one interval = one vsync late; negative only if it ended before the expected display) and
+      // 'pipeline' (presentation minus receive time) are only fed while a measurement is active.
+      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='late')return;push(current[kind],ms);},
       dropped(n){if(recording&&current&&n>0)current.dropped+=n;},
       skipped(n){if(recording&&current&&n>0)current.skipped+=n;},
       // One row per second of stream telemetry, t in seconds since the start; at most an hour.
@@ -169,7 +171,7 @@
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
       report(){return {schema:3,version:'10.1.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
-        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||eventsCut||segments.length>=256,eventsTruncated:eventsCut,
+        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||segments.length>=256,eventsTruncated:eventsCut,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
           const sorted=[...gpu].sort((a,b)=>a-b),row={config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
             passes:[...segment.passes].sort((a,b)=>b[1]-a[1]).map(([sequence,count])=>({sequence,frames:count})),final:segment.final,

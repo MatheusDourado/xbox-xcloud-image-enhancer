@@ -262,6 +262,22 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  assert.match(saved.name,/^bx-v10\.1\.0-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
+// Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez
+// (7 series per frame) keeps raw display/arrival/server/wait samples as long as schema 2 did (75 000 frames).
+test('measurement keeps the raw frame intervals in a pool apart from the per-frame costs',()=>{
+ const d=api().createDiagnostics();d.start();d.frame({},0);
+ const frame=['display','arrival','server','wait'],cost=['cpu','late','pipeline'];
+ for(let i=0;i<74999;i++)for(const k of [...frame,...cost])d.interval(k,16.7);
+ assert.equal(d.report().truncated,false,'below 300 000 frame samples nothing is truncated');for(const k of [...frame,...cost])d.interval(k,16.7);
+ let seg=d.report().segments[0];
+ for(const k of frame)assert.equal(seg[k].samplesTruncated,false,k+' keeps raw samples through 75 000 frames with 7 series');
+ for(const k of cost)assert.equal(seg[k].samplesTruncated,false);assert.equal(seg.cpu.samplesMs.length,75000);assert.equal(d.report().truncated,true,'the frame pool is full');
+ for(const k of frame)d.interval(k,16.7);seg=d.report().segments[0];
+ for(const k of frame)assert.equal(seg[k].samplesTruncated,true,k+' is cut at 300 000 raw samples of its pool');assert.equal(seg.display.samplesMs.length,75000);assert.equal(seg.display.count,75001);
+ for(const k of cost)assert.equal(seg[k].samplesTruncated,false,k+' is not cut by the frame pool');assert.equal(d.report().truncated,true);
+ for(let i=0;i<25000;i++)for(const k of cost)d.interval(k,1);seg=d.report().segments[0];
+ assert.equal(seg.cpu.samplesMs.length,100000);assert.equal(seg.cpu.samplesTruncated,false);d.interval('late',1);assert.equal(d.report().segments[0].late.samplesTruncated,true,'the cost pool is cut on its own');
+});
 
 test('without GPU timers the live decoder rate is the reference, under the FPS limit',()=>{const a=api();
  assert.equal(a.liveCadence(30,60),30);assert.equal(a.liveCadence(60,30),30);assert.equal(a.liveCadence(60,0),60);
@@ -388,18 +404,18 @@ test('the WebGPU probe gives the adapter info or null, and is only offered where
  const none=gpuApi({});assert.equal(none.supported(),false);assert.equal(await none.probe(),null);
  assert.equal(await gpuApi({gpu:{requestAdapter:async()=>null}}).probe(),null);assert.equal(JSON.stringify(await gpuApi({gpu:{requestAdapter:async()=>({})}}).probe()),'{}');});
 
-// Audit 3.5 / 12.1 (measurement instrumentation): pass sequences, last pass, events and the cpu/slack/pipeline series.
+// Audit 3.5 / 12.1 (measurement instrumentation): pass sequences, last pass, events and the cpu/late/pipeline series.
 test('measurement counts the pass sequences of a segment, names its last pass and keeps the new series',()=>{
  const d=api().createDiagnostics();d.passes(null,'x');d.event('compile',{ms:1});d.start();
  const a=d.frame({r:'webgl2'},0);d.passes(a,'upload,spatial,casFiltered#1',{name:'casFiltered',filterId:1});
  for(let i=0;i<3;i++){d.frame({r:'webgl2'},10+i);d.passes(a,'upload,spatial@highp.0.1.4.1.0.0.1.1,casFiltered#1',{name:'casFiltered',filterId:1});}
  const b=d.frame({r:'webgpu'},100);d.passes(b,'import,spatial@highp.0.1.4.1.0.0.1.1,sgsr',{name:'sgsr'});d.passes({},'bogus');
- d.interval('cpu',2.5);d.interval('cpu',-1);d.interval('slack',-3.2);d.interval('slack',12);d.interval('pipeline',48);d.interval('pipeline',NaN);
+ d.interval('cpu',2.5);d.interval('cpu',-1);d.interval('late',-3.2);d.interval('late',16.7);d.interval('late',0);d.interval('pipeline',48);d.interval('pipeline',NaN);d.interval('slack',5);
  d.stop();const r=d.report(),[x,y]=r.segments;
  assert.deepEqual(JSON.parse(JSON.stringify(x.passes)),[{sequence:'upload,spatial@highp.0.1.4.1.0.0.1.1,casFiltered#1',frames:3},{sequence:'upload,spatial,casFiltered#1',frames:1}],'the generic shader counts apart, inside the same segment');
  assert.deepEqual(JSON.parse(JSON.stringify(x.final)),{name:'casFiltered',filterId:1});assert.deepEqual(JSON.parse(JSON.stringify(y.final)),{name:'sgsr',filterId:null});assert.equal(y.passes.length,1);
- assert.equal(y.cpu.count,1);assert.equal(y.cpu.p50,2.5);assert.equal(y.cpu.hitches,null);assert.equal(y.slack.count,2);assert.equal(y.slack.p50,-3.2,'negative slack (a late frame) is kept');assert.equal(y.slack.maxMs,12);assert.equal(y.pipeline.count,1);assert.equal(y.pipeline.p95,48);
- assert.equal(x.cpu.count,0);assert.equal(x.slack.p50,null);assert.equal(r.events.length,0);assert.equal(r.eventsTruncated,false);assert.equal(r.sampleLimit.events,500);
+ assert.equal(y.cpu.count,1);assert.equal(y.cpu.p50,2.5);assert.equal(y.cpu.hitches,null);assert.equal(y.late.count,3);assert.equal(y.late.p50,0);assert.equal(y.late.maxMs,16.7,'a frame one vsync late is the upper tail');assert.deepEqual([...y.late.samplesMs],[-3.2,16.7,0],'ending before the expected display (negative) is kept');assert.equal(y.pipeline.count,1);assert.equal(y.pipeline.p95,48);
+ assert.equal(x.cpu.count,0);assert.equal(x.late.p50,null);assert.equal(y.slack,undefined,'schema 3 has no slack series');assert.equal(r.events.length,0);assert.equal(r.eventsTruncated,false);assert.equal(r.sampleLimit.events,500);
 });
 test('measurement events are dated from the start, rounded and capped at 500 with a truncation mark',()=>{
  const d=api().createDiagnostics();d.start();d.event('compile',{name:'spatial@highp.1.1.4.1.0.0.1.1',ms:12.3456,wait:false,frames:1,none:undefined,bad:NaN});
