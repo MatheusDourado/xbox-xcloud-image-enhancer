@@ -108,8 +108,11 @@
     // captured by the server (server), the Fluidez wait per frame, its drops and the frames the <video>
     // element skipped; the report adds a per-second stream timeline, so pacing can be read from the
     // file, not only the average FPS.
-    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw=0,disjoints=0,started=null,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false;
-    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,INTERVALS=['display','arrival','server','wait'];
+    // Audit 3.5: each segment also counts the pass sequences it ran (passes), names its last pass (final) and
+    // keeps the main-thread cost (cpu), the slack to the expected display time (slack, may be negative) and
+    // the receive-to-presentation latency (pipeline); events[] dates compilations, allocations and switches.
+    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw=0,disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false;
+    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,INTERVALS=['display','arrival','server','wait','cpu','slack','pipeline'],HITCHES=['display','arrival','server'];
     const percentile=(a,p)=>a.length?a[Math.ceil(a.length*p)-1]:null,round=v=>Math.round(v*100)/100;
     // Interval series: count, mean, deviation and maximum are exact and percentiles come from 0.1 ms bins,
     // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT in
@@ -127,23 +130,34 @@
         hitches:hitches?bins.reduce((a,[b,c])=>b/10>median*1.5?a+c:a,0):null,samplesMs:x.samples,samplesTruncated:x.cut};}
     return {
       get active(){return recording;},get startedAt(){return started;},
-      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=raw=0;disjoints=0;started=Date.now();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;},
+      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=raw=0;disjoints=0;started=Date.now();startedAt=performance.now();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;},
       stop(reason=null){if(!recording)return;recording=false;ended=Date.now();stopReason=reason;},
       frame(config,time){if(!recording)return null;const key=JSON.stringify(config);
         if(current?.key!==key){if(current)current.activeMs+=current.last-current.since;
           let segment=byKey.get(key);
           if(!segment){if(segments.length>=256){this.stop('limite de 256 configurações');return null;}
-            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,display:series(),arrival:series(),server:series(),wait:series()};segments.push(segment);byKey.set(key,segment);}
+            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null};for(const k of INTERVALS)segment[k]=series();segments.push(segment);byKey.set(key,segment);}
           segment.visits++;segment.since=segment.last=time;current=segment;}
         current.frames++;current.last=time;return current;
       },
+      // The passes a frame ran, in order ('upload,spatial@mediump.0.1.4.1.0.0.1.1,casFiltered#1'): one counter
+      // per distinct sequence inside the segment (the generic 'spatial' while a variant compiles counts apart),
+      // plus the last pass and its filterId. Never splits a segment.
+      passes(segment,sequence,final=null){if(!segment||!segments.includes(segment))return;segment.passes.set(sequence,(segment.passes.get(sequence)||0)+1);
+        if(final)segment.final={name:final.name,filterId:final.filterId??null};},
+      // Dated events (t in seconds since the start): variant compilation, target allocation, degrade, renderer,
+      // Fluidez/capture and canvas size changes. At most EVENT_LIMIT; eventsTruncated marks the cut.
+      event(type,data){if(!recording)return;if(events.length>=EVENT_LIMIT){eventsCut=true;return;}const row={t:Math.round((performance.now()-startedAt)*10)/10000,type};
+        for(const k in data){const v=data[k];row[k]=typeof v==='number'?(Number.isFinite(v)?round(v):null):v??null;}events.push(row);},
       // method: how the engine timed the frame ('timer', 'timestamp' or 'fence'); kept per segment, so
       // the report says what each gpu series is (audit R9: a fence is an upper bound, not GPU time).
       sample(segment,ms,method=null){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
         if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;if(method)segment.gpuMethod=method;
       },
       // Interval (ms) of the configuration being rendered: 'display', 'arrival', 'server' or 'wait'.
-      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0)return;push(current[kind],ms);},
+      // 'cpu' (main-thread time of the frame), 'slack' (expected display time minus the end of the processing: negative
+      // when late) and 'pipeline' (presentation minus receive time) are only fed while a measurement is active.
+      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='slack')return;push(current[kind],ms);},
       dropped(n){if(recording&&current&&n>0)current.dropped+=n;},
       skipped(n){if(recording&&current&&n>0)current.skipped+=n;},
       // One row per second of stream telemetry, t in seconds since the start; at most an hour.
@@ -151,13 +165,14 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:2,version:'10.0.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
-        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||segments.length>=256,
+      report(){return {schema:3,version:'10.0.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw>=RAW_LIMIT||timelineCut||eventsCut||segments.length>=256,eventsTruncated:eventsCut,
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
-          const sorted=[...gpu].sort((a,b)=>a-b);return {config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
-            gpu:{method:segment.gpuMethod,count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]},
-            display:summary(segment.display),arrival:summary(segment.arrival),server:summary(segment.server),wait:summary(segment.wait,false)};}),
-        timeline};}
+          const sorted=[...gpu].sort((a,b)=>a-b),row={config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
+            passes:[...segment.passes].sort((a,b)=>b[1]-a[1]).map(([sequence,count])=>({sequence,frames:count})),final:segment.final,
+            gpu:{method:segment.gpuMethod,count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]}};
+          for(const k of INTERVALS)row[k]=summary(segment[k],HITCHES.includes(k));return row;}),
+        timeline,events};}
     };
   }
   async function captureVideoStats(video,peer){
