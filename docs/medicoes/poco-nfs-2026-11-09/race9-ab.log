@@ -1,0 +1,9 @@
+ok
+22:04:45
+22:04:45 OUT -> {"output":"native"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+22:05:25 OUT -> {"output":"auto"} rend=webgl2 neural=running res=1920×1080 → 1920×1080
+22:06:05 OUT -> {"output":"native"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+22:06:45 OUT -> {"output":"auto"} rend=webgl2 neural=running res=1920×1080 → 1920×1080
+restored A
+
+[exited with code 0]

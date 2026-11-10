@@ -1,0 +1,46 @@
+buffers { size_kb: 262144 fill_policy: RING_BUFFER }
+buffers { size_kb: 16384 fill_policy: RING_BUFFER }
+duration_ms: 1800000
+write_into_file: true
+file_write_period_ms: 2000
+flush_period_ms: 10000
+data_sources { config { name: "android.surfaceflinger.frametimeline" } }
+data_sources { config { name: "linux.ftrace" ftrace_config {
+  ftrace_events: "power/gpu_work_period"
+  ftrace_events: "power/gpu_frequency"
+  ftrace_events: "power/cpu_frequency"
+  ftrace_events: "sched/sched_switch"
+  ftrace_events: "sched/sched_waking"
+  ftrace_events: "task/task_newtask"
+  ftrace_events: "task/task_rename"
+  ftrace_events: "thermal/thermal_temperature"
+  ftrace_events: "ftrace/print"
+  atrace_categories: "gfx"
+  atrace_categories: "view"
+  atrace_categories: "webview"
+  atrace_categories: "input"
+  atrace_categories: "hal"
+  atrace_categories: "video"
+  atrace_categories: "freq"
+  atrace_categories: "thermal"
+  atrace_apps: "com.imagefilter.xcloud"
+  buffer_size_kb: 16384
+  drain_period_ms: 250
+} } }
+data_sources { config { name: "linux.process_stats" target_buffer: 1 process_stats_config { scan_all_processes_on_start: true proc_stats_poll_ms: 1000 } } }
+data_sources { config { name: "linux.sys_stats" target_buffer: 1 sys_stats_config {
+  meminfo_period_ms: 1000 meminfo_counters: MEMINFO_MEM_AVAILABLE
+  stat_period_ms: 1000 stat_counters: STAT_CPU_TIMES
+  thermal_period_ms: 1000 gpufreq_period_ms: 500 cpufreq_period_ms: 500 } } }
+data_sources { config { name: "android.power" target_buffer: 1 android_power_config {
+  battery_poll_ms: 1000 battery_counters: BATTERY_COUNTER_CURRENT battery_counters: BATTERY_COUNTER_CAPACITY_PERCENT collect_power_rails: true } } }
+data_sources { config { name: "track_event" track_event_config {
+  disabled_categories: "*"
+  enabled_categories: "gpu" enabled_categories: "viz" enabled_categories: "cc"
+  enabled_categories: "media" enabled_categories: "webrtc" enabled_categories: "toplevel"
+  enabled_categories: "blink.user_timing" enabled_categories: "benchmark" enabled_categories: "android_webview"
+  enabled_categories: "v8.gc"
+} } }
+data_sources { config { name: "org.chromium.trace_event" chrome_config {
+  trace_config: "{\"record_mode\":\"record-continuously\",\"included_categories\":[\"gpu\",\"viz\",\"cc\",\"media\",\"webrtc\",\"toplevel\",\"blink.user_timing\",\"benchmark\",\"android_webview\",\"v8.gc\"]}"
+} } }

@@ -1,0 +1,8 @@
+ok
+22:09:38 FILT -> {"detail":1,"deband":0.8}
+22:10:18 FILT -> {"detail":0.3,"deband":0.8}
+22:10:59 FILT -> {"detail":1,"deband":0.8}
+22:11:39 FILT -> {"detail":1,"deband":0}
+restored
+
+[exited with code 0]
