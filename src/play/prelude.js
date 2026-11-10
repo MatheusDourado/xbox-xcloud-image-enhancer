@@ -33,10 +33,16 @@ var STATES = {currentStream: {peerConnection: null}};
 // sees at most 8 ms per decoded frame (Better xCloud's stream.video.preventResolutionDrops changes the same report
 // inside the site's code). Our own telemetry reads the real values (realStats). Both settings are read when the
 // session starts: a change applies to the next stream. Installed here, at document-start, before the site's code.
+// Audit C11: the limit holds between any two reads, not only on the average since the start: each object queried
+// (peer connection or receiver) keeps, per inbound stream, a virtual totalDecodeTime that grows by at most 8 ms per
+// frame decoded since its previous read (monotonic, reset when the counters restart). preventDrops is latched by
+// each object on its first read, so turning it on or off mid-game neither jumps the series nor acts before the next game.
 var BxPlayStream = (() => {
  const CAP_MS = 8, OS = {'1080p': 'windows', '1080p-hq': 'tizen'}, PLAY = /\/sessions\/cloud\/play(?:[?#]|$)/i;
  // request: what the last play request asked for; capAt/capCalls/realMs: the last report the cap changed.
  const state = {request: null, capAt: 0, capCalls: 0, realMs: null, error: ''};
+ // Per queried object: {on: preventDrops latched at its first read, streams: Map(stats id → {frames, real, out})}.
+ const sessions = new WeakMap();
  const prefs = () => window.BxImageFilter?.settings || {};
  const isRequest = v => typeof Request === 'function' && v instanceof Request;
  // Body (JSON text) and x-ms-device-info (JSON text or null) of the play request, declaring osName.
@@ -58,18 +64,30 @@ var BxPlayStream = (() => {
   } catch {}
   return result;
  }
- // The report with each inbound video totalDecodeTime limited to capMs per decoded frame (a copy, only when one
- // was above it). realMs: the real mean decoding time since the stream started.
- function capReport(report, capMs = CAP_MS) {
-  const out = new Map();let realMs = null;
+ // The report with each inbound video totalDecodeTime limited to capMs per frame decoded since the previous read of
+ // the same stream (streams: Map kept by the caller; a new Map each call caps the totals since the start). The copy
+ // is made only when a value changes. realMs: the real decoding time per frame over the last interval that was capped.
+ function capReport(report, capMs = CAP_MS, streams = new Map()) {
+  const out = new Map();let realMs = null, changed = false;
   report.forEach((v, k) => {
    if (v?.type === 'inbound-rtp' && (v.kind ?? v.mediaType) === 'video' && v.framesDecoded > 0 && typeof v.totalDecodeTime === 'number') {
-    const limit = v.framesDecoded * capMs / 1000;
-    if (v.totalDecodeTime > limit) { realMs = v.totalDecodeTime / v.framesDecoded * 1000; v = {...v, totalDecodeTime: limit}; }
+    const id = v.id ?? k, s = streams.get(id), frames = v.framesDecoded, real = v.totalDecodeTime;
+    let total;
+    if (!s || frames < s.frames || real < s.real) {
+     // First read or restarted counters: the totals since the start, capped as a whole.
+     total = Math.min(real, frames * capMs / 1000);
+     if (total < real) realMs = real / frames * 1000;
+     streams.set(id, {frames, real, out: total});
+    } else {
+     const df = frames - s.frames, dt = real - s.real, step = Math.min(dt, df * capMs / 1000);
+     if (step < dt && df > 0) realMs = dt / df * 1000;
+     total = s.out + step;s.frames = frames;s.real = real;s.out = total;
+    }
+    if (total !== real) { v = {...v, totalDecodeTime: total};changed = true; }
    }
    out.set(k, v);
   });
-  return {report: realMs === null ? report : out, realMs};
+  return {report: changed ? out : report, realMs};
  }
  // Native getStats per patched prototype: realStats calls it, so the adapter never sees the capped values.
  const natives = new Map();
@@ -82,10 +100,13 @@ var BxPlayStream = (() => {
   // Not async: keeps length 0 and the legacy callback form, which webrtc-adapter tells apart by both.
   const getStats = function getStats() {
    const result = native.apply(this, arguments);
-   if (prefs().preventDrops !== true || typeof result?.then !== 'function') return result;
+   if (typeof result?.then !== 'function' || this == null || typeof this !== 'object') return result;
+   let session = sessions.get(this);
+   if (!session) { session = {on: prefs().preventDrops === true, streams: new Map()};sessions.set(this, session); }
+   if (!session.on) return result;
    return result.then(report => {
     try {
-     const c = capReport(report);
+     const c = capReport(report, CAP_MS, session.streams);
      if (c.realMs !== null) { state.capAt = Date.now();state.capCalls++;state.realMs = c.realMs; }
      return c.report;
     } catch (error) { state.error = String(error); return report; }

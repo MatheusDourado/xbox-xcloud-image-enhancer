@@ -26,7 +26,11 @@
   renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null,probe:null},
   // play.xbox.com (BxPlayStream.info): the stream settings, what the last session asked of the server and whether the
   // site's decoding time is being capped (capActive); null on the Better xCloud build.
-  stream:null};
+  stream:null,
+  // Audit C02: what the last frame really ran (BxRestoration.planEffective: strengths after the compression adaptation
+  // and the GPU budget, the AA path, requested values and the budget's cuts) and every reduction of the current
+  // budget in order ({step, reason, revision, source}); status.adaptation is only the last reason.
+  effective:null,cuts:[]};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -46,6 +50,10 @@
  const api=window.BxImageFilter={settings,status,diagnostic:false,panelOpen:false,presets:BxRestoration.presets,
   // Restores the treatment; the HUD choice is a display preference and stays, and so do the stream settings.
   reset(){const {hud,hudPosition,streamResolution,preventDrops}=settings;Object.assign(settings,BxRestoration.defaults,{hud,hudPosition,streamResolution,preventDrops});persist();api.diagnostic=false;activeEngine?.resetBudget();if(activePlayer){activePlayer.bxReferenceFps=null;activePlayer.bxTimes=[];activePlayer.bxCadenceMark=performance.now();}},
+  // Explicit override of the automatic reduction (audit C02): turns back on everything the GPU budget cut, keeping the
+  // settings. The budget measures again from scratch and may cut again if the GPU stays over the limit.
+  restoreBudget(){const player=activePlayer;if(!activeEngine)return false;if(player){player.bxEngine?.resetBudget();player.bxGpu?.engine?.resetBudget();}else activeEngine.resetBudget();
+   status.adaptation='';status.cuts=[];if(player){player.bxReferenceFps=null;player.bxTimes=[];player.bxCadenceMark=performance.now();}return true;},
   // Unchanged values are ignored: the gamepad repeats a held direction ~10 times a second, even at the ends.
   update(patch){const changed=Object.keys(patch).filter(k=>settings[k]!==patch[k]);if(!changed.length)return;
    Object.assign(settings,patch);if(changed.includes('capture')||changed.includes('fluidity'))captureEpoch++;if(changed.includes('renderer'))rendererEpoch++;if(changed.some(k=>!LIVE_KEYS.has(k)))activeEngine?.resetBudget();persist(true);},
@@ -77,7 +85,7 @@
   async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
    const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
    report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,neural:status.neural,
-    adaptation:status.adaptation,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},stream:status.stream,warnings:status.warnings.map(w=>w.text)};
+    adaptation:status.adaptation,cuts:status.cuts,effective:status.effective,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},stream:status.stream,warnings:status.warnings.map(w=>w.text)};
    const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
    report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
@@ -86,7 +94,7 @@
   configText(){const native=nativePrefs();
    const o=status.origin,round=v=>typeof v==='number'?Math.round(v*10)/10:v;
    return JSON.stringify({build:globalThis.BxBuild?.version,app:window.BxAndroid?.getAppInfo?.()??null,screen:`${screen.width}×${screen.height} @${window.devicePixelRatio}`,
-    status:{resolution:status.resolution,stream:status.stream,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
+    status:{resolution:status.resolution,stream:status.stream,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,cuts:status.cuts.map(c=>c.reason),effective:status.effective,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
     pacing:status.pacing&&{meanMs:round(status.pacing.meanMs),deviationMs:round(status.pacing.deviationMs),p95Ms:round(status.pacing.p95Ms),hitches:status.pacing.hitches},
     origin:o&&{server:o.server&&[round(o.server.meanMs),round(o.server.deviationMs)],arrival:o.arrival&&[round(o.arrival.meanMs),round(o.arrival.deviationMs)],missed:o.missed,presented:o.presented},
     net:status.net&&Object.fromEntries(Object.entries(status.net).map(([k,v])=>[k,k==='bitsPerPixel'&&typeof v==='number'?Math.round(v*1000)/1000:round(v)])),warnings:status.warnings.map(w=>w.text),
@@ -115,23 +123,29 @@
  }
  // Stream telemetry for the panel, the HUD and the compression-adaptive treatment: one getStats per
  // second, only while one of them needs it.
- let telemetryBusy=false,lastRtp=null,telemetryPeer=null,bppSamples=[];
+ let telemetryBusy=false,lastRtp=null,telemetryPeer=null,telemetryIdentity=null,bppSamples=[];
  async function pollTelemetry(){
   const pc=peer();
   // A new session starts from scratch: no deltas or QP level carried over from the previous game.
-  if(pc!==telemetryPeer){telemetryPeer=pc;lastRtp=null;status.net=null;status.adaptive=null;bppSamples=[];}
+  if(pc!==telemetryPeer){telemetryPeer=pc;lastRtp=null;telemetryIdentity=null;status.net=null;status.adaptive=null;bppSamples=[];}
   if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring||activeEngine&&!activeEngine.ext)){updateWarnings();return;}
   telemetryBusy=true;
   try{let rtp=null,rtt=null;const stats=await BxRestoration.readStats(pc);
    if(peer()!==pc)return;
    stats.forEach(item=>{if(item.type==='inbound-rtp'&&item.kind==='video')rtp=item;
     if(item.type==='candidate-pair'&&item.nominated&&item.state==='succeeded'&&Number.isFinite(item.currentRoundTripTime))rtt=item.currentRoundTripTime*1000;});
-   if(lastRtp&&rtp&&lastRtp.id!==rtp.id)lastRtp=null;
    const info=rtp&&stats.get?.(rtp.codecId),profile=BxRestoration.h264Profile(info?.sdpFmtpLine);
    const codec=info?.mimeType?info.mimeType.replace('video/','')+(profile?' '+profile:''):null;
+   // Audit C08: a new inbound stream (id, SSRC), codec or frame size starts the deltas and the compression estimate
+   // over, so neither the QP mean nor the bit-per-pixel window of another stream carries over.
+   const identity=rtp?[rtp.id,rtp.ssrc,info?.mimeType??'',rtp.frameWidth??'',rtp.frameHeight??''].join('|'):null;
+   if(identity!==null&&identity!==telemetryIdentity){if(telemetryIdentity!==null){lastRtp=null;bppSamples=[];status.adaptive=null;}telemetryIdentity=identity;}
    const d=BxRestoration.decoderSummary(lastRtp,rtp?{...rtp,codec}:null),q=BxRestoration.streamSummary(lastRtp,rtp);lastRtp=rtp;
    status.net=d&&{codec:d.codec,profile,fpsReceived:d.fps,decoder:d.kind,implementation:d.implementation,decodeMs:d.dtMs,bufferMs:d.jitterMs,rttMs:rtt,...q};
-   if(Number.isFinite(rtp?.qpSum))adaptToCompression(q?.qp??null,q?.frames??0);else adaptToBitrate(q?.bitsPerPixel??null,q?.frames??0);
+   // The QP scale (0-51) and the level calibration are H.264's: another codec (VP9/AV1 use 0-255) is estimated
+   // from the bits per pixel instead. Without codec information the stream is xCloud's H.264.
+   const h264=!info?.mimeType||/h264/i.test(info.mimeType);
+   if(h264&&Number.isFinite(rtp?.qpSum))adaptToCompression(q?.qp??null,q?.frames??0);else adaptToBitrate(q?.bitsPerPixel??null,q?.frames??0);
    const diag=activeEngine?.diagnostics;
    if(diag?.active&&d)diag.timeline({fpsReceived:d.fps,fpsShown:api.active?status.fps:null,bitrateMbps:q?.bitrateMbps,lossPct:q?.lossPct,rttMs:rtt,decodeMs:d.dtMs,bufferMs:d.jitterMs,
     qp:q?.qp,bitsPerPixel:q?.bitsPerPixel,level:status.adaptive?.level,gpuMs:status.gpuP95??status.gpuEstimate?.p95,waitMs:status.fluidity?.extraMs,
@@ -155,8 +169,9 @@
  // (stalls) are skipped; the first estimate needs 5 seconds. Same hysteresis as the QP.
  function adaptToBitrate(bpp,frames){
   if(!Number.isFinite(bpp)||!(bpp>0)||!(frames>=10))return;
-  bppSamples.push(bpp);if(bppSamples.length>60)bppSamples.shift();if(bppSamples.length<5)return;
-  const sorted=[...bppSamples].sort((a,b)=>a-b),p80=sorted[Math.ceil(sorted.length*.8)-1],qp=BxRestoration.qpFromBitsPerPixel(p80),target=BxRestoration.compressionLevel(qp);
+  // Samples expire after a minute of stream time (audit C08): a stall or a hidden page does not keep old seconds.
+  const now=Date.now();bppSamples.push({at:now,bpp});while(bppSamples.length>60||bppSamples.length&&now-bppSamples[0].at>60000)bppSamples.shift();if(bppSamples.length<5)return;
+  const sorted=bppSamples.map(e=>e.bpp).sort((a,b)=>a-b),p80=sorted[Math.ceil(sorted.length*.8)-1],qp=BxRestoration.qpFromBitsPerPixel(p80),target=BxRestoration.compressionLevel(qp);
   const a=status.adaptive,level=a?.level==null||Math.abs(target-a.level)>.15?target:a.level;
   status.adaptive={source:'bitrate',qp:null,qpMean:null,qpEstimate:qp,bitsPerPixel:p80,level,scales:BxRestoration.compressionScales(level)};
  }
@@ -173,6 +188,11 @@
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
   if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
   if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:'Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).'});
+  // Audit C02: a cut stays visible even when a later reduction replaced status.adaptation.
+  const cut=status.effective?.cuts;
+  if(cut&&settings.mode==='filtered'&&status.mode!=='waiting'){
+   if(cut.antialias)w.push({level:'warn',key:'aa-cut',text:'Antialiasing pedido, mas desligado pela redução automática de GPU.'});
+   if(cut.temporal)w.push({level:'warn',key:'temporal-cut',text:'Estabilidade em movimento pedida, mas desligada pela redução automática de GPU.'});}
   if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:'Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   // The site reports a capped decoding time to the server; status.net.decodeMs stays the real one.
@@ -195,7 +215,8 @@
  // Records a frame shown on screen: 2 s window for the panel's pacing line, longer ring for the HUD graph.
  // A frame shown while the page is hidden (a callback already queued when it hid) starts no interval: the
  // next one would span the hidden time.
- function shownAt(t,now,engine){if(document.hidden){t.lastShown=null;return;}keep(t.display,now,now);if(t.lastShown!=null&&t.lastShown>hiddenAt){status.intervals.push(now-t.lastShown);status.intervalsTotal++;if(status.intervals.length>240)status.intervals.shift();engine?.diagnostics.interval('display',now-t.lastShown);}t.lastShown=now;}
+ // segment: the measurement segment of the frame shown (audit C09), not the one of the last render.
+ function shownAt(t,now,engine,segment=null){if(document.hidden){t.lastShown=null;return;}keep(t.display,now,now);if(t.lastShown!=null&&t.lastShown>hiddenAt){status.intervals.push(now-t.lastShown);status.intervalsTotal++;if(status.intervals.length>240)status.intervals.shift();engine?.diagnostics.interval('display',now-t.lastShown,segment);}t.lastShown=now;}
  const statsOf=list=>BxRestoration.frameStats(list.map(e=>e[1]));
  function startTiming(player){
   if(player.bxTiming)return;
@@ -236,7 +257,11 @@
    t.raf=requestAnimationFrame(tick);
    const now=performance.now(),f=t.pacer.tick(now),engine=player.bxRender;t.lastTick=now;
    const dropped=t.pacer.dropped;if(dropped>t.pacerDropped){engine?.diagnostics.dropped(dropped-t.pacerDropped);t.pacerDropped=dropped;}
-   if(f&&engine&&renderable(player)&&engine.present(f.slot)){t.shown=f.slot;shownAt(t,now,engine);if(f.arrival>hiddenAt)engine.diagnostics.interval('wait',now-f.arrival);if(player.gl&&!player.gl.isContextLost())player.gl.useProgram(player.program);}
+   if(f&&engine&&renderable(player)&&engine.present(f.slot)){t.shown=f.slot;const segment=engine.lastPresented?.segment??null;shownAt(t,now,engine,segment);
+    if(f.arrival>hiddenAt)engine.diagnostics.interval('wait',now-f.arrival,segment);
+    // Receive time of the frame to the submission of its treated image (audit C10), in the frame's own segment.
+    if(Number.isFinite(f.receive)&&f.receive>hiddenAt)engine.diagnostics.interval('treated',performance.now()-f.receive,segment);
+    if(player.gl&&!player.gl.isContextLost())player.gl.useProgram(player.program);}
   };
   t.raf=requestAnimationFrame(tick);return t.pacer;
  }
@@ -359,6 +384,7 @@
   const engine=player.bxRender;
   status.mode=api.diagnostic?'diagnostic':settings.mode;status.frames=engine.frames;status.lastFrame=Date.now();status.resolution=`${w}×${h} → ${ow}×${oh}`;
   status.gpuP95=engine.budget.p95;status.measurement=engine.ext?'gpu':'cadence';status.adaptation=engine.budget.reason;
+  status.effective=engine.effective??null;status.cuts=engine.budget.cuts;
   status.gpuEstimate=engine.ext?null:engine.gpuEstimate;
   // Whether the neural restoration asked for is drawn: the engine drawing decides (WebGPU draws with
   // neural > 0 only after its budget cut it); without float targets it never runs (audit N5, item 4).
@@ -400,11 +426,11 @@
   let track=null,reader;
   try{track=source.clone();reader=new MediaStreamTrackProcessor({track}).readable.getReader();}
   catch(error){track?.stop();status.capture={active:false,frames:0,reason:'Indisponível: '+(error.message||error)};return false;}
-  const d=player.bxDirect={track,reader,frames:0,rendered:0,started:performance.now(),nextAt:null};
+  const d=player.bxDirect={track,reader,frames:0,rendered:0,started:performance.now(),lastAt:null,videoMark:null,nextAt:null};
   status.capture={active:true,frames:0,reason:''};player.bxDiagnostics?.event('capture',{active:true});
   (async()=>{let reason='Fluxo de vídeo encerrado';
    try{for(;;){const {value,done}=await reader.read();if(done)break;
-     try{if(player.bxDirect!==d)break;d.frames++;renderDirect(player,value);}finally{value.close();}}}
+     try{if(player.bxDirect!==d)break;d.frames++;d.lastAt=performance.now();d.videoMark=null;renderDirect(player,value);}finally{value.close();}}}
    catch(error){reason=String(error?.message||error);}
    finally{if(player.bxDirect===d)stopDirect(player,reason);}})();
   return true;
@@ -413,6 +439,8 @@
   const d=player.bxDirect;if(!d)return;player.bxDirect=null;
   try{d.reader.cancel().catch(()=>{});}catch{}d.track.stop();
   status.capture={active:false,frames:d.rendered,reason};clearOrigin(player);player.bxDiagnostics?.event('capture',{active:false,reason});
+  // The video path has another time base and clock: no temporal history across the switch (audit C13).
+  player.bxEngine?.resetHistory();player.bxGpu?.engine?.resetHistory();
  }
  function renderDirect(player,frame){
   const d=player.bxDirect,t=player.bxTiming;
@@ -441,7 +469,7 @@
    if(!engine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
    // Some drivers may not take a decoder frame as a texture: check the first frames once and fall back.
    if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
-   d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame'});
+   d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame',receive:network&&player.bxDiagnostics?.active?arrival:null});
    publish(player,{w,h,ow,oh,shown,newFrame:true,timing});
    // Main-thread cost of this frame (measurement only; the late series needs the rVFC metadata, video path only).
    if(player.bxDiagnostics?.active)player.bxDiagnostics.interval('cpu',performance.now()-at);
@@ -457,6 +485,16 @@
   const d=player.bxDirect;if(!d)return false;
   // The video path keeps rendering until the first direct frame; with none within 2 s, it stays.
   if(d.frames===0&&performance.now()-d.started>2000){stopDirect(player,'Nenhum quadro da captura direta: usando o vídeo');player.bxDirectFailed=true;return false;}
+  // Watchdog (audit C13): after the first frames the reader may stop delivering while the track still reads live.
+  // This runs from the video's own frame callback, so the <video> element is presenting frames: when it shows more
+  // than 5 new ones over a second without any direct frame (page visible, not paused), the video path takes over.
+  // Retried, as a failure to start, after a change of capture or Fluidez.
+  if(d.frames>0&&!document.hidden&&!player.$video?.paused&&performance.now()-d.lastAt>1000){
+   // Without the video's frame counter, 3 s without a direct frame.
+   const count=player.$video?.getVideoPlaybackQuality?.().totalVideoFrames,known=Number.isFinite(count);
+   if(known&&d.videoMark===null)d.videoMark=count;
+   if(known?count-d.videoMark>5:performance.now()-d.lastAt>3000){stopDirect(player,'A captura direta parou de entregar quadros: usando o vídeo');player.bxDirectFailed=true;return false;}
+  }
   return d.frames>0;
  }
  proto.updateFrame=function(){
@@ -486,12 +524,15 @@
     const pacer=ensurePacer(this,settings.fluidity),slot=newFrame||!timing.shown?freeSlot(timing):timing.shown;
     if(!engine.render(video,ow,oh,renderSettings,time,api.diagnostic,slot,true))return;
     timing.lastSlot=slot;
-    if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;pacer.add({slot,arrival:performance.now(),rtp});}
+    if(newFrame||!timing.shown){const rtp=timing.pendingRtp;timing.pendingRtp=null;
+     const receive=t0&&timing.vfAt!=null&&performance.now()-timing.vfAt<50&&Number.isFinite(timing.vfReceive)?timing.vfReceive:null;
+     pacer.add({slot,arrival:performance.now(),rtp,receive});}
     else if(engine.present(slot))this.gl.useProgram(this.program);
    }else{
     if(timing.pacer){stopPacer(this);this.bxDiagnostics?.event('fluidity',{mode:'off'});}
     if(!engine.render(video,ow,oh,renderSettings,time,api.diagnostic))return;
-    if(newFrame)shownAt(timing,performance.now(),engine);
+    if(newFrame){const end=performance.now();shownAt(timing,end,engine,engine.lastPresented?.segment??null);
+     if(t0&&timing.vfAt!=null&&end-timing.vfAt<50&&Number.isFinite(timing.vfReceive))this.bxDiagnostics.interval('treated',end-timing.vfReceive,engine.lastPresented?.segment??null);}
    }
    this.bxLastFrame=token;this.bxLastSettings=controls;
    publish(this,{w,h,ow,oh,shown,newFrame,timing});

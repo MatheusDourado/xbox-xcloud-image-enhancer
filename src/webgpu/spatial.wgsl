@@ -51,7 +51,8 @@ fn spatial(fc:vec2f,size:vec2f)->vec4f{
   for(var i=0;i<4;i++){
    if(f32(i)>=taps){break;}
    var d=vec2f(-.5,1);if(i==0){d=vec2f(1,.5);}else if(i==1){d=vec2f(-1,-.5);}else if(i==2){d=vec2f(.5,-1);}
-   let n=at(p+floor(d*radius));
+   // trunc: opposite taps stay exactly opposite (audit C12), as spatial.glsl.
+   let n=at(p+trunc(d*radius));
    let weight=select(1.,1.-smoothstep(.006,.012+u.deband*.04,peak(n-c)),selective);
    avg+=n*weight;weightSum+=weight;
    diff=max(diff,max(max(abs(n.r-c.r),abs(n.g-c.g)),abs(n.b-c.b)));
@@ -109,7 +110,9 @@ fn spatial(fc:vec2f,size:vec2f)->vec4f{
    let uv=(p+.5)/size;let d=dir/max(major,1e-5)/size*.5;
    let smoothColor=(tex(uv-d)+tex(uv+d))*.5;
    let sl=lum(smoothColor);
-   if(sl>=lo&&sl<=hi){result+=(smoothColor-c)*weight;}
+   // Audit C03: delta bounded on the result's luma by the source neighborhood, as spatial.glsl.
+   if(sl>=lo&&sl<=hi){let delta=(smoothColor-c)*weight;let L=lum(result);let dl=lum(delta);let bound=clamp(L+dl,min(L,lo),max(L,hi));
+    result+=select(delta,delta*((bound-L)/dl),abs(dl)>1e-5);}
   }
  }
  if(quantize&&DEBAND&&u.deband>0.){result+=(fract(52.9829189*fract(dot(fc,vec2f(.06711056,.00583715))))-.5)/255.;}

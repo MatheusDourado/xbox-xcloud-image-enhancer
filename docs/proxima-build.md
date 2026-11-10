@@ -51,9 +51,9 @@ As evidências e os números estão em [medicoes/poco-nfs-2026-11-09/README.md](
 5. **Rede neural a 60 FPS: cabe com folga curta.** No Gears 4 em 1080p60, com o aparelho frio, a GPU real ficou em ~76% (12,4–13 de 16,7 ms) e o ritmo se manteve. Nos menus a 60 FPS com a CPU limitada (corrida 5), não coube. Proposta: desligar a rede automaticamente quando a ocupação real passar de ~85% ou houver limitação térmica, não só pelo FPS; repetir o A/B com janelas curtas (o da corrida 12 coincidiu com morte e renascimento).
 6. **WebGPU gasta ~2,3 ms a mais de GPU real que o WebGL2 neste aparelho** (13,8 contra 11,4 ms por quadro), com a mesma latência.
    - Suspeitas: composição de dois canvas de 1440p e `spatial@highp` contra `mediump`.
-   - Proposta: no Adreno, `renderer: auto` deve preferir o WebGL2; avaliar remover o canvas WebGL2 transparente quando o WebGPU desenha.
+   - Proposta: avaliar remover o canvas WebGL2 transparente quando o WebGPU desenha. (`renderer: auto` já escolhe o WebGL2 em todos os aparelhos: `AUTO_WEBGPU` está vazio.)
 7. **Desligar a rede neural troca o renderizador sozinho** (WebGL2 → WebGPU) quando o pedido é WebGPU. Isso mistura variáveis e causa um piscar. Mostrar no painel por que o renderizador mudou.
-8. **O fence do WebGL2 superestima ~1,8×** a GPU real (~20 contra 11,4 ms). A redução automática e o aviso "GPU perto do limite" usam esse número. Calibrar ou deixar de basear decisões nele.
+8. **O fence do WebGL2 superestima ~1,8×** a GPU real (~20 contra 11,4 ms). Correção (auditoria de 10/11, v10.1.2): no código o fence **não** alimenta a redução automática — `pollFence` não chama `budget.sample()`; sem cronômetro, a redução segue a cadência. O fence só aparece como estimativa e no aviso "GPU perto do limite" (`fenceTrend`). Calibrar continua útil para o aviso.
 9. **O `<video>` reporta ~100% de quadros descartados** (`getVideoPlaybackQuality`) com o tratamento ligado, até no modo Original e com Captura = vídeo (a opacidade é 0). Hoje não afeta a resolução, mas qualquer telemetria do site o vê como cliente "quebrado".
 
 ### Ferramentas de teste

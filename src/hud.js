@@ -158,7 +158,7 @@
   for (const x of leg) legEl.append(x.k, x.v.e);
   el.append(E('div', 'bxif-h-head', d.e, word.e, fps.e, lab('FPS')), cv,
    E('div', 'bxif-h-grp', row('Ritmo', dev.e, devUnit, p95.e), row('Quadros', sub('trav '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
-   E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab('Latência'), total.e, bar), legEl),
+   E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab('Atraso est.'), total.e, bar), legEl),
    E('div', 'bxif-h-grp', videoRow, row('Rede', br.e, sub(' Mb/s · QP '), qp.e, sub(' · perda '), loss.e)),
    warn);
   return {kind: 'full', dot: d, word, fps, cv, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,

@@ -52,34 +52,47 @@
   // Sharpness 0 skips the edge step (threshold above any vote): plain bilinear scaling, no sharpening.
   function sgsrParams(sharpness){return sharpness>0?{sharp:.2+.4*sharpness,threshold:20/255}:{sharp:1,threshold:4};}
   function outputSize(w,h,output){const height=/^\d+$/.test(output)?Number(output):h;return {width:Math.round(w*height/h),height};}
-  // ondegrade(reason, revision): set by the engines to date each reduction in the measurement (an event).
-  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',ondegrade:null,
+  // ondegrade(reason, revision, step): set by the engines to date each reduction in the measurement (an event).
+  // Audit C02: cuts[] keeps every reduction of this budget, in order ({step, reason, revision, at: ms of the clock,
+  // source: 'timer' or 'cadence'}); reason is only the last one. A cut lasts until the budget is reset (a change of
+  // the image settings, Restaurar, a new GPU limit or api.restoreBudget()): there is no automatic recovery.
+  function createBudget(){return {limitMs:3,values:[],p95:null,cadenceOver:0,fenceOver:0,over:0,temporalAllowed:true,neuralAllowed:true,debandScale:1,debandTaps:4,antialiasAllowed:true,cleanupAllowed:true,enhanceAllowed:true,outputCap:Infinity,settings:defaults,sourceHeight:1080,revision:0,reason:'',cuts:[],ondegrade:null,
   configure(settings,height){this.settings=normalize(settings);this.sourceHeight=height;},
   outputFor(settings){
     if(settings.mode!=='filtered'||settings.gpuBudget===0||settings.output==='native'||this.outputCap===Infinity)return settings.output;
     const height=Math.min(Number(settings.output),this.outputCap);
     return height<=this.sourceHeight?'native':String(height);
-  },degrade(){
-    const s=this.settings;
+  },degrade(source='timer'){
+    const s=this.settings;let step;
     if(this.limitMs===0)return;
-    if(s.temporal>0&&this.temporalAllowed){this.temporalAllowed=false;this.reason='Temporal desligado para preservar fluidez';}
+    if(s.temporal>0&&this.temporalAllowed){this.temporalAllowed=false;step='temporal';
+      // Audit C03: with temporal off the AA moves into the spatial pass (fused), which is not the same operator.
+      this.reason='Temporal desligado para preservar fluidez'+(s.antialias>0&&this.antialiasAllowed?' (antialiasing passa ao passe espacial)':'');}
     else if(s.output!=='native'&&Math.min(Number(s.output),this.outputCap)>this.sourceHeight){
-      this.outputCap=Math.min(Number(s.output),this.outputCap)>1440&&this.sourceHeight<1440?1440:this.sourceHeight;
+      this.outputCap=Math.min(Number(s.output),this.outputCap)>1440&&this.sourceHeight<1440?1440:this.sourceHeight;step='output';
       this.reason='Saída reduzida para '+(this.outputCap===this.sourceHeight?'nativa':this.outputCap+'p')+' para preservar fluidez';
     }
-    else if(s.antialias>0&&this.antialiasAllowed){this.antialiasAllowed=false;this.reason='Antialiasing desligado para preservar fluidez';}
-    else if(s.neural>0&&this.neuralAllowed){this.neuralAllowed=false;this.reason='Reconstrução neural desligada para preservar fluidez';}
-    else if(s.deband>0&&this.debandScale>0){this.debandScale=Math.max(0,this.debandScale-.5);this.debandTaps=this.debandScale>0?2:0;this.reason='Degradês reduzidos para preservar fluidez';}
-    else if(s.cleanup>0&&this.cleanupAllowed){this.cleanupAllowed=false;this.reason='Limpeza desligada para preservar fluidez';}
-    else if((s.detail>0||s.chroma>0)&&this.enhanceAllowed){this.enhanceAllowed=false;this.reason='Detalhe e cor desligados para preservar fluidez';}
+    else if(s.antialias>0&&this.antialiasAllowed){this.antialiasAllowed=false;step='antialias';this.reason='Antialiasing desligado para preservar fluidez';}
+    else if(s.neural>0&&this.neuralAllowed){this.neuralAllowed=false;step='neural';this.reason='Reconstrução neural desligada para preservar fluidez';}
+    else if(s.deband>0&&this.debandScale>0){this.debandScale=Math.max(0,this.debandScale-.5);this.debandTaps=this.debandScale>0?2:0;step='deband';this.reason='Degradês reduzidos para preservar fluidez';}
+    else if(s.cleanup>0&&this.cleanupAllowed){this.cleanupAllowed=false;step='cleanup';this.reason='Limpeza desligada para preservar fluidez';}
+    else if((s.detail>0||s.chroma>0)&&this.enhanceAllowed){this.enhanceAllowed=false;step='enhance';this.reason='Detalhe e cor desligados para preservar fluidez';}
     else return;
     // Do not let timings from a more expensive pipeline trigger the next reduction.
-    this.values=[];this.over=0;this.cadenceOver=0;this.revision++;this.ondegrade?.(this.reason,this.revision);
-  },cadence(reference,current,ratio=.95){
+    this.values=[];this.over=0;this.cadenceOver=0;this.revision++;
+    this.cuts.push({step,reason:this.reason,revision:this.revision,at:clock(),source});
+    this.ondegrade?.(this.reason,this.revision,step);
+  },
+  // What the budget has turned off or reduced for these settings, by filter (audit C02): what the panel, the
+  // HUD warnings and the export show next to the values asked for.
+  cutState(settings=this.settings){const s=settings;return {temporal:s.temporal>0&&!this.temporalAllowed,antialias:s.antialias>0&&!this.antialiasAllowed,
+    neural:s.neural>0&&!this.neuralAllowed,deband:s.deband>0&&this.debandScale<1,cleanup:s.cleanup>0&&!this.cleanupAllowed,enhance:(s.detail>0||s.chroma>0)&&!this.enhanceAllowed,
+    output:this.outputCap===Infinity?null:this.outputCap};},
+  cadence(reference,current,ratio=.95){
     if(this.limitMs===0)return;
     if(!Number.isFinite(reference)||reference<=0||!Number.isFinite(current))return;
     this.cadenceOver=current<reference*ratio?this.cadenceOver+1:0;
-    if(this.cadenceOver>=3){this.degrade();this.cadenceOver=0;}
+    if(this.cadenceOver>=3){this.degrade('cadence');this.cadenceOver=0;}
   },fenceTrend(p50,reference){
     // Early warning only (docs/spec2-estudo.md 10.4, an inference): the fence p50 above 1.5 frame
     // intervals for 3 windows in a row. It never reduces the treatment: the fence includes queued work,
@@ -118,8 +131,17 @@
     // Audit 3.5: each segment also counts the pass sequences it ran (passes), names its last pass (final) and
     // keeps the main-thread cost (cpu), how late the processing ended against the frame's expected display time
     // (late) and the receive-to-presentation latency (pipeline); events[] dates compilations, allocations and switches.
-    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw={frame:0,cost:0},disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false;
-    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,INTERVALS=['display','arrival','server','wait','cpu','late','pipeline'],HITCHES=['display','arrival','server'],COST=['cpu','late','pipeline'];
+    // Audit C09: each rendered frame gets a ticket (id, its segment) that travels with its pacer slot. present() and a
+    // discarded slot close it, so the frames shown, the last passes actually run and the display/wait intervals are
+    // counted in the segment of the frame on screen, not in the one being rendered. frames[] keeps one compact row per
+    // frame ([id, segment index, rendered at, presented at or null, state 'p' presented / 'd' discarded / 'r' pending],
+    // times in ms since the start) up to FRAME_LIMIT.
+    // Audit C10: 'treated' is the receive time of a frame to the submission of its treated image to the canvas (the
+    // present() call, or the end of the draw without Fluidez): what the treatment adds, measured per frame, not a sum.
+    // It is not the time to the screen (compositor and scanout) nor the input lag (controller to photon).
+    let recording=false,segments=[],byKey=new Map(),current=null,gpuCount=0,raw={frame:0,cost:0},disjoints=0,started=null,startedAt=0,ended=null,stopReason=null,metadata={},timeline=[],timelineCut=false,events=[],eventsCut=false,frameRows=[],frameCut=false,frameId=0;
+    const GPU_LIMIT=120000,RAW_LIMIT=300000,TIMELINE_LIMIT=3600,EVENT_LIMIT=500,FRAME_LIMIT=20000,INTERVALS=['display','arrival','server','wait','cpu','late','pipeline','treated'],HITCHES=['display','arrival','server'],COST=['cpu','late','pipeline','treated'];
+    const since=t=>Math.round((t-startedAt)*10)/10;
     const percentile=(a,p)=>a.length?a[Math.ceil(a.length*p)-1]:null,round=v=>Math.round(v*100)/100;
     // Interval series: count, mean, deviation and maximum are exact and percentiles come from 0.1 ms bins,
     // so the summary covers the whole segment however long; only the raw samples stop at RAW_LIMIT per pool
@@ -138,13 +160,13 @@
         hitches:hitches?bins.reduce((a,[b,c])=>b/10>median*1.5?a+c:a,0):null,samplesMs:x.samples,samplesTruncated:x.cut};}
     return {
       get active(){return recording;},get startedAt(){return started;},
-      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=0;raw={frame:0,cost:0};disjoints=0;started=Date.now();startedAt=clock();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;},
+      start(meta={}){recording=true;segments=[];byKey=new Map();current=null;gpuCount=0;raw={frame:0,cost:0};disjoints=0;started=Date.now();startedAt=clock();ended=null;stopReason=null;metadata=meta;timeline=[];timelineCut=false;events=[];eventsCut=false;frameRows=[];frameCut=false;frameId=0;},
       stop(reason=null){if(!recording)return;recording=false;ended=Date.now();stopReason=reason;},
       frame(config,time){if(!recording)return null;const key=JSON.stringify(config);
         if(current?.key!==key){if(current)current.activeMs+=current.last-current.since;
           let segment=byKey.get(key);
           if(!segment){if(segments.length>=256){this.stop('limite de 256 configurações');return null;}
-            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null};for(const k of INTERVALS)segment[k]=series(COST.includes(k)?'cost':'frame');segments.push(segment);byKey.set(key,segment);}
+            segment={key,config,frames:0,visits:0,activeMs:0,since:time,last:time,dropped:0,skipped:0,gpu:[],gpuMethod:null,passes:new Map(),final:null,finalScheduled:0,finalExecuted:0,presented:0,discarded:0,repeated:0};for(const k of INTERVALS)segment[k]=series(COST.includes(k)?'cost':'frame');segments.push(segment);byKey.set(key,segment);}
           segment.visits++;segment.since=segment.last=time;current=segment;}
         current.frames++;current.last=time;return current;
       },
@@ -162,11 +184,28 @@
       sample(segment,ms,method=null){if(!segment||!segments.includes(segment)||!Number.isFinite(ms)||ms<0)return;
         if(gpuCount>=GPU_LIMIT)return;segment.gpu.push(ms);gpuCount++;if(method)segment.gpuMethod=method;
       },
-      // Interval (ms) of the configuration being rendered: 'display', 'arrival', 'server' or 'wait'.
-      // 'cpu' (main-thread time of the frame), 'late' (end of the processing minus the frame's expected display time:
-      // 0 = same vsync, one interval = one vsync late; negative only if it ended before the expected display) and
-      // 'pipeline' (presentation minus receive time) are only fed while a measurement is active.
-      interval(kind,ms){if(!recording||!current||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='late')return;push(current[kind],ms);},
+      // A rendered frame (audit C09). deferred: its last pass waits for present(); presented: it went straight to the
+      // canvas. Returns the ticket that present()/discard close, or null outside a measurement.
+      rendered(segment,deferred,presented,time=clock()){if(!recording||!segment||!segments.includes(segment))return null;
+        const ticket={id:++frameId,segment,deferred,presented:false,row:null};
+        if(frameRows.length<FRAME_LIMIT){ticket.row=[ticket.id,segments.indexOf(segment),since(time),null,'r'];frameRows.push(ticket.row);}else frameCut=true;
+        if(deferred)segment.finalScheduled++;else segment.finalExecuted++;
+        if(presented)this.presented(ticket,time,false);return ticket;},
+      // The frame of this ticket reached the canvas; finalRan: its deferred last pass ran now. A second present of
+      // the same frame (a redraw) only counts as repeated.
+      presented(ticket,time=clock(),finalRan=true){if(!recording||!ticket||!segments.includes(ticket.segment))return;const s=ticket.segment;
+        if(ticket.presented){s.repeated++;return;}ticket.presented=true;s.presented++;if(finalRan&&ticket.deferred)s.finalExecuted++;
+        if(ticket.row){ticket.row[3]=since(time);ticket.row[4]='p';}},
+      // A slot left the pacer without being shown: its last pass never ran.
+      discarded(ticket){if(!recording||!ticket||ticket.presented||ticket.discarded||!segments.includes(ticket.segment))return;ticket.discarded=true;ticket.segment.discarded++;if(ticket.row)ticket.row[4]='d';},
+      // Interval (ms) of the configuration being rendered, or of the given segment (the frame presented, audit C09):
+      // 'display', 'arrival', 'server' or 'wait'. 'cpu' (main-thread time of the frame), 'late' (end of the CPU
+      // processing minus the <video> frame's expected display time: 0 = same vsync, one interval = one vsync late;
+      // negative only if it ended before; with Fluidez the last pass still runs later), 'pipeline' (the <video>
+      // element's presentation minus receive time: delivery of the untreated video to the compositor) and 'treated'
+      // (receive to the submission of the treated frame) are only fed while a measurement is active.
+      interval(kind,ms,segment=null){const target=segment&&segments.includes(segment)?segment:current;
+        if(!recording||!target||!INTERVALS.includes(kind)||!Number.isFinite(ms)||ms<0&&kind!=='late')return;push(target[kind],ms);},
       dropped(n){if(recording&&current&&n>0)current.dropped+=n;},
       skipped(n){if(recording&&current&&n>0)current.skipped+=n;},
       // One row per second of stream telemetry, t in seconds since the start; at most an hour.
@@ -174,11 +213,15 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:3,version:'10.1.1',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
-        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||segments.length>=256,eventsTruncated:eventsCut,
+      report(){return {schema:4,version:'10.1.2',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+        sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT,frames:FRAME_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||frameCut||segments.length>=256,eventsTruncated:eventsCut,
+        // Schema 4 (audit C09): frames = [id, segment, renderedMs, presentedMs, state]; passes[] lists the sequences
+        // as scheduled (a deferred last pass is marked @present); presentation says how many of them ran.
+        frames:{columns:['id','segment','renderedMs','presentedMs','state'],rows:frameRows,truncated:frameCut},
         segments:segments.map(segment=>{const {config,frames,visits,gpu,dropped,skipped}=segment,durationMs=segment.activeMs+(segment===current?segment.last-segment.since:0);
           const sorted=[...gpu].sort((a,b)=>a-b),row={config,frames,durationMs,drawFps:durationMs>0?(frames-visits)*1000/durationMs:null,pacerDropped:dropped,videoSkipped:skipped,
             passes:[...segment.passes].sort((a,b)=>b[1]-a[1]).map(([sequence,count])=>({sequence,frames:count})),final:segment.final,
+            presentation:{finalScheduled:segment.finalScheduled,finalExecuted:segment.finalExecuted,presented:segment.presented,discarded:segment.discarded,repeated:segment.repeated},
             gpu:{method:segment.gpuMethod,count:gpu.length,p50:percentile(sorted,.5),p95:percentile(sorted,.95),p99:percentile(sorted,.99),samplesMs:[...gpu]}};
           for(const k of INTERVALS)row[k]=summary(segment[k],HITCHES.includes(k));return row;}),
         timeline,events};}
@@ -345,7 +388,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.1.1-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.1.2-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -390,6 +433,8 @@
       if(cleanup>0||deband>0||chroma>0||detail>0||fusedAntialias>0)
         plan.spatial={cleanup,deband,chroma,detail,antialias:fusedAntialias,debandTaps:budget.debandTaps,quantize:!(quality&&floatTargets),selective:s.spatialMode==='selective'};
       if(temporalEnabled){plan.temporal=s.temporal;plan.antialias=antialias;}
+      // Where the AA runs (audit C03): 'separate' after temporal, 'fused' in the spatial pass, null when off.
+      plan.antialiasPath=antialias>0?(temporalEnabled?'separate':'fused'):null;
       // Upscale: EASU then the sharpening pass, or SGSR alone as the last pass (item 5). At native
       // output SGSR is never used: the sharpening pass stays (SGSR was measured only when scaling).
       if(s.upscale&&outW>w&&outH>h)plan.scaler=s.scaler==='sgsr'?'sgsr':'easu';
@@ -406,6 +451,13 @@
   }
   // Whether the WebGPU renderer draws this plan; otherwise the frame goes to WebGL2 (same image).
   function rendererSupports(plan){return !plan.gl;}
+  // What a frame really runs, from the plan that draws it (audit C02/C08): the strengths after the compression
+  // adaptation and the GPU budget, next to what the settings ask (requested) and what the budget cut (cuts).
+  function planEffective(plan,s,budget){const sp=plan.spatial;
+    return {mode:s.mode,neural:plan.neural,temporal:plan.temporal,antialias:plan.antialiasPath==='separate'?plan.antialias:sp?.antialias||0,antialiasPath:plan.antialiasPath??null,
+      cleanup:sp?.cleanup||0,deband:sp?.deband||0,debandTaps:sp&&sp.deband>0?sp.debandTaps:0,chroma:sp?.chroma||0,detail:sp?.detail||0,scaler:plan.scaler,final:plan.final?.name??null,
+      requested:{neural:s.neural,temporal:s.temporal,antialias:s.antialias,cleanup:s.cleanup,deband:s.deband,chroma:s.chroma,detail:s.detail,output:s.output},
+      cuts:budget.cutState(s),revision:budget.revision};}
   // Renderer for the 'auto' setting (Spec 4). WebGPU only on a GPU where both acceptance criteria of
   // docs/spec4-webgpu.md were met: an image equivalent to WebGL2 and a GPU cost equal or lower than WebGL2
   // in a 30 FPS session. Entries are adapter {vendor, architecture} pairs; none qualified so far.
@@ -414,7 +466,7 @@
   // Configuration of one frame in the measurement (diagnostics segment), shared by both renderers.
   function segmentConfig(s,budget,w,h,outW,outH,revision,diagnostic,floatTargets,renderer){
     const filtered=s.mode==='filtered',{hud:_hud,hudPosition:_position,...measured}=s;
-    const config={settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&floatTargets&&budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&budget.temporalAllowed,cleanup:filtered&&budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&budget.enhanceAllowed?s.chroma:0,detail:filtered&&budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*budget.debandScale:0,debandTaps:filtered&&s.deband>0?budget.debandTaps:0,antialias:filtered&&budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}};
+    const config={settings:measured,diagnostic,source:[w,h],output:[outW,outH],revision,effective:{neural:filtered&&floatTargets&&budget.neuralAllowed?s.neural:0,temporal:filtered&&s.temporal>0&&budget.temporalAllowed,antialiasPath:filtered&&s.antialias>0&&budget.antialiasAllowed?(s.temporal>0&&budget.temporalAllowed?'separate':'fused'):null,cleanup:filtered&&budget.cleanupAllowed?s.cleanup:0,chroma:filtered&&budget.enhanceAllowed?s.chroma:0,detail:filtered&&budget.enhanceAllowed?s.detail:0,deband:filtered?s.deband*budget.debandScale:0,debandTaps:filtered&&s.deband>0?budget.debandTaps:0,antialias:filtered&&budget.antialiasAllowed?s.antialias:0,scaler:filtered&&s.upscale&&outW>w&&outH>h?s.scaler:null}};
     if(renderer)config.renderer=renderer;return config;
   }
   class Engine {
@@ -445,7 +497,7 @@
       // Time spent compiling in the constructor (programs and pre-warmed variants): reported in the measurement metadata.
       this.warmMs=clock()-t0;
     }
-    newBudget(){const b=createBudget();b.ondegrade=(reason,revision)=>this.diagnostics.event('degrade',{reason,revision});return b;}
+    newBudget(){const b=createBudget();b.ondegrade=(reason,revision,step)=>this.diagnostics.event('degrade',{reason,revision,step});return b;}
     // Compilation in two halves: start() issues the work without waiting, finish() reads the status
     // (which waits for the compiler) and deletes the shader objects.
     startProgram(fragment){const gl=this.gl,program=gl.createProgram(),objects=[];
@@ -515,8 +567,8 @@
       gl.drawArrays(gl.TRIANGLES,0,3);
     }
     dropQuery(item){for(const q of [].concat(item.q))this.gl.deleteQuery(q);}
-    // A slot leaving the pacer without being presented: its render() time still counts.
-    flushSlot(t){if(t.pendingQuery){this.queries.push(t.pendingQuery);t.pendingQuery=null;}t.final=null;}
+    // A slot leaving the pacer without being presented: its render() time still counts, its frame was discarded.
+    flushSlot(t){if(t.pendingQuery){this.queries.push(t.pendingQuery);t.pendingQuery=null;}t.final=null;this.diagnostics.discarded(t.ticket);t.ticket=null;}
     poll(){const gl=this.gl;if(!this.ext)return;
       if(gl.getParameter(this.ext.GPU_DISJOINT_EXT)){for(const item of this.queries)this.dropQuery(item);this.queries=[];this.diagnostics.disjoint();return;}
       // A deferred frame (render + present) is one sample made of two queries.
@@ -567,7 +619,7 @@
         gl.activeTexture(gl.TEXTURE0);this.configure(this.input);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
         let source=this.input;
-        const plan=framePlan(s,this.budget,w,h,outW,outH,this.floatTargets,diagnostic);
+        const plan=framePlan(s,this.budget,w,h,outW,outH,this.floatTargets,diagnostic);this.effective=planEffective(plan,s,this.budget);
         if(plan.filtered){
           // Neural restoration first: trained on decoded stream luma (tools/nn), needs float targets.
           if(plan.neural>0){
@@ -584,12 +636,18 @@
             const qw=Math.max(1,Math.ceil(w/4)),qh=Math.max(1,Math.ceil(h/4));
             const index=(this.historyIndex||0)^1;
             const low=this.target('low'+index,qw,qh),prevLow=this.target('low'+(index^1),qw,qh),history=this.target('history'+(index^1),w,h,true);
-            this.draw('copy',low,qw,qh,{source:this.input});
+            // Audit C07: the quarter-size luma of the motion search averages the whole 4x4 area (4 bilinear taps),
+            // so fine periodic detail does not alias into a false pattern before the coarse search.
+            this.draw('downsample',low,qw,qh,{source:this.input});
+            // Audit C06: the fine search compares the raw frame with the previous raw frame (same signal as the
+            // coarse search), not with the processed history; the history is only blended. One copy at source size.
+            const raw=this.target('raw'+index,w,h),prevRaw=this.target('raw'+(index^1),w,h);
+            this.draw('copy',raw,w,h,{source:this.input});
             const valid=historyValid(this.previous,time,w,h);
             const cut=this.target('cut',1,1);this.draw('cut',cut,1,1,{source:low.texture,previous:prevLow.texture});
             const motion=this.target('motion',Math.max(1,Math.ceil(w/16)),Math.max(1,Math.ceil(h/16)));
             gl.bindTexture(gl.TEXTURE_2D,motion.texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
-            this.draw('motion',motion,motion.w,motion.h,{source:low.texture,previous:prevLow.texture,cut:cut.texture,fullSource:this.input,fullPrevious:history.texture},{validHistory:valid});
+            this.draw('motion',motion,motion.w,motion.h,{source:low.texture,previous:prevLow.texture,cut:cut.texture,fullSource:raw.texture,fullPrevious:prevRaw.texture},{validHistory:valid});
             const temporal=this.target('history'+index,w,h,true);
             this.draw('temporal',temporal,w,h,{source,history:history.texture,motion:motion.texture},{temporal:valid?plan.temporal:0});source=temporal.texture;
             this.historyIndex=index; // Ping-pong retains both histories without two extra copies.
@@ -601,15 +659,18 @@
         const final={...plan.final,textures:{[plan.final.key]:source}};
         if(outputTarget&&deferFinal){
           const old=this.targets[outputTarget];if(old)this.flushSlot(old);
-          const owner=source===this.input?null:Object.keys(this.targets).find(k=>this.targets[k].texture===source&&!k.startsWith('history')&&!k.startsWith('paced'));
+          const owner=source===this.input?null:Object.keys(this.targets).find(k=>this.targets[k].texture===source&&!k.startsWith('history')&&!k.startsWith('raw')&&!k.startsWith('paced'));
           let slot;
           if(owner){slot=this.targets[owner];this.targets[outputTarget]=slot;if(old)this.targets[owner]=old;else delete this.targets[owner];}
           else{const fp=source!==this.input;slot=this.target(outputTarget,w,h,fp);this.draw('copy',slot,w,h,{source});}
           slot.final={name:final.name,filterId:final.filterId,key:Object.keys(final.textures)[0],uniforms:final.uniforms,w:outW,h:outH};deferredSlot=slot;
-          // The last pass runs at present(): marked so in the sequence.
+          // The last pass is scheduled for present(): marked so in the sequence; present() counts it when it runs.
           if(this.trace)this.trace.push(final.name+(final.filterId?'#'+final.filterId:'')+'@present');
         }else this.drawFinal(final,outputTarget?this.target(outputTarget,outW,outH):null,outW,outH);
         if(segment)this.diagnostics.passes(segment,this.trace.join(','),final);
+        // Audit C09: the frame's ticket. Straight to the canvas it is presented now; in a slot, at present().
+        const ticket=segment?this.diagnostics.rendered(segment,!!deferredSlot,!outputTarget):null;
+        if(outputTarget){const t=this.targets[outputTarget];if(t)t.ticket=ticket;}else this.lastPresented=ticket;
         if(this.fenceTiming&&!this.fence&&started-this.fenceAt>=500)this.startFence(started,s.mode,segment);
         this.frames++;return true;
       }finally{this.trace=null;
@@ -629,8 +690,10 @@
       if(t.final){const item=t.pendingQuery;t.pendingQuery=null;let q=null;if(item&&this.ext){q=gl.createQuery();gl.beginQuery(this.ext.TIME_ELAPSED_EXT,q);}
         this.drawFinal({...t.final,textures:{[t.final.key]:t.texture}},null,t.final.w,t.final.h);
         if(q){gl.endQuery(this.ext.TIME_ELAPSED_EXT);item.q=[].concat(item.q,q);}if(item)this.queries.push(item);}
-      else this.draw('copy',null,t.w,t.h,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);return true;}
-    releasePaced(){const gl=this.gl;for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){if(t.pendingQuery)this.dropQuery(t.pendingQuery);gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);delete this.targets[name];}}
+      else this.draw('copy',null,t.w,t.h,{source:t.texture});gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);
+      // Audit C09: the frame on screen now (its segment receives the display/wait intervals).
+      this.diagnostics.presented(t.ticket);this.lastPresented=t.ticket;return true;}
+    releasePaced(){const gl=this.gl;for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){if(t.pendingQuery)this.dropQuery(t.pendingQuery);this.diagnostics.discarded(t.ticket);gl.deleteTexture(t.texture);gl.deleteFramebuffer(t.fbo);delete this.targets[name];}}
     resetHistory(){this.previous=null;}
     resetBudget(){for(const item of this.queries)this.dropQuery(item);this.queries=[];for(const t of Object.values(this.targets))if(t.pendingQuery){this.dropQuery(t.pendingQuery);t.pendingQuery=null;}this.budget=this.newBudget();this.resetHistory();this.fenceGeneration++;this.fenceValues=[];this.gpuEstimate=null;}
     destroy(){const gl=this.gl;
@@ -642,5 +705,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={readStats,autoRenderer,AUTO_WEBGPU,framePlan,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={readStats,autoRenderer,AUTO_WEBGPU,framePlan,planEffective,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();
