@@ -101,7 +101,13 @@ jobs:
           TITLE=$(head -1 "$NOTES" | sed 's/^# *//')
           tail -n +2 "$NOTES" > /tmp/notes.md
           FILES=(better-xcloud-image-filter.user.js xcloud-image-filter-play.user.js)
-          if [ "$APK" = "true" ]; then FILES+=(android/dist/*.apk); fi
+          # Só o APK da versão deste build (android/AndroidManifest.xml): android/dist/ pode guardar APKs antigos versionados.
+          if [ "$APK" = "true" ]; then
+            VERSION=$(sed -n 's/.*android:versionName="\([^"]*\)".*/\1/p' android/AndroidManifest.xml)
+            APK_FILE="android/dist/xcloud-imagefilter-$VERSION.apk"
+            test -f "$APK_FILE" || { echo "::error::APK não encontrado: $APK_FILE"; exit 1; }
+            FILES+=("$APK_FILE")
+          fi
           PRE=(); case "$TAG" in *-*) PRE=(--prerelease);; esac
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "${FILES[@]}" --clobber
