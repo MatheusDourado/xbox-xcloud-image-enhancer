@@ -332,6 +332,8 @@
   watchTimer = 0;
   if (!el) return;
   watchTimer = setTimeout(watch, WATCH);
+  // play.xbox.com's React hydration can drop nodes appended to <html> at document-start: put the HUD back.
+  if (!el.isConnected) { doc.documentElement.append(el); layoutDirty = true; }
   const want = !doc.hidden && (api.active || netLive());
   if (want && !showing) show(); else if (!want && showing) hide();
  }

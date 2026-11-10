@@ -21,10 +21,12 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 | `spatialMode` | `selective`, `legacy` | Limpeza espacial |
 | `hud` | `off`, `compact`, `full` | Indicadores durante o jogo |
 | `hudPosition` | `top-left`, `top-right`, `bottom-left`, `bottom-right` | Canto do HUD |
+| `streamResolution` | `auto`, `1080p` (padrão), `1080p-hq` | Só play.xbox.com. Resolução pedida ao servidor no `POST .../sessions/cloud/play`: `1080p` declara `osName: windows` e tela 1920×1080 (`x-ms-device-info`); `1080p-hq` declara `tizen`; `auto` deixa o pedido do site (720p no Poco F7). Vale no próximo jogo |
+| `preventDrops` | booleano (padrão `true`) | Só play.xbox.com. Impedir queda de resolução: o `getStats` que o site lê informa no máximo 8 ms de decodificação por quadro. A telemetria do script lê o valor real. Vale no próximo jogo |
 
 ## Ações
 
-- `api.update(patch)` (ignora valores iguais; grava no armazenamento após 400 ms sem mudanças), `api.reset()` (restaura o tratamento; mantém o HUD), `api.applyPreset(key)`, `api.preset()` → chave do perfil atual ou `custom`.
+- `api.update(patch)` (ignora valores iguais; grava no armazenamento após 400 ms sem mudanças), `api.reset()` (restaura o tratamento; mantém o HUD, `streamResolution` e `preventDrops`), `api.applyPreset(key)`, `api.preset()` → chave do perfil atual ou `custom`.
 - `api.presets`: `{natural, console, sharp, clean, light}`, cada um com `{label, description, values}`.
 - `api.diagnostic` (booleano, não salvo): colore a imagem para confirmar que o tratamento roda.
 - `api.startMeasurement()` → `Promise<boolean>`; `api.measuring`; `api.exportMeasurement()` → baixa o JSON e devolve o relatório (formato abaixo) com `saved`. A medição é do player e é compartilhada pelos dois renderizadores: trocar de renderizador durante a gravação só abre outro segmento. Sem nenhum quadro tratado (`segments` vazio) nada é gravado e `saved` é `false`.
@@ -53,7 +55,9 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 - `adaptive` — `null` ou, conforme a origem:
   - `{source: 'qp', qp, qpMean, level (0–1), scales:{cleanup, deband, detail}}`;
   - `{source: 'bitrate', qp: null, qpMean: null, qpEstimate, bitsPerPixel, level, scales}`: sem QP no navegador. Usa o percentil 80 dos bits por pixel do último minuto (mínimo 5 s; segundos com menos de 10 quadros ficam de fora). 0,12 bit/pixel equivale ao QP 28 (neutro) e cada dobro, a 4 QP a menos (`BxRestoration.qpFromBitsPerPixel`).
-- `warnings` — lista `{level: 'error'|'warn'|'info', key, text}` (renderizador, bitrate limitado, resolução, decodificação por software, perda de pacotes, saída acima da tela, rede neural pedida e não rodando, erro do motor).
+- `stream` — só play.xbox.com (`BxPlayStream.info()`; `null` no Better xCloud): `{resolution, preventDrops}` (ajustes atuais), `request` (o que o último `POST .../play` pediu: `{at, resolution, osName, from (osName original do site), header (se o x-ms-device-info foi reescrito), preventDrops}` ou `null`), `capActive` (o limite alterou um `getStats` do site nos últimos 5 s), `capMs` (8), `realDecodeMs` (média real de decodificação desde o início do stream, do último relatório limitado), `capCalls`, `error`. Também vai em `configText()` e no `status` da medição.
+- `net.decodeMs` e o `decodeMs` da linha do tempo da medição são sempre o tempo **real**: `BxRestoration.readStats(alvo)` chama o `getStats` nativo guardado pelo prelude (`BxPlayStream.realStats`), não o limitado que o site vê.
+- `warnings` — lista `{level: 'error'|'warn'|'info', key, text}` (renderizador, bitrate limitado, resolução, decodificação por software, perda de pacotes, saída acima da tela, rede neural pedida e não rodando, erro do motor, `prevent-drops` quando o limite de decodificação está agindo).
 
 ## Medição — relatório de `api.exportMeasurement()` (`schema: 3`)
 

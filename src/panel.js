@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.1.0';
+ const VERSION = 'v10.1.1';
  const num = v => typeof v === 'number' && Number.isFinite(v);
 
  /* =============================== api.ui =============================== */
@@ -457,7 +457,7 @@
  /* =============================== Panel model =============================== */
  // Heavy settings rebuild textures or restart the capture/pacer: leading edge plus one trailing update.
  const HEAVY = new Set(['fluidity', 'capture', 'output', 'gpuBudget', 'spatialMode']);
- const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'scaler', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural', 'desynchronized', 'renderer'];
+ const SYNC_KEYS = ['mode', 'sharpness', 'sharpening', 'scaler', 'output', 'adaptive', 'fluidity', 'capture', 'smoothing', 'gpuBudget', 'spatialMode', 'hud', 'hudPosition', 'cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural', 'desynchronized', 'renderer', 'streamResolution', 'preventDrops'];
  const TREAT = ['cleanup', 'deband', 'chroma', 'detail', 'temporal', 'antialias', 'neural'];
  const UI_KEY = 'BxImageFilter.ui.v1';
  const phoneTier = (() => { try { return matchMedia('(max-height:500px)').matches; } catch { return false; } })();
@@ -856,7 +856,18 @@
    auto: 'Escolhe o WebGL2, salvo numa GPU em que o WebGPU já foi medido com imagem igual e custo igual ou menor.', webgl2: 'O renderizador de sempre.',
    webgpu: 'Mesmos filtros em WebGPU: lê o quadro sem cópia e mede a GPU com timestamp. Temporal e Reconstrução neural continuam no WebGL2. Se falhar, volta ao WebGL2 sem recarregar.'})[v] || '')});
   els.rendererOut = out('renderer'); els.renderer.row.append(els.rendererOut);
-  s4.body.append(budget.row, els.renderer.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
+  // play.xbox.com only (src/play/prelude.js, docs/play-xbox-com.md): what the play request asks of the server and the
+  // decoding time the site reports to it. Both are read when a game starts.
+  const streamRows = [];
+  if (typeof BxPlayStream !== 'undefined') {
+   els.streamRes = choice({key: 'streamResolution', label: 'Resolução do stream', opts: [['auto', 'Auto'], ['1080p', '1080p'], ['1080p-hq', '1080p HQ']], hint: v => (({
+    auto: 'O que o site pede: neste celular costuma ser 720p (H.264 Baseline).', '1080p': 'Declara Windows e tela 1920×1080 ao servidor, como o Better xCloud: 1080p H.264 Main. Mais decodificação e latência no celular.',
+    '1080p-hq': 'Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.'})[v] || '') + ' Vale no próximo jogo: saia e entre de novo.'});
+   els.preventDrops = toggle({key: 'preventDrops', label: 'Impedir queda de resolução', get: () => valueOf('preventDrops'), set: (v, e) => commit('preventDrops', v, e),
+    hint: 'O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.'});
+   streamRows.push(els.streamRes.row, els.preventDrops.row);
+  }
+  s4.body.append(...streamRows, budget.row, els.renderer.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
   s4.update = updateDesempenho;
   // [H] 05 Ferramentas
   const s5 = section('ferramentas', '05', 'Indicadores e ferramentas');

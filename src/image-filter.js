@@ -23,7 +23,10 @@
   // Renderer (Spec 4): the setting, the one drawing now, its state (webgl2, starting, webgpu, fallback) and why.
   // probe: {vendor, architecture} of the WebGPU adapter for the 'auto' choice (BxRestoration.autoRenderer), null
   // until a WebGPU engine is created or, while AUTO_WEBGPU names a GPU, the adapter is probed once.
-  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null,probe:null}};
+  renderer:{setting:settings.renderer,active:'webgl2',state:'webgl2',reason:'',adapter:null,timestamps:null,warmMs:null,probe:null},
+  // play.xbox.com (BxPlayStream.info): the stream settings, what the last session asked of the server and whether the
+  // site's decoding time is being capped (capActive); null on the Better xCloud build.
+  stream:null};
  let activeEngine=null,activePlayer=null;
  // Physical pixels the video occupies on screen. The canvas CSS box is fixed by Better
  // xCloud (object-fit contain), so this does not depend on the canvas backing size.
@@ -34,14 +37,15 @@
   return Math.round((screen?.height||0)*dpr);
  }
  // Settings that do not change the processed image keep the GPU adaptation.
- const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized','renderer']);
+ // streamResolution and preventDrops (play.xbox.com) apply to the next stream: no GPU adaptation reset either.
+ const LIVE_KEYS=new Set(['mode','smoothing','hud','hudPosition','desynchronized','renderer','streamResolution','preventDrops']);
  // Bumped by every capture/Fluidez change: a failed direct capture is retried after the user changes either.
  let captureEpoch=0;
  // Bumped by every renderer change: a WebGPU renderer that failed is tried again only after it.
  let rendererEpoch=0;
  const api=window.BxImageFilter={settings,status,diagnostic:false,panelOpen:false,presets:BxRestoration.presets,
-  // Restores the treatment; the HUD choice is a display preference and stays.
-  reset(){const {hud,hudPosition}=settings;Object.assign(settings,BxRestoration.defaults,{hud,hudPosition});persist();api.diagnostic=false;activeEngine?.resetBudget();if(activePlayer){activePlayer.bxReferenceFps=null;activePlayer.bxTimes=[];activePlayer.bxCadenceMark=performance.now();}},
+  // Restores the treatment; the HUD choice is a display preference and stays, and so do the stream settings.
+  reset(){const {hud,hudPosition,streamResolution,preventDrops}=settings;Object.assign(settings,BxRestoration.defaults,{hud,hudPosition,streamResolution,preventDrops});persist();api.diagnostic=false;activeEngine?.resetBudget();if(activePlayer){activePlayer.bxReferenceFps=null;activePlayer.bxTimes=[];activePlayer.bxCadenceMark=performance.now();}},
   // Unchanged values are ignored: the gamepad repeats a held direction ~10 times a second, even at the ends.
   update(patch){const changed=Object.keys(patch).filter(k=>settings[k]!==patch[k]);if(!changed.length)return;
    Object.assign(settings,patch);if(changed.includes('capture')||changed.includes('fluidity'))captureEpoch++;if(changed.includes('renderer'))rendererEpoch++;if(changed.some(k=>!LIVE_KEYS.has(k)))activeEngine?.resetBudget();persist(true);},
@@ -73,7 +77,7 @@
   async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
    const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
    report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,neural:status.neural,
-    adaptation:status.adaptation,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},warnings:status.warnings.map(w=>w.text)};
+    adaptation:status.adaptation,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},stream:status.stream,warnings:status.warnings.map(w=>w.text)};
    const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
    report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
@@ -82,7 +86,7 @@
   configText(){const native=nativePrefs();
    const o=status.origin,round=v=>typeof v==='number'?Math.round(v*10)/10:v;
    return JSON.stringify({build:globalThis.BxBuild?.version,app:window.BxAndroid?.getAppInfo?.()??null,screen:`${screen.width}×${screen.height} @${window.devicePixelRatio}`,
-    status:{resolution:status.resolution,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
+    status:{resolution:status.resolution,stream:status.stream,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
     pacing:status.pacing&&{meanMs:round(status.pacing.meanMs),deviationMs:round(status.pacing.deviationMs),p95Ms:round(status.pacing.p95Ms),hitches:status.pacing.hitches},
     origin:o&&{server:o.server&&[round(o.server.meanMs),round(o.server.deviationMs)],arrival:o.arrival&&[round(o.arrival.meanMs),round(o.arrival.deviationMs)],missed:o.missed,presented:o.presented},
     net:status.net&&Object.fromEntries(Object.entries(status.net).map(([k,v])=>[k,k==='bitsPerPixel'&&typeof v==='number'?Math.round(v*1000)/1000:round(v)])),warnings:status.warnings.map(w=>w.text),
@@ -118,7 +122,7 @@
   if(pc!==telemetryPeer){telemetryPeer=pc;lastRtp=null;status.net=null;status.adaptive=null;bppSamples=[];}
   if(!pc?.getStats||telemetryBusy||!(api.panelOpen||settings.hud!=='off'||settings.adaptive||api.measuring||activeEngine&&!activeEngine.ext)){updateWarnings();return;}
   telemetryBusy=true;
-  try{let rtp=null,rtt=null;const stats=await pc.getStats();
+  try{let rtp=null,rtt=null;const stats=await BxRestoration.readStats(pc);
    if(peer()!==pc)return;
    stats.forEach(item=>{if(item.type==='inbound-rtp'&&item.kind==='video')rtp=item;
     if(item.type==='candidate-pair'&&item.nominated&&item.state==='succeeded'&&Number.isFinite(item.currentRoundTripTime))rtt=item.currentRoundTripTime*1000;});
@@ -171,6 +175,9 @@
   if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:'Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).'});
   if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:'Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.'});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
+  // The site reports a capped decoding time to the server; status.net.decodeMs stays the real one.
+  const ps=typeof BxPlayStream==='undefined'?null:BxPlayStream.info();status.stream=ps;
+  if(ps?.capActive){const real=net?.decodeMs??ps.realDecodeMs;w.push({level:'info',key:'prevent-drops',text:`Impedir queda de resolução ativo: o site informa ao servidor ${ps.capMs} ms de decodificação`+(Number.isFinite(real)?` (real: ${dec(real)} ms).`:'.')});}
   status.warnings=w;
  }
  function tick(){smoothingTick();pollTelemetry();}

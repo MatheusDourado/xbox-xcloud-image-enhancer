@@ -24,3 +24,116 @@ var STATES = {currentStream: {peerConnection: null}};
  window.RTCPeerConnection = TrackedPeerConnection;
  if (window.webkitRTCPeerConnection === Native) window.webkitRTCPeerConnection = TrackedPeerConnection;
 })();
+// Stream resolution and "Impedir queda de resolução" (docs/play-xbox-com.md, medição de 2026-11-09 no Poco F7).
+// The new site announces itself as android with its window size (807×394 on the Poco) and the server answers
+// H.264 Baseline 3.1 in 720p. Declaring windows and 1920×1080 in POST /v5/sessions/cloud/play brings 1080p Main
+// 4.2, as Better xCloud's stream.video.resolution does (getOsNameFromResolution: 1080p → windows, 1080p-hq → tizen).
+// WebRtcStreamV1 then reports frameDecodedTimeMs = receiveTime + Δ totalDecodeTime / Δ framesDecoded (getStats) to
+// the server, which drops 1080p to 720p within ~15 s at ~21 ms of decoding. With preventDrops the site's getStats
+// sees at most 8 ms per decoded frame (Better xCloud's stream.video.preventResolutionDrops changes the same report
+// inside the site's code). Our own telemetry reads the real values (realStats). Both settings are read when the
+// session starts: a change applies to the next stream. Installed here, at document-start, before the site's code.
+var BxPlayStream = (() => {
+ const CAP_MS = 8, OS = {'1080p': 'windows', '1080p-hq': 'tizen'}, PLAY = /\/sessions\/cloud\/play(?:[?#]|$)/i;
+ // request: what the last play request asked for; capAt/capCalls/realMs: the last report the cap changed.
+ const state = {request: null, capAt: 0, capCalls: 0, realMs: null, error: ''};
+ const prefs = () => window.BxImageFilter?.settings || {};
+ const isRequest = v => typeof Request === 'function' && v instanceof Request;
+ // Body (JSON text) and x-ms-device-info (JSON text or null) of the play request, declaring osName.
+ function rewritePlay(body, deviceInfo, osName) {
+  const result = {body, deviceInfo, from: null};
+  try {
+   const o = JSON.parse(body);
+   if (o?.settings && typeof o.settings === 'object') { result.from = o.settings.osName ?? null; o.settings.osName = osName; result.body = JSON.stringify(o); }
+  } catch {}
+  try {
+   const o = JSON.parse(deviceInfo);
+   if (o?.dev && typeof o.dev === 'object') {
+    o.dev.os = {...o.dev.os, name: osName, ver: '22631.2715', platform: 'desktop'};
+    o.dev.hw = {...o.dev.hw, make: 'Microsoft', model: 'Surface Pro'};
+    o.dev.displayInfo = {dimensions: {widthInPixels: 1920, heightInPixels: 1080}, pixelDensity: {dpiX: 1, dpiY: 1}};
+    o.dev.browser = {browserName: 'chrome', browserVersion: '130.0'};
+    result.deviceInfo = JSON.stringify(o);
+   }
+  } catch {}
+  return result;
+ }
+ // The report with each inbound video totalDecodeTime limited to capMs per decoded frame (a copy, only when one
+ // was above it). realMs: the real mean decoding time since the stream started.
+ function capReport(report, capMs = CAP_MS) {
+  const out = new Map();let realMs = null;
+  report.forEach((v, k) => {
+   if (v?.type === 'inbound-rtp' && (v.kind ?? v.mediaType) === 'video' && v.framesDecoded > 0 && typeof v.totalDecodeTime === 'number') {
+    const limit = v.framesDecoded * capMs / 1000;
+    if (v.totalDecodeTime > limit) { realMs = v.totalDecodeTime / v.framesDecoded * 1000; v = {...v, totalDecodeTime: limit}; }
+   }
+   out.set(k, v);
+  });
+  return {report: realMs === null ? report : out, realMs};
+ }
+ // Native getStats per patched prototype: realStats calls it, so the adapter never sees the capped values.
+ const natives = new Map();
+ function wrapStats(proto) {
+  const current = proto?.getStats;
+  if (typeof current !== 'function') return;
+  const native = current.bxNative || current;
+  natives.set(proto, native);
+  if (current.bxNative) return;
+  // Not async: keeps length 0 and the legacy callback form, which webrtc-adapter tells apart by both.
+  const getStats = function getStats() {
+   const result = native.apply(this, arguments);
+   if (prefs().preventDrops !== true || typeof result?.then !== 'function') return result;
+   return result.then(report => {
+    try {
+     const c = capReport(report);
+     if (c.realMs !== null) { state.capAt = Date.now();state.capCalls++;state.realMs = c.realMs; }
+     return c.report;
+    } catch (error) { state.error = String(error); return report; }
+   });
+  };
+  getStats.bxNative = native;
+  proto.getStats = getStats;
+ }
+ function realStats(target) {
+  for (const [proto, native] of natives) if (proto.isPrototypeOf(target)) return native.call(target);
+  return target.getStats();
+ }
+ async function playRequest(self, input, init, resolution, osName) {
+  const req = isRequest(input) ? input : null;
+  try {
+   const body = init?.body != null ? init.body : req ? await req.clone().text() : null;
+   if (typeof body !== 'string') return nativeFetch.call(self, input, init);
+   const headers = new Headers(init?.headers || req?.headers || undefined);
+   const r = rewritePlay(body, headers.get('x-ms-device-info'), osName);
+   if (r.deviceInfo != null) headers.set('x-ms-device-info', r.deviceInfo);
+   state.request = {at: Date.now(), resolution, osName, from: r.from, header: r.deviceInfo != null, preventDrops: prefs().preventDrops === true};
+   const options = {...init, body: r.body, headers};
+   return req ? nativeFetch.call(self, new Request(req, options)) : nativeFetch.call(self, input, options);
+  } catch (error) { state.error = String(error); return nativeFetch.call(self, input, init); }
+ }
+ const nativeFetch = window.fetch?.bxNative || window.fetch;
+ if (typeof nativeFetch === 'function' && !window.fetch.bxNative) {
+  const fetch = function fetch(input, init) {
+   const resolution = prefs().streamResolution, osName = OS[resolution];
+   if (osName) {
+    const url = typeof input === 'string' ? input : input?.url ?? String(input);
+    const method = String(init?.method || (isRequest(input) ? input.method : 'GET')).toUpperCase();
+    if (method === 'POST' && PLAY.test(url)) return playRequest(this, input, init, resolution, osName);
+   }
+   return nativeFetch.apply(this, arguments);
+  };
+  fetch.bxNative = nativeFetch;
+  window.fetch = fetch;
+ }
+ // The prototype that owns getStats: the native one, under TrackedPeerConnection above.
+ const owner = proto => { while (proto && !Object.prototype.hasOwnProperty.call(proto, 'getStats')) proto = Object.getPrototypeOf(proto); return proto; };
+ wrapStats(owner(window.RTCPeerConnection?.prototype));
+ wrapStats(owner(window.RTCRtpReceiver?.prototype));
+ // For the panel and the measurement: the settings, what the last session asked for and whether the cap is acting.
+ function info() {
+  const s = prefs();
+  return {resolution: s.streamResolution ?? null, preventDrops: s.preventDrops === true, request: state.request && {...state.request},
+   capActive: Date.now() - state.capAt < 5000, capMs: CAP_MS, realDecodeMs: state.realMs, capCalls: state.capCalls, error: state.error || null};
+ }
+ return {CAP_MS, OS, state, rewritePlay, capReport, realStats, info};
+})();
