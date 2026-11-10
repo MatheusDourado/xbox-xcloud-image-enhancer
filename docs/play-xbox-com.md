@@ -36,12 +36,18 @@ Build observado: `hotfix-1.0.2611.0612`, gerado em 2026-11-06T23:46Z.
 É gerado por `tools/build.py`. Usa @match `https://play.xbox.com/*`, `@run-at document-start` e `@noframes`.
 
 - **`src/play/prelude.js`**: stubs mínimos de `BxLogger` e `getStreamPref`. Também envolve `RTCPeerConnection` em document-start (subclasse) para registrar a conexão que recebe vídeo. Isso alimenta telemetria, Suavização e adaptação à compressão.
+- **Resolução do stream e Impedir queda de resolução** (também em `src/play/prelude.js`, instalados em document-start; ajustes `streamResolution` e `preventDrops` em "Desempenho e rede"; medição de 2026-11-09 no Poco F7, `docs/medicoes/poco-nfs-2026-11-09`):
+  - O site novo se anuncia `osName: android` com o tamanho da janela (807×394 no Poco), e o servidor manda 720p H.264 Baseline 3.1. O `fetch` envolvido reescreve o `POST .../v5/sessions/cloud/play`: `settings.osName` e o cabeçalho `x-ms-device-info` (`dev.os` windows 22631.2715 desktop, tela 1920×1080). Com isso o servidor mandou 1080p H.264 Main 4.2. Mesmo mapeamento do Better xCloud: `1080p` → `windows`, `1080p-hq` → `tizen` (este não foi medido aqui).
+  - O servidor ainda derrubava o 1080p para 720p em ~15 s, inclusive no modo Original. O `WebRtcStreamV1` do site reporta ao servidor `frameDecodedTimeMs = receiveTime + currentDecodeTimeMs`, com `currentDecodeTimeMs = Δ totalDecodeTime / Δ framesDecoded` lido do `getStats` (~21 ms no Poco). Com `preventDrops`, o `getStats` de `RTCPeerConnection` e `RTCRtpReceiver` devolve ao site `totalDecodeTime` limitado a `framesDecoded × 8 ms`. O 1080p ficou a corrida inteira. É o princípio do "preventResolutionDrops" do Better xCloud, que muda o mesmo valor dentro do código do site.
+  - A telemetria do script (`status.net.decodeMs`, `decodeMs` da medição) usa o `getStats` nativo guardado pelo prelude e continua vendo o tempo real. Com o limite agindo, o painel mostra o aviso "Impedir queda de resolução ativo" e `status.stream.capActive` fica `true`.
+  - **Depende do comportamento atual do site**: o caminho `/sessions/cloud/play`, o formato do corpo e do `x-ms-device-info` e o cálculo do `WebRtcStreamV1` a partir do `getStats`. Um build novo do site pode ignorar ou mudar isso sem aviso. Os dois ajustes são lidos quando o jogo começa: mudar exige sair e entrar no jogo.
+  - Custo: em 1080p a decodificação e a latência no aparelho sobem (achados 7 e 9 da medição). Se o vídeo atrasar ou travar, volte a Resolução do stream para Auto ou desligue Impedir queda de resolução.
 - **Classes do upstream**: `BaseStreamPlayer`, `BaseCanvasPlayer` e `WebGL2Player` saem de `script.js` sem alteração (MIT). Assim `image-filter.js`, `panel.js` e `hud.js` rodam como estão.
 - **`src/play/host.js`**:
   - **Detecção**: procura um `<video>` com `srcObject` que tenha trilha de vídeo `live`. Procura primeiro em `[data-testid=media-container]` e, se não achar, em qualquer `<video>`. Trailers e vídeos de destaque usam `src` e ficam de fora.
   - **Canvas**: cria um `WebGL2Player` com o canvas logo depois do vídeo, posicionado sobre ele com `pointer-events: none`. O vídeo fica com `opacity: 0`, não `display: none`, para que foco, teclado e ponteiro continuem indo para o elemento do site.
   - **Fim e reconexão**: acompanha o fim do stream e a troca de `<video>` (verificação a cada 1 s e em mutações do DOM) e remove o canvas.
-  - **Painel**: o botão "IF" (borda verde) fica sempre visível em `play.xbox.com`, no canto inferior direito. Assim dá para ver que o script está rodando, já que o site novo não tem os ícones do Better xCloud. Durante o jogo, o botão vai para o canto superior esquerdo e some após 4 s sem ponteiro. **Alt+Shift+F** também abre o painel. As teclas digitadas no painel não chegam ao jogo, e Esc fecha o painel.
+  - **Painel**: o botão redondo **xCloud Enhanced** (ícone de nuvem com controle) fica sempre visível em `play.xbox.com`. Assim dá para ver que o script está rodando, já que o site novo não tem os ícones do Better xCloud. Sem posição salva, ele fica no canto inferior direito na navegação e na borda direita, a ~35% da altura, durante o jogo. Nunca fica nos 64 px do topo, onde estão o botão Xbox (menu do stream) e o cabeçalho do site. Dá para arrastá-lo (toque ou mouse; mover menos de 8 px conta como toque) e, ao soltar, ele encosta na borda lateral mais próxima, dentro da área segura. A posição fica salva (`localStorage`, `BxImageFilter.play.widget.v1`) e se ajusta ao girar a tela. Durante o jogo, some após 4 s sem ponteiro. **Alt+Shift+F** também abre o painel. As teclas digitadas no painel não chegam ao jogo. Esc fecha o painel, assim como um toque fora dele (o toque não chega ao jogo).
   - **Diagnóstico**: o topo do painel diz o que o script vê: "Nenhum jogo em andamento" (com a contagem de vídeos), "Stream encontrado" ou "Tratamento ligado ao vídeo do jogo", com a resolução. Se a hidratação do React remover o botão, ele é recolocado em até 1 s.
 - **`www.xbox.com/*/play` não muda**: `better-xcloud-image-filter.user.js` só muda no fingerprint `sourceSha256` do `BxBuild`, porque `src/play/` entra no hash.
 
@@ -82,8 +88,8 @@ Build observado: `hotfix-1.0.2611.0612`, gerado em 2026-11-06T23:46Z.
 
 Nada abaixo dá para verificar sem conta:
 
-0. **Script rodando**: na home logada, o botão "IF" aparece no canto inferior direito e o painel diz "Script ativo em play.xbox.com".
-1. **Detecção**: confirmar que o stream de `/stream/<produto>` cria o `<video>` dentro de `[data-testid=media-container]` e que o botão "IF" aparece. No console: `BxImageFilter.playHost.player()` deve ser diferente de `null`, e `BxImageFilter.status.mode` deve estar em `filtered`.
+0. **Script rodando**: na home logada, o botão **xCloud Enhanced** aparece no canto inferior direito e o painel diz "Script ativo em play.xbox.com".
+1. **Detecção**: confirmar que o stream de `/stream/<produto>` cria o `<video>` dentro de `[data-testid=media-container]` e que o botão **xCloud Enhanced** aparece. No console: `BxImageFilter.playHost.player()` deve ser diferente de `null`, e `BxImageFilter.status.mode` deve estar em `filtered`.
 2. **Imagem**: o canvas cobre o vídeo sem tarja nem deslocamento, em tela cheia e fora dela. A interface do site (menu do stream, toque) continua por cima.
 3. **Entrada**: controle, teclado e toque chegam ao jogo com o canvas por cima.
 4. **Telemetria**: o painel mostra codec, FPS recebido e bitrate. Se não mostrar, a conexão rastreada não é a do vídeo.
@@ -92,28 +98,28 @@ Nada abaixo dá para verificar sem conta:
 7. **Android (WebView)**:
    - o site novo abre com o UA atual do app;
    - o document-start dispara em `play.xbox.com`;
-   - o botão "IF" responde ao toque;
+   - o botão **xCloud Enhanced** responde ao toque e pode ser arrastado;
    - a resolução recebida não cai para 720p. O ajuste `1080p-hq` do wrapper antigo depende do Better xCloud e **não existe no site novo**.
 8. **Medição**: salvar uma medição no Poco e no Dell para comparar o custo com o site antigo.
 
 ### Roteiro de teste para o Matheus (Windows/Chrome + Tampermonkey)
 
-1. Os ícones do Better xCloud não aparecem no site novo, e isso é esperado: o Better xCloud não roda nele. O que indica que o script novo está ativo é o botão **IF** no canto inferior direito.
+1. Os ícones do Better xCloud não aparecem no site novo, e isso é esperado: o Better xCloud não roda nele. O que indica que o script novo está ativo é o botão redondo **xCloud Enhanced** no canto inferior direito.
 2. No Tampermonkey, crie um script novo e cole todo o conteúdo de `xcloud-image-filter-play.user.js`. Salve. O script do site antigo pode continuar instalado: ele não roda em `play.xbox.com`.
-3. Abra `https://play.xbox.com`. O botão **IF** deve aparecer já na home; abra-o e confira se o topo diz "Script ativo em play.xbox.com".
-4. Entre num jogo na nuvem e espere a imagem aparecer. O botão vai para o canto superior esquerdo.
+3. Abra `https://play.xbox.com`. O botão **xCloud Enhanced** deve aparecer já na home; abra-o e confira se o topo diz "Script ativo em play.xbox.com".
+4. Entre num jogo na nuvem e espere a imagem aparecer. O botão sobe para a borda direita, a ~35% da altura (se não tiver sido arrastado antes), sem cobrir o botão Xbox do site.
 5. No console (F12), confira:
    - `BxImageFilter.playHost.player()` não é `null`;
    - `BxImageFilter.status.mode` é `filtered`;
    - `BxImageFilter.status.resolution` mostra a entrada e a saída, por exemplo `1920×1080 → …`.
-6. Abra o painel (**IF** ou **Alt+Shift+F**). O topo deve dizer "Tratamento ligado ao vídeo do jogo". Compare **Vídeo original** com **Novo tratamento** na mesma cena. O painel deve mostrar codec, FPS recebido e bitrate.
+6. Abra o painel (botão **xCloud Enhanced** ou **Alt+Shift+F**). O topo deve dizer "Tratamento ligado ao vídeo do jogo". Compare **Vídeo original** com **Novo tratamento** na mesma cena. O painel deve mostrar codec, FPS recebido e bitrate.
 7. Confira se o controle e o teclado continuam funcionando, inclusive em tela cheia.
-8. Saia do jogo e entre em outro: o botão volta ao canto inferior direito, sobe de novo no outro jogo e a imagem tratada aparece uma vez só.
+8. Saia do jogo e entre em outro: o botão volta ao canto inferior direito (ou à posição salva), sobe de novo no outro jogo e a imagem tratada aparece uma vez só.
 9. Se algo falhar, envie um print do painel aberto (o texto do topo) e o resultado de `BxImageFilter.status`.
 
 ## 6. Limites conhecidos no site novo
 
-- **Sem os recursos do Better xCloud**: resolução e bitrate forçados, região, limite de FPS, MKB, controles de toque, barra de estatísticas e o renderizador/nitidez nativos. Os avisos do painel que leem preferências do Better xCloud ficam calados.
+- **Sem os recursos do Better xCloud**: bitrate forçado (a resolução de 1080p agora é pedida pelo próprio script, seção 3), região, limite de FPS, MKB, controles de toque, barra de estatísticas e o renderizador/nitidez nativos. Os avisos do painel que leem preferências do Better xCloud ficam calados.
 - **Sem navegação por controle**: o painel abre por botão (ponteiro/toque) ou teclado. Num Android TV só com controle, não há como abrir o painel até integrar com o menu do site novo.
 - **Fragilidade**: a detecção depende de `srcObject` com trilha WebRTC e do `data-testid` do container. É o que há no build `hotfix-1.0.2611.0612`, e um build futuro pode mudar isso.
 - **Opt-out não resolve para todos**: para o Matheus, "Exit preview" redireciona de volta para `play.xbox.com` (relato de 2026-11-07). Para a conta dele, este userscript é o único caminho para ter o tratamento. Quem ainda consegue sair do preview continua no site antigo, onde nada mudou.

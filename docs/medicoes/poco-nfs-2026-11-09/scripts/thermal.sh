@@ -1,0 +1,2 @@
+#!/bin/bash
+while true; do echo "=== $(date +%T) up=$(adb shell cat /proc/uptime | cut -d' ' -f1)"; adb shell "dumpsys thermalservice | sed -n '/Current temperatures from HAL/,/Current cooling/p' | grep -E 'mName=(skin|CPU0|GPU0|battery)' | head -4; dumpsys thermalservice | grep 'Thermal Status'; dumpsys battery | grep -E ' level|temperature'; cat /sys/class/kgsl/kgsl-3d0/gpuclk 2>/dev/null; cat /sys/class/kgsl/kgsl-3d0/gpu_busy_percentage 2>/dev/null"; sleep 30; done

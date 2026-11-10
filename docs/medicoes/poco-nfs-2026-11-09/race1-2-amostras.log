@@ -1,0 +1,19 @@
+20:21:46 neural->0
+20:22:16 {"mbps":6.05,"fps":30,"dec":9.7,"est":null,"pac":[41.5,0],"fl":2,"neural":"off","loaf":2}
+Thermal Status: 0
+20:22:46 {"mbps":5.85,"fps":29,"dec":10.1,"est":null,"pac":[42.1,0],"fl":3,"neural":"off","loaf":2}
+Thermal Status: 0
+20:23:17 {"mbps":6.22,"fps":30,"dec":9.6,"est":null,"pac":[42.4,1],"fl":4,"neural":"off","loaf":2}
+Thermal Status: 0
+20:23:47 {"mbps":0.08,"fps":30,"dec":8.6,"est":null,"pac":[41.5,1],"fl":10,"neural":"off","loaf":5}
+Thermal Status: 0
+20:24:17 {"mbps":0.39,"fps":60,"dec":8.9,"est":null,"pac":[27,12],"fl":20,"neural":"off","loaf":5}
+Thermal Status: 0
+20:24:47 {"mbps":0.4,"fps":60,"dec":7.9,"est":null,"pac":[24.9,4],"fl":34,"neural":"off","loaf":5}
+Thermal Status: 0
+20:25:18 {"mbps":0.04,"fps":29,"dec":20.6,"est":null,"pac":[45.1,1],"fl":52,"neural":"off","loaf":5}
+Thermal Status: 0
+20:25:48 {"mbps":3.47,"fps":30,"dec":19.8,"est":{"p50":13.700000017881393,"p95":25.100000023841858,"count":30},"pac":[43.1,0],"fl":39,"neural":"running","loaf":0}
+Thermal Status: 0
+
+[exited with code 0]

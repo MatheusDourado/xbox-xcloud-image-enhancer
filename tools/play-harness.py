@@ -50,7 +50,7 @@ probe=r'''
  const r=canvas.getBoundingClientRect();check(Math.abs(r.width-640)<2&&Math.abs(r.height-360)<2,`Canvas covers the stream area (${r.width}×${r.height})`);
  const f0=api.status.frames;await wait(1000);check(api.status.frames-f0>=15,`Frames keep coming (${api.status.frames-f0} in 1 s)`);
  // Panel: launcher button and Alt+Shift+F, keys inside it do not reach the page.
- check(launch.hasAttribute('data-stream')&&launch.getBoundingClientRect().top<20,'Panel button moves to the top left during the game');
+ {const b=launch.getBoundingClientRect();check(launch.hasAttribute('data-stream')&&b.left>innerWidth/2&&b.top>=64,`Panel widget sits on the right edge during the game, below the site's top bar (${Math.round(b.left)},${Math.round(b.top)})`);}
  document.dispatchEvent(new KeyboardEvent('keydown',{key:'F',code:'KeyF',altKey:true,shiftKey:true,bubbles:true}));
  const dialog=document.querySelector('.bxif-play-dialog');
  await until(()=>api.panelOpen,2000,'panel visible');

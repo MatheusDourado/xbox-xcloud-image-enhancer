@@ -1,0 +1,9 @@
+ok
+21:56:51
+21:56:50 FLUID -> {"fluidity":"off"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+21:57:30 FLUID -> {"fluidity":"balanced"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+21:58:11 FLUID -> {"fluidity":"off"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+21:58:51 FLUID -> {"fluidity":"balanced"} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+restored A
+
+[exited with code 0]

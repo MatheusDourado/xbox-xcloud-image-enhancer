@@ -1,0 +1,7 @@
+21:04:23 NEURAL -> {"neural":1} rend=webgl2 neural=off res=1920×1080 → 2276×1280
+21:05:03 NEURAL -> {"neural":0} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+21:05:44 NEURAL -> {"neural":1} rend=webgl2 neural=off res=1920×1080 → 2276×1280
+21:06:24 NEURAL -> {"neural":0} rend=webgl2 neural=running res=1920×1080 → 2276×1280
+restored A
+
+[exited with code 0]
