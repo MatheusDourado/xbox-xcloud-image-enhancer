@@ -72,7 +72,9 @@ void main(){
   for(int i=0;i<4;i++){
    if(float(i)>=debandTaps)break;
    vec2 d=i==0?vec2(1,.5):i==1?vec2(-1,-.5):i==2?vec2(.5,-1):vec2(-.5,1);
-   vec3 n=at(p+floor(d*radius));
+   // trunc, not floor: opposite taps stay exactly opposite (audit C12; floor(-a) != -floor(a) shifted the
+   // mean by half a pixel toward -x,-y).
+   vec3 n=at(p+trunc(d*radius));
    // Outlying samples across an edge cannot pull a smooth region toward it.
    float weight=selective?1.-smoothstep(.006,.012+deband*.04,peak(n-c)):1.;
    avg+=n*weight;weightSum+=weight;
@@ -150,7 +152,10 @@ void main(){
    highp vec2 size=vec2(textureSize(source,0)),uv=(p+.5)/size,d=dir/max(major,1e-5)/size*.5;
    vec3 smoothColor=(texture(source,uv-d).rgb+texture(source,uv+d).rgb)*.5;
    float sl=lum(smoothColor);
-   if(sl>=lo&&sl<=hi)result+=(smoothColor-c)*weight;
+   // Audit C03: result already carries the other filters, so the delta is bounded on it: the AA never pushes
+   // the luma of the result past the source neighborhood (new overshoot only; an existing value is kept).
+   if(sl>=lo&&sl<=hi){vec3 delta=(smoothColor-c)*weight;float L=lum(result),dl=lum(delta),target=clamp(L+dl,min(L,lo),max(L,hi));
+    result+=abs(dl)>1e-5?delta*((target-L)/dl):delta;}
   }
  }
  #endif

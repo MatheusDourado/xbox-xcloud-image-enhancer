@@ -54,7 +54,7 @@ fn weightY(dx:f32,dy:f32,c:f32,dev:f32)->vec2f{let x=(dx*dx+dy*dy)*.55+clamp(abs
   var s=weightY(pl.x,pl.y+1.,ud.x,dev)+weightY(pl.x-1.,pl.y+1.,ud.y,dev)+weightY(pl.x-1.,pl.y-2.,ud.z,dev)+weightY(pl.x,pl.y-2.,ud.w,dev);
   s+=weightY(pl.x+1.,pl.y-1.,left.x,dev)+weightY(pl.x,pl.y-1.,left.y,dev)+weightY(pl.x,pl.y,left.z,dev)+weightY(pl.x+1.,pl.y,left.w,dev);
   s+=weightY(pl.x-1.,pl.y-1.,right.x,dev)+weightY(pl.x-2.,pl.y-1.,right.y,dev)+weightY(pl.x-2.,pl.y,right.z,dev)+weightY(pl.x-1.,pl.y,right.w,dev);
-  var fy=s.y/s.x;let mx=max(max(left.y,left.z),max(right.x,right.w));let mn=min(min(left.y,left.z),min(right.x,right.w));
+  var fy=s.y/select(1e-5,s.x,abs(s.x)>1e-5);let mx=max(max(left.y,left.z),max(right.x,right.w));let mn=min(min(left.y,left.z),min(right.x,right.w));
   fy=clamp(u.sharp*fy,mn,mx);let dy=clamp(fy-cw,-23./255.,23./255.);color=clamp(color+dy,vec3f(0),vec3f(1));
  }
  // Same order as the sharpening pass it replaces (casFiltered): saturation, contrast, brightness, finish.

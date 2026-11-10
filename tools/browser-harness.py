@@ -69,7 +69,7 @@ probe=r'''
  prefs['video.processing.mode']='quality';player.updateFrame();check(player.gl.getError()===player.gl.NO_ERROR,'Native quality mode remains valid');
  const qualityPixels=readPlayer();check(Math.abs(qualityPixels[(40*128+20)*4]-85)<=1,'Quality halo limiter preserves uniform region luminance');
  const menu=document.createElement('section');document.body.append(menu);BxImageFilter.mountControls(menu);
- check(menu.querySelector('[data-bx-restoration="v10.1.1"]')&&!document.getElementById('bx-image-filter-panel'),'Controls mount inside supplied Better xCloud menu');
+ check(menu.querySelector('[data-bx-restoration="v10.1.2"]')&&!document.getElementById('bx-image-filter-panel'),'Controls mount inside supplied Better xCloud menu');
  const sleep=ms=>new Promise(r=>setTimeout(r,ms)),root=menu.querySelector('.bxif-panel');
  // Better xCloud's D-pad on a focused range: value = parseInt(value) + parseInt(step) * dir, then a non-bubbling 'input'.
  const pad=(el,dir)=>{el.value=(parseInt(el.value)+parseInt(el.step)*dir).toString();el.dispatchEvent(new InputEvent('input'));};
@@ -99,7 +99,7 @@ probe=r'''
  check(exported.status.neural==='off'&&['gpu','cadence'].includes(exported.status.measurement)&&[null,'timer','fence'].includes(exported.segments[0].gpu.method)&&exported.segments[0].gpu.method!=='timestamp','Report carries the neural state, the measurement kind and the gpu method of the segment ('+exported.segments[0].gpu.method+')');
  // Audit 3.5: the passes each frame ran, the last pass, the cpu series, the events and the GPU metadata.
  {const seg=exported.segments[0],seq=seg.passes[0]?.sequence||'',last=seq.split(',').pop().replace(/[#@].*$/,'');
-  check(exported.schema===3&&seg.passes.length>=1&&seq.startsWith('upload,')&&seg.passes[0].frames>=1&&seg.final&&seg.final.name===last,'Report lists the pass sequence and the last pass of the segment ('+seq+')');
+  check(exported.schema===4&&seg.passes.length>=1&&seq.startsWith('upload,')&&seg.passes[0].frames>=1&&seg.final&&seg.final.name===last,'Report lists the pass sequence and the last pass of the segment ('+seq+')');
   check(seg.cpu.count>=1&&seg.cpu.hitches===null&&seg.cpu.p50>=0&&'late' in seg&&'pipeline' in seg&&!('slack' in seg)&&seg.late.hitches===null,'Report keeps the main-thread cost per frame with late and pipeline series');
   check(Array.isArray(exported.events)&&exported.eventsTruncated===false&&exported.sampleLimit.events===500,'Report has a bounded event list');
   check(exported.status.resolution===BxImageFilter.status.resolution&&'adaptation' in exported.status&&'display' in exported.status&&exported.status.renderer.active==='webgl2','Report status carries adaptation, display, resolution and the renderer');
@@ -172,7 +172,7 @@ probe=r'''
   check(!player.bxTiming.pacer&&!Object.keys(player.bxEngine.targets).some(n=>n.startsWith('paced')),'Turning Fluidez off releases its textures and loop');
   const copyButton=[...menu2.querySelectorAll('button')].find(b=>b.textContent==='Copiar configuração');copyButton.click();await new Promise(r=>setTimeout(r,200));
   const exported=JSON.parse(menu2.querySelector('textarea').value);
-  check(exported.treatment&&'smoothing' in exported.treatment&&'stream.video.resolution' in exported.betterXcloud&&exported.build==='6.7.12-imagefilter.10.1.1','Copy configuration exports treatment and Better xCloud settings');
+  check(exported.treatment&&'smoothing' in exported.treatment&&'stream.video.resolution' in exported.betterXcloud&&exported.build==='6.7.12-imagefilter.10.1.2','Copy configuration exports treatment and Better xCloud settings');
   check(exported.status.neural==='off'&&['gpu','cadence'].includes(exported.status.measurement),'Copy configuration carries the neural state and the measurement kind');
   check(!menu2.querySelector('[aria-label="Codec (teste)"]')&&!menu2.querySelector('[data-bxif-key=refreshRate]'),'No codec test; refresh-rate control only inside the Android app');
   delete window.STATES;}

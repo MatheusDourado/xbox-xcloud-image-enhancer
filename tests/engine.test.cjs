@@ -238,7 +238,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,3);assert.equal(r.version,'10.1.1');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,4);assert.equal(r.version,'10.1.2');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -259,7 +259,7 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v10\.1\.1-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v10\.1\.2-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
 // Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez
@@ -460,4 +460,45 @@ test('engine pre-warms the spatial variant of the given settings together with t
  gl=fakeGl(10);new a.Engine(gl,shaders,{settings:{processingMode:'quality'}});assert.equal(gl.calls.programs,3,'without float targets the quality variant still quantizes: same as the default');
  gl=fakeGl(23);assert.ok(new a.Engine(gl,shaders,{settings:{temporal:.5,antialias:.5}}).programs['spatial@highp.0.1.4.1.0.0.1.1'],'with temporal the AA leaves the spatial pass');assert.equal(gl.calls.programs,3);
  assert.ok(Number.isFinite(new a.Engine(fakeGl(10),shaders).warmMs));
+});
+
+test('every budget cut is recorded with its step and source; cutState says what each filter lost (audit C02)',()=>{
+ const a=api(),s=a.normalize({temporal:.5,antialias:.5,output:'native',deband:.6,cleanup:0,detail:0,chroma:0}),p=a.createBudget();p.configure(s,1080);
+ const seen=[];p.ondegrade=(reason,revision,step)=>seen.push([step,revision]);
+ for(let i=0;i<90;i++)p.sample(20);for(let i=0;i<3;i++)p.cadence(60,30);
+ assert.deepEqual(JSON.parse(JSON.stringify(p.cuts.map(c=>[c.step,c.source,c.revision]))),[['temporal','timer',1],['antialias','cadence',2]]);assert.deepEqual(seen,[['temporal',1],['antialias',2]]);
+ assert.match(p.cuts[0].reason,/antialiasing passa ao passe espacial/,'the AA path change is named with the temporal cut');
+ assert.equal(p.reason,p.cuts[1].reason,'reason stays the last cut');
+ const c=p.cutState(s);assert.equal(c.temporal,true);assert.equal(c.antialias,true);assert.equal(c.deband,false);assert.equal(c.output,null);
+ assert.equal(p.cutState({...s,antialias:0}).antialias,false,'nothing asked, nothing cut');
+});
+
+test('the effective state comes from the plan that draws: AA path fused/separate and the strengths after the budget (audit C02/C03)',()=>{
+ const a=api(),s=a.normalize({temporal:.5,antialias:.4,deband:.6,chroma:.75}),b=a.createBudget();b.configure(s,1080);
+ let plan=a.framePlan(s,b,1920,1080,1920,1080,true),e=a.planEffective(plan,s,b);
+ assert.equal(plan.antialiasPath,'separate');assert.equal(e.antialias,.4);assert.equal(e.antialiasPath,'separate');assert.equal(e.temporal,.5);assert.equal(e.requested.antialias,.4);
+ b.temporalAllowed=false;plan=a.framePlan(s,b,1920,1080,1920,1080,true);e=a.planEffective(plan,s,b);
+ assert.equal(plan.antialiasPath,'fused');assert.equal(e.antialias,.4);assert.equal(e.temporal,0);assert.equal(e.cuts.temporal,true);
+ b.antialiasAllowed=false;e=a.planEffective(a.framePlan(s,b,1920,1080,1920,1080,true),s,b);
+ assert.equal(e.antialias,0);assert.equal(e.antialiasPath,null);assert.equal(e.cuts.antialias,true);assert.equal(e.requested.antialias,.4);
+ assert.equal(a.segmentConfig(s,b,1920,1080,1920,1080,0,false,true).effective.antialiasPath,null);
+ const b2=a.createBudget();b2.configure(s,1080);b2.temporalAllowed=false;assert.equal(a.segmentConfig(s,b2,1920,1080,1920,1080,0,false,true).effective.antialiasPath,'fused');
+ const off=a.planEffective(a.framePlan({...s,antialias:0},a.createBudget(),1920,1080,1920,1080,true),s,b2);assert.equal(off.antialiasPath,null);
+});
+
+test('frame tickets: presented, discarded and repeated frames counted in their own segment; intervals follow the frame shown (audit C09)',()=>{
+ const d=api().createDiagnostics();assert.equal(d.rendered({},true,false),null,'nothing outside a measurement');d.start();
+ const A=d.frame({c:'A'},0),a1=d.rendered(A,true,false,1),a2=d.rendered(A,true,false,2);
+ const B=d.frame({c:'B'},10),b1=d.rendered(B,true,false,11),direct=d.rendered(B,false,true,12);
+ d.presented(a1,20);d.discarded(a2);d.discarded(a2);d.presented(a1,22);d.discarded(a1);
+ // B is the current segment while A's frame is on screen: the display/wait intervals go to A.
+ d.interval('display',16.7,A);d.interval('wait',5,A);d.interval('treated',30,A);d.interval('display',16.7);d.discarded(b1);
+ const r=d.report(),[x,y]=r.segments;
+ assert.equal(r.schema,4);
+ assert.deepEqual(JSON.parse(JSON.stringify(x.presentation)),{finalScheduled:2,finalExecuted:1,presented:1,discarded:1,repeated:1});
+ assert.deepEqual(JSON.parse(JSON.stringify(y.presentation)),{finalScheduled:1,finalExecuted:1,presented:1,discarded:1,repeated:0});
+ assert.equal(x.display.count,1);assert.equal(x.wait.count,1);assert.equal(x.treated.count,1);assert.equal(y.display.count,1);
+ assert.deepEqual(JSON.parse(JSON.stringify(r.frames.columns)),['id','segment','renderedMs','presentedMs','state']);
+ assert.deepEqual(JSON.parse(JSON.stringify(r.frames.rows.map(row=>[row[0],row[1],row[4]]))),[[1,0,'p'],[2,0,'d'],[3,1,'d'],[4,1,'p']]);
+ assert.equal(r.frames.truncated,false);
 });

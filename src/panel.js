@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.1.1';
+ const VERSION = 'v10.1.2';
  const num = v => typeof v === 'number' && Number.isFinite(v);
 
  /* =============================== api.ui =============================== */
@@ -85,7 +85,8 @@
   g.reset = () => { state.clear(); memo.clear(); };
   return g;
  }
- // Approximate video latency: network round trip, jitter buffer, decode, treatment and Fluidez wait.
+ // Estimated video delay (audit C10): network round trip, jitter buffer, decode, treatment and Fluidez wait, a sum of
+ // means and percentiles of different windows that may overlap. Not a measurement, and not the input lag.
  function latency() {
   const n = status.net, on = api.active, v = k => n && num(n[k]) ? n[k] : null;
   const rtt = v('rttMs'), buffer = v('bufferMs'), decode = v('decodeMs');
@@ -715,7 +716,9 @@
  const CORNER = {'top-left': 'Superior esquerdo', 'top-right': 'Superior direito', 'bottom-left': 'Inferior esquerdo', 'bottom-right': 'Inferior direito'};
  const SMOOTH_STATE = {waiting: 'aguardando vídeo', unsupported: 'não suportado', requested: 'aceito', partial: 'parcial', error: 'falhou'};
  const WARN_HINT = {bitrate: 'Better xCloud › Stream: Bitrate máximo → Ilimitado.', resolution: 'Better xCloud › Stream: escolha 1080p.', loss: 'Prefira Wi-Fi 5 GHz ou cabo.',
-  'neural-cut': 'Para voltar: Restaurar tratamento, ou Aliviar GPU = Nunca (a GPU pode não acompanhar).', 'neural-float': 'A rede precisa de EXT_color_buffer_float; deixe Reconstrução neural em 0 neste aparelho.'};
+  'neural-cut': 'Para voltar: Restaurar tratamento, ou Aliviar GPU = Nunca (a GPU pode não acompanhar).',
+  'aa-cut': 'O corte vale até mudar a imagem: Religar mede de novo (a GPU pode não acompanhar), ou Aliviar GPU = Nunca.',
+  'temporal-cut': 'O corte vale até mudar a imagem: Religar mede de novo (a GPU pode não acompanhar), ou Aliviar GPU = Nunca. Sem ela, o antialiasing roda no passe espacial.', 'neural-float': 'A rede precisa de EXT_color_buffer_float; deixe Reconstrução neural em 0 neste aparelho.'};
  const natural = api.presets?.natural?.values || {};
 
  function kpi(name, cap) {
@@ -737,7 +740,7 @@
   els.warns.addEventListener('focusout', e => { if (!(e.relatedTarget && els.warns.contains(e.relatedTarget))) els.warnSig = null; });
   r.append(els.warns);
   // [C] live card
-  els.k = {fps: kpi('kpi-fps', 'FPS'), pacing: kpi('kpi-pacing', 'Ritmo'), hitches: kpi('kpi-hitches', 'Travadas'), latency: kpi('kpi-latency', 'Latência')};
+  els.k = {fps: kpi('kpi-fps', 'FPS'), pacing: kpi('kpi-pacing', 'Ritmo'), hitches: kpi('kpi-hitches', 'Travadas'), latency: kpi('kpi-latency', 'Atraso est.')};
   els.spark = h('canvas', {'data-bxif-out': 'spark', 'aria-hidden': 'true'});
   els.sparkT = h('span', {class: 'bxif-spark-t'});
   els.meta = h('div', {class: 'bxif-meta', 'data-bxif-out': 'meta'});
@@ -841,8 +844,8 @@
   const legend = key => { const v = h('span'); return {row: h('div', null, h('i', {class: 'bxif-sw-i'}), h('span', {text: key + ' '}), v), v}; };
   els.leg = [legend('Rede (RTT)'), legend('Buffer'), legend('Decodificação'), legend('Tratamento'), legend('Espera da Fluidez')];
   els.latency = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-out': 'latency'},
-   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Latência estimada'}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
-   h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: 'Soma aproximada; não inclui controle, jogo nem tela.'}));
+   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Atraso estimado do vídeo'}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
+   h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: 'Soma de médias e percentis de trechos diferentes, que podem se sobrepor: uma estimativa, não uma medida. Não é o atraso do controle à tela (não inclui controle, jogo, compositor nem tela).'}));
   els.stream = h('div', {'data-bxif-out': 'stream'}); els.decoder = h('div', {'data-bxif-out': 'decoder'}); els.quality = h('div', {'data-bxif-out': 'quality'}); els.drops = h('div', {'data-bxif-out': 'drops'});
   // Spec 3 item 11 (docs/medicoes/spec3/*item11*): on the Vostro at 30 FPS, display p95 50 → 34 ms and
   // about −0.5 ms of GPU per frame; at 60 FPS the frames shown fell from 58-59 to 44 FPS. On the Poco F7
@@ -1021,6 +1024,8 @@
    let action = null;
    if (w.key === 'output') action = button('Usar Auto', 'sm', e => { commit('output', 'auto', e); syncAll(); });
    if (w.key === 'renderer') action = button('Ir para Renderizador', 'sm', focusRenderer);
+   // Audit C02: an explicit way back from the automatic reduction, without changing the settings.
+   if (w.key === 'aa-cut' || w.key === 'temporal-cut' || w.key === 'neural-cut') action = button('Religar', 'sm', () => { api.restoreBudget?.(); updateWarnings(true); });
    els.warns.append(h('div', {class: 'bxif-warn', 'data-level': w.level}, h('i', {class: 'bxif-badge', 'data-c': w.level === 'info' ? 'i' : '!', 'aria-hidden': 'true'}), tx, action));
   }
   if (list.length > 3) {
@@ -1136,6 +1141,10 @@
  function updateAjuste() {
   const applying = adaptiveApplying(), k = status.adaptive?.scales || {}, nt = NEURAL_TAG[status.neural] || ['EXP', null];
   els.treat.neural.lab.setTag(nt[0], nt[1]);
+  // Audit C02: the value asked for stays on the slider; the tag says when the GPU budget turned it off.
+  const cuts = settings.mode === 'filtered' && api.active ? status.effective?.cuts : null;
+  els.treat.antialias.lab.setTag(cuts?.antialias ? 'Cortado' : '', 'ok');
+  els.treat.temporal.lab.setTag(cuts?.temporal ? 'Cortado' : '', 'ok');
   for (const key of ['cleanup', 'deband', 'detail']) {
    const c = els.treat[key];
    if (applying && num(k[key])) {
@@ -1170,7 +1179,9 @@
    setS(els.gpuTick, 'transform', `translateX(${(L / scaleMax * 100).toFixed(1)}%)`);
    setA(els.gpuNote, 'data-hide', '');
   }
-  setParts(els.adaptation, status.adaptation && s.on ? [['↓ ' + status.adaptation, 'ok']] : [['Nenhuma redução automática', 'dim']]);
+  // Every cut of the current budget, oldest first (audit C02): a later cut no longer hides an earlier one.
+  const cutList = s.on && status.cuts?.length ? status.cuts.map(c => c.reason) : status.adaptation && s.on ? [status.adaptation] : [];
+  setParts(els.adaptation, cutList.length ? cutList.flatMap((r, i) => [[(i ? ' · ' : '') + '↓ ' + r, 'ok']]) : [['Nenhuma redução automática', 'dim']]);
   const lat = s.lat, flOn = valueOf('fluidity') !== 'off', segs = [lat.rtt, lat.buffer, lat.decode, lat.gpu, flOn ? lat.wait : 0];
   [...els.latBar.children].forEach((sp, i) => setS(sp, 'flex-grow', String(num(segs[i]) ? Math.max(0, +segs[i].toFixed(1)) : 0)));
   setT(els.latTotal, lat.total === null ? '—' : '≈' + fmtInt(lat.total) + ' ms'); setA(els.latTotal, 'data-g', G('total', s.gTotal));

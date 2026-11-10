@@ -148,6 +148,7 @@
       this.budget.configure(s,h);this.poll();
       const plan=R.framePlan(s,this.budget,w,h,outW,outH,this.floatTargets,diagnostic);
       if(!R.rendererSupports(plan))return false;
+      this.effective=R.planEffective(plan,s,this.budget);
       const revision=this.budget.revision,segment=this.diagnostics.active?this.diagnostics.frame(R.segmentConfig(s,this.budget,w,h,outW,outH,revision,diagnostic,this.floatTargets,'webgpu'),performance.now()):null;
       // trace: the pass names of this frame for the measurement (same vocabulary as WebGL2), only while recording.
       this.usedTargets=new Set();const passes=[],trace=segment?[]:null;
@@ -183,6 +184,9 @@
         }
         this.device.queue.submit([encoder.finish()]);if(item?.read)this.mapPending(item);
         if(segment)this.diagnostics.passes(segment,trace.join(','),final);
+        // Audit C09: the frame's ticket, closed by present() or a discarded slot when deferred or paced.
+        const ticket=segment?this.diagnostics.rendered(segment,!!(outputTarget&&deferFinal),!outputTarget):null;
+        if(outputTarget){const t=this.targets[outputTarget];if(t)t.ticket=ticket;}else this.lastPresented=ticket;
         this.frames++;return true;
       }finally{
         for(const [name,t] of Object.entries(this.targets))if(!this.usedTargets.has(name)&&!name.startsWith('paced')){t.texture.destroy();delete this.targets[name];}
@@ -191,7 +195,7 @@
     }
     canvasView(){this.canvasTexture=this.context.getCurrentTexture();return this.canvasTexture.createView();}
     // A slot leaving the pacer without being presented: its render() time still counts.
-    flushSlot(t){const item=t.pendingQuery;t.pendingQuery=null;t.final=null;
+    flushSlot(t){const item=t.pendingQuery;t.pendingQuery=null;t.final=null;this.diagnostics.discarded(t.ticket);t.ticket=null;
       if(item&&!item.empty){const e=this.device.createCommandEncoder();this.collect(e,item);this.device.queue.submit([e.finish()]);this.mapPending(item);}}
     // Shows a frame stored by render(...,outputTarget): the deferred last pass, or a copy, on the canvas.
     present(name){const t=this.targets[name];if(!t||this.failed)return false;
@@ -203,7 +207,7 @@
         this.pass(encoder,p,group,view,q!=null&&{begin:q,end:q+1});this.collect(encoder,item);
         this.device.queue.submit([encoder.finish()]);if(item?.read)this.mapPending(item);}
       else{const p=this.ready('copy','tex',this.format);if(!p)return false;this.pass(encoder,p,this.bind('tex',null,t.view),view);this.device.queue.submit([encoder.finish()]);}
-      return true;}
+      this.diagnostics.presented(t.ticket);this.lastPresented=t.ticket;return true;}
     // Pixels of a target or of the canvas texture of this task, as WebGL2's readPixels would return them
     // (RGBA, bottom row first): for regression tests and benches.
     async read(name){const t=name==='canvas'?{texture:this.canvasTexture,w:this.canvasTexture.width,h:this.canvasTexture.height,format:this.format}:this.targets[name];
@@ -214,7 +218,7 @@
         for(let y=0;y<h;y++)for(let x=0;x<w;x++)for(let c=0;c<4;c++)out[((h-1-y)*w+x)*4+c]=Math.round(Math.min(1,Math.max(0,f16(half[(y*row/2)+x*4+c])))*255);}
       else for(let y=0;y<h;y++){const a=src.subarray(y*row,y*row+w*4),o=(h-1-y)*w*4;out.set(a,o);if(bgra)for(let x=0;x<w;x++){const i=o+x*4,r=out[i];out[i]=out[i+2];out[i+2]=r;}}
       buf.unmap();buf.destroy();return out;}
-    releasePaced(){for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){t.pendingQuery=null;t.texture.destroy();delete this.targets[name];}}
+    releasePaced(){for(const [name,t] of Object.entries(this.targets))if(name.startsWith('paced')){t.pendingQuery=null;this.diagnostics.discarded(t.ticket);t.texture.destroy();delete this.targets[name];}}
     resetHistory(){this.previous=null;}
     resetBudget(){for(const t of Object.values(this.targets))t.pendingQuery=null;this.pending=[];this.budget=this.newBudget();this.resetHistory();}
     destroy(){for(const t of Object.values(this.targets))t.texture.destroy();this.targets={};for(const b of this.uniforms.values())b.destroy();this.uniforms.clear();

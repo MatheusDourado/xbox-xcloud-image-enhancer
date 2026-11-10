@@ -49,7 +49,7 @@ for expression in ['e + (e - gaussianBlur) * sharpenFactor / 3.0','mix(e, outCol
 shaders['casFiltered']=filtered
 inputs=[Path('script.js'),Path('tools/build.py'),Path('tools/nn_glsl.py'),*sorted(Path('src').rglob('*.*'))]
 fingerprint=hashlib.sha256(b''.join(p.as_posix().encode()+b'\0'+p.read_bytes() for p in inputs if p.is_file())).hexdigest()
-build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.10.1.1','sourceSha256':fingerprint})+';\n'
+build='globalThis.BxBuild='+json.dumps({'version':'6.7.12-imagefilter.10.1.2','sourceSha256':fingerprint})+';\n'
 # WebGPU renderer (Spec 4): the WGSL ports, prelude included, and the engine that draws them.
 wgsl={p.stem:p.read_text(encoding='utf-8') for p in sorted(Path('src/webgpu').glob('*.wgsl'))}
 bundle=build+'globalThis.BxShaders='+json.dumps(shaders)+';\n'+'globalThis.BxWgsl='+json.dumps(wgsl)+';\n'+Path('src/restoration-engine.js').read_text(encoding='utf-8')+'\n'+Path('src/webgpu-engine.js').read_text(encoding='utf-8')
@@ -63,7 +63,7 @@ menu='\"video.processing.sharpness\",\"video.saturation\"'
 assert source.count(menu)==1
 source=source.replace(menu,'\"video.processing.sharpness\",($parent) => {window.BxImageFilter.mountControls($parent);},\"video.saturation\"')
 source=source.replace(marker,bundle+'\n'+Path('src/frame-pacing.js').read_text(encoding='utf-8')+'\n'+'\n'.join(Path('src/'+n).read_text(encoding='utf-8') for n in ('image-filter.js','panel.js','hud.js'))+'\n'+marker)
-source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.10.1.1')
+source=source.replace('// @name         Better xCloud','// @name         Better xCloud — Image Filter Experimental').replace('// @version      6.7.12','// @version      6.7.12-imagefilter.10.1.2')
 source='\n'.join(line for line in source.split('\n') if not line.startswith(('// @updateURL','// @downloadURL')))
 source=source.replace('// @grant        none','// @grant        none\n// @updateURL    none\n// @downloadURL  none').replace('CheckForUpdate: !0','CheckForUpdate: !1',1)
 Path('better-xcloud-image-filter.user.js').write_text(source,encoding='utf-8',newline='\n')
@@ -78,7 +78,7 @@ players=between('class BaseStreamPlayer {','class WebGPUPlayer extends BaseCanva
 play_header='''// ==UserScript==
 // @name         xCloud Image Filter — play.xbox.com (experimental)
 // @namespace    xcloud-image-filter
-// @version      10.1.1-play
+// @version      10.1.2-play
 // @description  Image treatment (WebGL2) for Xbox Cloud Gaming on play.xbox.com, bound directly to the stream video. Includes Better xCloud's canvas player by redphx (MIT).
 // @license      MIT
 // @match        https://play.xbox.com/*
@@ -92,4 +92,4 @@ play_header='''// ==UserScript==
 '''
 play=play_header+Path('src/play/prelude.js').read_text(encoding='utf-8')+players+bundle+'\n'+Path('src/frame-pacing.js').read_text(encoding='utf-8')+'\n'+'\n'.join(Path('src/'+n).read_text(encoding='utf-8') for n in ('image-filter.js','panel.js','hud.js','play/host.js'))
 Path('xcloud-image-filter-play.user.js').write_text(play,encoding='utf-8',newline='\n')
-print('Built userscript v10.1.1, play.xbox.com userscript and shared player bundle')
+print('Built userscript v10.1.2, play.xbox.com userscript and shared player bundle')

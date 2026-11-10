@@ -1,6 +1,8 @@
 #version 300 es
 precision highp float;
 precision highp sampler2D;
+// source/previous: quarter-size raw frames; fullSource/fullPrevious: the raw frame and the previous raw frame
+// (audit C06: the same signal in both searches; the processed history is only blended by temporal.glsl).
 uniform sampler2D source, previous, cut, fullSource, fullPrevious;
 uniform vec2 outputSize;
 uniform bool validHistory;

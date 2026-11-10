@@ -70,11 +70,29 @@ test('the site sees inbound video decode time capped at 8 ms per frame; our tele
  const real=(await p.context.BxRestoration.readStats(p.pc)).get('v');assert.equal(real.totalDecodeTime,2.1);
  assert.equal((await p.context.BxRestoration.readStats(new p.window.RTCRtpReceiver())).get('v').totalDecodeTime,2.1);
  assert.ok(p.stream.info().capActive);assert.ok(Math.abs(p.stream.info().realDecodeMs-21)<1e-9);
- // Below the cap, and with the setting off, the site's report is the native one.
+ // Restarted counters (below the cap since the start): the native value again.
  p.decode.total=.5;assert.equal((await p.pc.getStats()).get('v').totalDecodeTime,.5);
- p.decode.total=2.1;p.api.settings.preventDrops=false;assert.equal((await p.pc.getStats()).get('v').totalDecodeTime,2.1);
+ // The setting is latched per connection (audit C11): turning it off mid-game keeps this connection capped and
+ // monotonic; a new connection (next game) reads it off and sees the native report.
+ p.decode.total=2.1;p.api.settings.preventDrops=false;const kept=(await p.pc.getStats()).get('v').totalDecodeTime;assert.ok(kept>=.5&&kept<=.5+1e-9,'no jump on the toggle');
+ assert.equal((await new p.window.RTCPeerConnection().getStats()).get('v').totalDecodeTime,2.1);
  // The wrapper keeps length 0 (webrtc-adapter's getStats shim checks it).
  assert.equal(p.window.RTCPeerConnection.prototype.getStats.length,0);
+});
+
+test('the decode cap holds between any two reads, not only on the mean since the start (audit C11)',()=>{
+ const {capReport}=play().stream,streams=new Map();
+ const read=(frames,total)=>capReport(new Map([['v',{id:'v',type:'inbound-rtp',kind:'video',framesDecoded:frames,totalDecodeTime:total}]]),8,streams);
+ // The audit's counterexample: 100 frames in 0.4 s, then 60 more in 0.72 s (12 ms each). The old cap on the total
+ // (160 x 8 ms = 1.28 s) let 1.12 s through: 12 ms per frame between the reads.
+ let r=read(100,.4);assert.equal(r.report.get('v').totalDecodeTime,.4);assert.equal(r.realMs,null);
+ r=read(160,1.12);const t=r.report.get('v').totalDecodeTime;assert.ok(Math.abs((t-.4)/60*1000-8)<1e-9,'8 ms per frame between the reads');assert.ok(Math.abs(r.realMs-12)<1e-9);
+ // Load goes 4 → 12 → 21 → 4 ms: every delta at most 8 ms per frame, the series never decreases, 4 ms passes unchanged.
+ let last=t,frames=160,real=1.12;
+ for(const ms of [4,12,21,4]){frames+=60;real+=60*ms/1000;const v=read(frames,real).report.get('v').totalDecodeTime,step=(v-last)/60*1000;
+  assert.ok(step<=8+1e-9&&step>=0,'per-read step '+step);assert.ok(Math.abs(step-Math.min(ms,8))<1e-9);last=v;}
+ // A counter reset (new SSRC/receiver) starts over from the native values.
+ assert.equal(read(10,.05).report.get('v').totalDecodeTime,.05);
 });
 
 test('adapter telemetry and warnings: real decodeMs while the site sees the cap, status.stream on play.xbox.com',async()=>{
