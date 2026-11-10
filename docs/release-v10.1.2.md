@@ -1,4 +1,6 @@
-# v10.1.2 (beta) — correções da auditoria estática da v10.1.1
+# v10.1.2 (pré-lançamento) — correções da auditoria da v10.1.1 (última versão)
+
+> **Esta versão é o resultado de uma auditoria da última release publicada, a [v10.1.1-beta.1](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/tag/v10.1.1-beta.1).** Após os testes da v10.1.1 feitos por outros usuários, o código dela (commit `cb0b931`, idêntico ao `main` em `29eb276` nos fontes, shaders e userscripts) passou por uma auditoria estática independente. Cada mudança abaixo cita o achado correspondente (C01–C15). Este é um **pré-lançamento**: foi validado só com os testes automatizados, ainda sem gameplay nem GPU real.
 
 Userscripts `6.7.12-imagefilter.10.1.2` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.1.2-play` (play.xbox.com), app Android **10.1.2** (`versionCode` 100102). Inclui tudo da [v10.1.1](release-v10.1.1.md).
 
