@@ -49,7 +49,7 @@ probe=r'''
  let savedFile=null;window.BxAndroid={saveFile:(name,mime,text)=>{savedFile={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const report=await api.exportMeasurement();delete window.BxAndroid;
  const segs=report.segments,seg=segs.find(s=>s.config.settings.capture==='direct'&&s.display.count>40);
- check(savedFile&&/^bx-v10\.1\.0-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===3,'Measurement is saved through the Android bridge (schema 3)');
+ check(savedFile&&/^bx-v10\.1\.1-diagnostics-\d+\.json$/.test(savedFile.name)&&JSON.parse(savedFile.text).schema===3,'Measurement is saved through the Android bridge (schema 3)');
  check(seg&&seg.arrival.count>40&&seg.server.count>40&&seg.wait.count>40,`Direct segment records display, arrival, server and wait intervals (${seg&&[seg.display.count,seg.arrival.count,seg.server.count,seg.wait.count]})`);
  // Audit 3.5: the direct segment keeps the main-thread cost per frame and its passes end at present(); the video
  // segment before the switch has the lateness against the expected display time; the switch to direct capture is a dated event.
