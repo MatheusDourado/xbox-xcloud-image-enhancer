@@ -1,4 +1,4 @@
-# xCloud ImageFilter para Android — v10.1.1
+# xCloud Enhanced para Android — v10.1.1
 
 App Android próprio (WebView) que abre o xCloud e injeta o userscript desta versão (Better xCloud 6.7.12 + tratamento de imagem **v10.1.1**). **Não é o app oficial do Better xCloud**: o app oficial é de código fechado (o repositório `redphx/better-xcloud-android` só tem o README), então não dá para modificá-lo.
 
@@ -6,7 +6,7 @@ App Android próprio (WebView) que abre o xCloud e injeta o userscript desta ver
 
 1. Baixe `android/dist/xcloud-imagefilter-10.1.1.apk` deste repositório (gerado pela CI a partir do commit da versão) (no GitHub: abra o arquivo → **Download raw file**).
 2. No celular, permita instalar apps da fonte usada (navegador ou gerenciador de arquivos) e instale.
-3. Abra **xCloud ImageFilter**, faça login na conta Microsoft e entre num jogo.
+3. Abra **xCloud Enhanced** (ícone de nuvem com controle), faça login na conta Microsoft e entre num jogo.
 4. No menu do Better xCloud → **Vídeo**, mantenha o renderizador **WebGL2**. O painel **Tratamento de imagem** fica logo abaixo de Renderizador. Em **05 Indicadores e ferramentas**, ligue os indicadores no jogo: no celular eles ficam na faixa preta ao lado do vídeo.
 
 Pode ser instalado junto com o app oficial: o pacote é outro (`com.imagefilter.xcloud`) e o login é separado.

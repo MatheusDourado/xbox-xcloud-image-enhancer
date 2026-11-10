@@ -28,6 +28,7 @@ Primeira sessão de depuração ao vivo no Poco F7 (2026-11-09), com Perfetto, m
 - **Widget arrastável**: toque abre, arrastar move (limite de 8 px), encosta na borda esquerda ou direita mais próxima e a posição fica salva.
 - **O widget não cobre mais o menu do Xbox.** Antes, durante o jogo, o botão ficava em cima do ícone do Xbox, e por isso não dava para sair do jogo. Agora o padrão é à direita, a ~35% da altura, e nenhuma posição fica nos 64 px do topo.
 - **Fechar o painel tocando fora dele**, sem que o toque chegue ao jogo. Arrastar de dentro para fora não fecha. Esc também fecha.
+- Ícone e nome do app Android: xCloud Enhanced (nuvem com controle)
 
 ### Correções
 - **O HUD sumia no play.xbox.com** até a opção ser alternada: a hidratação do React removia o elemento criado no início do carregamento. A verificação de 1 s agora o recoloca (`src/hud.js`).
