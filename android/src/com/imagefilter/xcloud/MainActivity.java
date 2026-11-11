@@ -87,7 +87,7 @@ public class MainActivity extends Activity {
         playScript = wrapPlay(readAsset("play.js"));
         playDocumentStart = DocumentStart.add(webView, playScript, new String[]{"https://play.xbox.com"});
         if (!documentStart) {
-            Toast.makeText(this, "WebView sem document-start: injeção tardia (atualize o Android System WebView)", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.late_injection), Toast.LENGTH_LONG).show();
         }
 
         webView.setWebChromeClient(new WebChromeClient());
@@ -136,7 +136,7 @@ public class MainActivity extends Activity {
             runOnUiThread(new Runnable() { @Override public void run() {
                 ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 clipboard.setPrimaryClip(ClipData.newPlainText("xCloud ImageFilter", text));
-                Toast.makeText(MainActivity.this, "Configuração copiada", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, getString(R.string.settings_copied), Toast.LENGTH_SHORT).show();
             } });
             return true;
         }
@@ -164,7 +164,7 @@ public class MainActivity extends Activity {
                     where = file.getAbsolutePath();
                 }
                 runOnUiThread(new Runnable() { @Override public void run() {
-                    Toast.makeText(MainActivity.this, "Medição salva em " + where, Toast.LENGTH_LONG).show();
+                    Toast.makeText(MainActivity.this, getString(R.string.measurement_saved, where), Toast.LENGTH_LONG).show();
                 } });
                 return where;
             } catch (Exception error) {

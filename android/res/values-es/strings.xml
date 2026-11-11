@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="late_injection">WebView sin document-start: inyección tardía (actualiza Android System WebView)</string>
+    <string name="settings_copied">Configuración copiada</string>
+    <string name="measurement_saved">Medición guardada en %1$s</string>
+</resources>
