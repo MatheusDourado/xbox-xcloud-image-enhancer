@@ -39,17 +39,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Ferramentas Android (sem SDK)
+      - name: Ferramentas Android (SDK do runner)
         run: |
-          PKGS="aapt dalvik-exchange zipalign apksigner"
-          # The runner's mirror (azure.archive.ubuntu.com) has failed DNS for whole runs (v10.1.3): give it
-          # 5 minutes, then retry once on the main Ubuntu archive.
-          if ! timeout 300 sudo sh -c "apt-get update -q && apt-get install -y -q $PKGS"; then
-            echo "::warning::Espelho apt do runner falhou; usando archive.ubuntu.com"
-            echo "http://archive.ubuntu.com/ubuntu/" | sudo tee /etc/apt/apt-mirrors.txt
-            sudo sed -i 's|azure\.archive\.ubuntu\.com|archive.ubuntu.com|g' /etc/apt/sources.list /etc/apt/sources.list.d/* 2>/dev/null || true
-            sudo apt-get update -q && sudo apt-get install -y -q $PKGS
-          fi
+          # The runner image ships the Android SDK, so no apt: on 2026-11-11 the runners could not resolve any
+          # Ubuntu mirror for hours. Newest build-tools that still has aapt (android/build.sh uses aapt, not aapt2).
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | while read -r d; do [ -x "$d/aapt" ] && echo "$d"; done | tail -1)
+          test -n "$BT" || { echo "::error::Nenhum build-tools com aapt em $ANDROID_HOME"; exit 1; }
+          echo "$BT" >> "$GITHUB_PATH"
+          echo "build-tools: $BT"
       - name: Userscript e testes
         run: |
           python3 tools/build.py
@@ -61,7 +58,8 @@ jobs:
       - name: Regressões WebGL e DOM
         run: |
           python3 -m pip install playwright==1.60.0
-          python3 -m playwright install --with-deps chromium
+          # --with-deps uses apt; the runner image already has the libraries Chrome needs.
+          timeout 300 python3 -m playwright install --with-deps chromium || python3 -m playwright install chromium
           # capture-harness tem falha intermitente de tempo (docs/spec1-estudo.md): uma nova tentativa, nunca pular.
           if ! python3 tools/run-browser-tests.py; then
             python3 -c "import json;r=json.load(open('output/playwright/results.json',encoding='utf-8'));[print('::warning title=1a tentativa '+x['suite']+'::'+str((x.get('result') or {}).get('error') or (x.get('result') or {}).get('failures'))[:900]) for x in (r if isinstance(r,list) else r.get('results',r)) if not x.get('ok')]" || true
