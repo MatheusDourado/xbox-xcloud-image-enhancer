@@ -5,8 +5,9 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.1.2';
+ const VERSION = 'v10.1.3';
  const num = v => typeof v === 'number' && Number.isFinite(v);
+ const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
 
  /* =============================== api.ui =============================== */
  const styleParts = {};
@@ -21,10 +22,10 @@
    (doc.head || doc.documentElement).append(el);
   } else el.append(doc.createTextNode(css));
  }
- const fmt = (v, d = 1) => num(v) ? v.toFixed(d).replace('.', ',') : '—';
+ const fmt = (v, d = 1) => num(v) ? v.toFixed(d).replace('.', globalThis.BxI18n?.decimal ?? ',') : '—';
  const fmtMs = v => !num(v) ? '—' : Math.abs(v) < 9.95 ? fmt(v, 1) : String(Math.round(v));
  const fmtInt = v => num(v) ? String(Math.round(v)) : '—';
- const fmtThousands = v => num(v) ? String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, '.') : '—';
+ const fmtThousands = v => num(v) ? String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, globalThis.BxI18n?.thousands ?? '.') : '—';
  // Target cadence: 60 or 30 FPS, from the server clock, then the screen, then the received FPS.
  function target() {
   const o = status.origin, p = status.pacing, n = status.net;
@@ -451,7 +452,7 @@
 .bxif-foot-line{padding:0 2px;font-size:var(--bxif-fs-11);color:var(--bxif-t3)}
 .bx-settings-row.bxif-native-muted>:not(.bx-settings-label){opacity:.45}
 .bx-settings-row.bxif-native-muted .bx-settings-label{color:#9ea4ae}
-.bx-settings-row.bxif-native-muted .bx-settings-label::after{content:"Substituída pela Nitidez do Tratamento de imagem";display:block;margin-top:2px;font-size:12px;font-weight:400;color:#b4b9c2}
+.bx-settings-row.bxif-native-muted .bx-settings-label::after{content:attr(data-bxif-note);display:block;margin-top:2px;font-size:12px;font-weight:400;color:#b4b9c2}
 @media (prefers-reduced-motion:reduce){.bxif-panel *{transition:none!important;animation:none!important}}
 `;
 
@@ -661,7 +662,7 @@
   const {row, hint} = makeRow(o.key, lab, sw);
   setT(hint, o.hint || '');
   const c = {key: o.key, input, row, lab, hint};
-  function show(on) { input.value = on ? '1' : '0'; setA(sw, 'data-on', on || null); const t = on ? 'Ligado' : 'Desligado'; setT(tx, t); setA(input, 'aria-valuetext', t); }
+  function show(on) { input.value = on ? '1' : '0'; setA(sw, 'data-on', on || null); const v = t(on ? 'Ligado' : 'Desligado'); setT(tx, v); setA(input, 'aria-valuetext', v); }
   const set = (on, e) => { show(on); o.set(on, e); };
   input.addEventListener('input', e => { if (e.isTrusted === false) setNav('1'); set(input.value === '1', e); });
   input.addEventListener('click', e => { if (e.isTrusted) return; setNav('1'); set(input.value !== '1', e); });
@@ -728,60 +729,60 @@
  }
 
  function build() {
-  const r = h('div', {class: 'bxif-panel', 'data-bx-restoration': VERSION, role: 'group', 'aria-label': 'Tratamento de imagem', 'data-nav': '0', 'data-tier': tierNow()});
+  const r = h('div', {class: 'bxif-panel', 'data-bx-restoration': VERSION, role: 'group', 'aria-label': t('Tratamento de imagem'), 'data-nav': '0', 'data-tier': tierNow()});
   r.nearby = {loop: dir => (dir === 2 || dir === 4) ? (onSideKey(dir), true) : false};
   // [A] header
   els.pillWord = h('span');
   els.pill = h('span', {class: 'bxif-pill', 'aria-live': 'polite', 'data-g': 'none'}, h('i', {class: 'bxif-dot'}), els.pillWord);
-  r.append(h('div', {class: 'bxif-head'}, h('div', {class: 'bxif-title'}, h('span', {class: 'bxif-name', text: 'Tratamento de imagem'}), h('span', {class: 'bxif-ver', text: VERSION})), els.pill));
+  r.append(h('div', {class: 'bxif-head'}, h('div', {class: 'bxif-title'}, h('span', {class: 'bxif-name', text: t('Tratamento de imagem')}), h('span', {class: 'bxif-ver', text: VERSION})), els.pill));
   // [B] warnings
   els.warns = h('div', {class: 'bxif-warns', 'data-bxif-out': 'warnings', 'data-hide': ''});
   els.warnText = new Map();
   els.warns.addEventListener('focusout', e => { if (!(e.relatedTarget && els.warns.contains(e.relatedTarget))) els.warnSig = null; });
   r.append(els.warns);
   // [C] live card
-  els.k = {fps: kpi('kpi-fps', 'FPS'), pacing: kpi('kpi-pacing', 'Ritmo'), hitches: kpi('kpi-hitches', 'Travadas'), latency: kpi('kpi-latency', 'Atraso est.')};
+  els.k = {fps: kpi('kpi-fps', 'FPS'), pacing: kpi('kpi-pacing', t('Ritmo')), hitches: kpi('kpi-hitches', t('Travadas')), latency: kpi('kpi-latency', t('Atraso est.'))};
   els.spark = h('canvas', {'data-bxif-out': 'spark', 'aria-hidden': 'true'});
   els.sparkT = h('span', {class: 'bxif-spark-t'});
   els.meta = h('div', {class: 'bxif-meta', 'data-bxif-out': 'meta'});
-  const hud = choice({key: 'hud', label: 'Indicadores no jogo', opts: [['off', 'Desligado'], ['compact', 'Compacto'], ['full', 'Completo']],
-   hint: v => ({off: 'Nada sobre o jogo.', compact: 'FPS, ritmo, travadas e latência num canto pequeno.', full: 'Fluidez, latência, rede e imagem.'})[v] || ''});
-  els.corner = choice({key: 'hudPosition', label: 'Canto', opts: Object.entries(CORNER), icon: v => h('span', {class: 'bxif-corner', 'data-c': v}),
-   hint: v => (CORNER[v] ? CORNER[v] + '. ' : '') + 'No celular, o modo Compacto usa a faixa preta lateral quando houver espaço.'});
+  const hud = choice({key: 'hud', label: t('Indicadores no jogo'), opts: [['off', t('Desligado')], ['compact', t('Compacto')], ['full', t('Completo')]],
+   hint: v => t(({off: 'Nada sobre o jogo.', compact: 'FPS, ritmo, travadas e latência num canto pequeno.', full: 'Fluidez, latência, rede e imagem.'})[v] || '')});
+  els.corner = choice({key: 'hudPosition', label: t('Canto'), opts: Object.entries(CORNER).map(([k, v]) => [k, t(v)]), icon: v => h('span', {class: 'bxif-corner', 'data-c': v}),
+   hint: v => (CORNER[v] ? t(CORNER[v]) + '. ' : '') + t('No celular, o modo Compacto usa a faixa preta lateral quando houver espaço.')});
   r.append(h('div', {class: 'bxif-live'},
    h('div', {class: 'bxif-kpis'}, els.k.fps.el, els.k.pacing.el, els.k.hitches.el, els.k.latency.el),
-   h('div', {class: 'bxif-spark-cap', 'aria-hidden': 'true'}, h('span', {text: 'RITMO NA TELA'}), els.sparkT),
+   h('div', {class: 'bxif-spark-cap', 'aria-hidden': 'true'}, h('span', {text: t('RITMO NA TELA')}), els.sparkT),
    h('div', {class: 'bxif-spark'}, els.spark), els.meta));
   // [D] 01 Fluidez
-  const s1 = section('fluidez', '01', 'Fluidez');
+  const s1 = section('fluidez', '01', t('Fluidez'));
   els.verdictTx = h('span', {class: 'bxif-verdict-tx'});
   els.verdictBtn = button('', 'sm out', e => verdict.action?.(e));
   els.verdictBtn.tabIndex = -1; setA(els.verdictBtn, 'data-off', true);
   els.verdict = h('div', {class: 'bxif-verdict', 'data-bxif-out': 'verdict', 'data-g': 'none'}, h('i', {class: 'bxif-dot'}), els.verdictTx, els.verdictBtn);
   els.verdict.addEventListener('focusout', e => { if (!(e.relatedTarget && els.verdict.contains(e.relatedTarget))) verdict.dirty = true; });
-  const flu = choice({key: 'fluidity', label: 'Fluidez', opts: [['off', 'Desligada'], ['balanced', 'Equilibrada'], ['max', 'Máxima']], hint: v => ({
+  const flu = choice({key: 'fluidity', label: t('Fluidez'), opts: [['off', t('Desligada')], ['balanced', t('Equilibrada')], ['max', t('Máxima')]], hint: v => t(({
    off: 'Exibe cada quadro assim que chega: menor latência; o ritmo segue a rede.',
    balanced: 'Exibe no ritmo do servidor e corrige a oscilação da rede e da decodificação. Acrescenta poucos ms de espera.',
-   max: 'Ritmo fixo de 30/60 FPS; corrige também jogo/servidor irregular. Um pouco mais de espera.'})[v] || ''});
-  els.capture = choice({key: 'capture', label: 'Captura de quadros', opts: [['video', 'Vídeo'], ['direct', 'Direta']], hint: v => v === 'direct'
-   ? 'Recebe cada quadro direto do decodificador: evita quadros pulados.' : 'Lê os quadros do elemento de vídeo (mais compatível).'});
+   max: 'Ritmo fixo de 30/60 FPS; corrige também jogo/servidor irregular. Um pouco mais de espera.'})[v] || '')});
+  els.capture = choice({key: 'capture', label: t('Captura de quadros'), opts: [['video', t('Vídeo')], ['direct', t('Direta')]], hint: v => t(v === 'direct'
+   ? 'Recebe cada quadro direto do decodificador: evita quadros pulados.' : 'Lê os quadros do elemento de vídeo (mais compatível).')});
   els.captureOut = out('capture'); els.capture.row.append(els.captureOut);
   const smoothHint = 'Pede ao navegador um alvo de buffer. Mais buffer deixa o ritmo mais regular, com mais latência. Não garante um atraso máximo.';
-  els.smooth = choice({key: 'smoothing', label: 'Suavidade', opts: [[0, 'Auto'], [17, '17 ms'], [33, '33 ms'], [50, '50 ms']], hint: v => (v === 0 ? 'O navegador decide. ' : '') + smoothHint});
+  els.smooth = choice({key: 'smoothing', label: t('Suavidade'), opts: [[0, 'Auto'], [17, '17 ms'], [33, '33 ms'], [50, '50 ms']], hint: v => (v === 0 ? t('O navegador decide.') + ' ' : '') + t(smoothHint)});
   els.smoothOut = out('smoothing'); els.smooth.row.append(els.smoothOut);
   els.pipe = {};
   const cell = (k, label) => { const v = h('span', {class: 'bxif-pipe-v'}), sub = h('span', {class: 'bxif-pipe-s'}); els.pipe[k] = {v, sub}; return h('div', {class: 'bxif-pipe-cell'}, h('span', {class: 'bxif-pipe-k', text: label}), v, sub); };
   els.pacingLine = h('div', {'data-bxif-out': 'pacing'}); els.fluLine = h('div', {'data-bxif-out': 'fluidity'});
   s1.body.append(els.verdict, flu.row, els.capture.row, els.smooth.row,
-   h('div', {class: 'bxif-cap'}, 'Onde nasce a oscilação ', h('span', {style: 'text-transform:none', text: '· 2 s'})),
-   h('div', {class: 'bxif-pipe', 'data-bxif-out': 'pipeline'}, cell('srv', 'SERVIDOR'), h('i', {class: 'bxif-pipe-arr'}), cell('arr', 'CHEGADA'), h('i', {class: 'bxif-pipe-arr'}), cell('scr', 'TELA')),
+   h('div', {class: 'bxif-cap'}, t('Onde nasce a oscilação') + ' ', h('span', {style: 'text-transform:none', text: '· 2 s'})),
+   h('div', {class: 'bxif-pipe', 'data-bxif-out': 'pipeline'}, cell('srv', t('SERVIDOR')), h('i', {class: 'bxif-pipe-arr'}), cell('arr', t('CHEGADA')), h('i', {class: 'bxif-pipe-arr'}), cell('scr', t('TELA'))),
    h('div', {class: 'bxif-lines'}, els.pacingLine, els.fluLine));
   s1.update = updateFluidez;
   // [E] 02 Nitidez e imagem
-  const s2 = section('nitidez', '02', 'Nitidez e imagem');
+  const s2 = section('nitidez', '02', t('Nitidez e imagem'));
   els.chips = Object.entries(api.presets || {}).map(([k, p]) => {
-   const b = button(p.label, null, () => { cancelPending(); api.applyPreset(k); syncAll(); afterCommit('preset'); });
-   b.className = 'bxif-chip'; b.dataset.preset = k; setA(b, 'aria-pressed', 'false'); setA(b, 'aria-label', 'Perfil ' + p.label);
+   const b = button(t(p.label), null, () => { cancelPending(); api.applyPreset(k); syncAll(); afterCommit('preset'); });
+   b.className = 'bxif-chip'; b.dataset.preset = k; setA(b, 'aria-pressed', 'false'); setA(b, 'aria-label', t('Perfil {0}', t(p.label)));
    b.addEventListener('focus', () => updatePreset(k)); b.addEventListener('blur', () => updatePreset(null));
    return b;
   });
@@ -789,31 +790,31 @@
   els.chipBox.nearby = {orientation: 'horizontal', focus: () => { (els.chips.find(b => b.getAttribute('aria-pressed') === 'true') || els.chips[0]).focus(); return true; }, loop: d => d === 2 || d === 4};
   els.presetPick = h('div', {class: 'bxif-val bxif-pick'});
   els.presetDesc = h('div', {class: 'bxif-desc'});
-  els.presetLab = labelCell('Perfil');
+  els.presetLab = labelCell(t('Perfil'));
   const presetRow = h('div', {class: 'bxif-row bxif-stack bxif-has-val', 'data-bxif-row': 'preset'}, els.presetLab.el, h('div', {class: 'bxif-ctl'}, els.chipBox, els.presetDesc), els.presetPick);
-  els.sharp = slider({key: 'sharpness', label: 'Nitidez', max: 20, step: 1, scale: 2, notch: 3, fmt: s => s === 0 ? 'Desl.' : fmt(s, 1)});
-  els.method = choice({key: 'sharpening', label: 'Método', opts: [['usm', 'USM'], ['cas', 'CAS'], ['rcas', 'RCAS'], ['native', 'Nativo']], hint: v => (({
-   usm: 'Recomendado: contorno limpo.', cas: 'AMD FidelityFX CAS.', rcas: 'AMD FidelityFX RCAS.', native: ['cas', 'usm'].includes(api.nativePref('video.processing')) ? 'Segue o Processamento do menu do Better xCloud (CAS/USM).'
-    : 'Sem menu do Better xCloud neste site: aplica o processamento salvo (' + (settings.processing === 'usm' ? 'USM' : 'CAS') + '; CAS por padrão).'})[v] || '') + ' Vale também para a referência Só nitidez.'});
+  els.sharp = slider({key: 'sharpness', label: t('Nitidez'), max: 20, step: 1, scale: 2, notch: 3, fmt: s => s === 0 ? t('Desl.') : fmt(s, 1)});
+  els.method = choice({key: 'sharpening', label: t('Método'), opts: [['usm', 'USM'], ['cas', 'CAS'], ['rcas', 'RCAS'], ['native', t('Nativo')]], hint: v => (({
+   usm: t('Recomendado: contorno limpo.'), cas: 'AMD FidelityFX CAS.', rcas: 'AMD FidelityFX RCAS.', native: ['cas', 'usm'].includes(api.nativePref('video.processing')) ? t('Segue o Processamento do menu do Better xCloud (CAS/USM).')
+    : t('Sem menu do Better xCloud neste site: aplica o processamento salvo ({0}; CAS por padrão).', settings.processing === 'usm' ? 'USM' : 'CAS')})[v] || '') + ' ' + t('Vale também para a referência Só nitidez.')});
   // Spec 3 item 5: SGSR 1 replaces EASU + sharpening with one pass when the output is larger than the stream.
-  els.scaler = choice({key: 'scaler', label: 'Escalador/nitidez', opts: [['easu', 'EASU + nitidez'], ['sgsr', 'SGSR (menos GPU)']], hint: v => (({
+  els.scaler = choice({key: 'scaler', label: t('Escalador/nitidez'), opts: [['easu', t('EASU + nitidez')], ['sgsr', t('SGSR (menos GPU)')]], hint: v => t(({
    easu: 'Atual: FSR 1 EASU amplia e o Método aplica a nitidez.', sgsr: 'Snapdragon GSR 1 amplia e dá nitidez numa passada só: menos GPU, um pouco menos de detalhe. Substitui o Método só quando a saída é maior que o stream; em saída nativa fica a nitidez atual.'})[v] || '')});
-  els.output = choice({key: 'output', label: 'Resolução de saída', opts: [['auto', 'Auto'], ['native', 'Nativa'], ['1440', '2K'], ['2160', '4K']], unknown: v => v + 'p', hint: v => ({
+  els.output = choice({key: 'output', label: t('Resolução de saída'), opts: [['auto', 'Auto'], ['native', t('Nativa')], ['1440', '2K'], ['2160', '4K']], unknown: v => v + 'p', hint: v => t(({
    auto: 'Renderiza na altura real do vídeo na tela (FSR + nitidez no tamanho final). Em HDMI 1080p fica nativa.', native: 'Mantém a resolução do stream.',
-   1440: 'Só para telas 1440p ou maiores; acima da tela só custa GPU.', 2160: 'Só para telas 4K; custo alto de GPU.'})[v] || 'Valor salvo fora das opções; escolha uma para substituí-lo.'});
+   1440: 'Só para telas 1440p ou maiores; acima da tela só custa GPU.', 2160: 'Só para telas 4K; custo alto de GPU.'})[v] || 'Valor salvo fora das opções; escolha uma para substituí-lo.')});
   els.outputOut = out('output'); els.output.row.append(els.outputOut);
-  els.adaptive = toggle({key: 'adaptive', label: 'Adaptar à compressão', get: () => valueOf('adaptive'), set: (v, e) => commit('adaptive', v, e),
-   hint: 'Ajusta limpeza, degradês e detalhe à compressão (QP) do stream, devagar, sem pulsar.'});
+  els.adaptive = toggle({key: 'adaptive', label: t('Adaptar à compressão'), get: () => valueOf('adaptive'), set: (v, e) => commit('adaptive', v, e),
+   hint: t('Ajusta limpeza, degradês e detalhe à compressão (QP) do stream, devagar, sem pulsar.')});
   els.qpPos = h('span', {class: 'bxif-meter-pos', 'data-hide': ''}, h('i', {class: 'bxif-meter-tick'}));
-  els.qp = h('div', {class: 'bxif-x', 'data-bxif-out': 'qp'}, h('div', {class: 'bxif-qp-track'}, h('span', {class: 'bxif-meter-clip'}, els.qpPos)), h('div', {class: 'bxif-qp-cap'}, h('span', {text: '20 limpo'}), h('span', {text: '28'}), h('span', {text: '36 forte'})));
+  els.qp = h('div', {class: 'bxif-x', 'data-bxif-out': 'qp'}, h('div', {class: 'bxif-qp-track'}, h('span', {class: 'bxif-meter-clip'}, els.qpPos)), h('div', {class: 'bxif-qp-cap'}, h('span', {text: t('20 limpo')}), h('span', {text: '28'}), h('span', {text: t('36 forte')})));
   els.adaptiveOut = out('adaptive');
   els.adaptive.row.append(els.qp, els.adaptiveOut);
-  els.mode = choice({key: 'mode', label: 'Comparação', opts: [['original', 'Original'], ['cas', 'Só nitidez'], ['filtered', 'Tratada']], hint: v => (({
-   original: 'Vídeo puro, sem tratamento.', cas: 'Referência: só a nitidez, sem limpeza.', filtered: 'Tratamento completo (use esta para jogar).'})[v] || '') + ' Com o jogo aberto, compare ao vivo à esquerda do menu.'});
+  els.mode = choice({key: 'mode', label: t('Comparação'), opts: [['original', t('Original')], ['cas', t('Só nitidez')], ['filtered', t('Tratada')]], hint: v => t(({
+   original: 'Vídeo puro, sem tratamento.', cas: 'Referência: só a nitidez, sem limpeza.', filtered: 'Tratamento completo (use esta para jogar).'})[v] || '') + ' ' + t('Com o jogo aberto, compare ao vivo à esquerda do menu.')});
   s2.body.append(presetRow, els.sharp.row, els.method.row, els.scaler.row, els.output.row, els.adaptive.row, els.mode.row);
   s2.update = updateNitidez;
   // [F] 03 Ajuste fino
-  const s3 = section('ajuste', '03', 'Ajuste fino');
+  const s3 = section('ajuste', '03', t('Ajuste fino'));
   const TREAT_UI = [['Compressão', 'cleanup', 'Suaviza degraus de bloco em áreas lisas; não remove ringing nem mosquito. Pouco efeito acima de ~10 Mb/s.'],
    ['Degradês', 'deband', 'Suaviza faixas em céus e sombras; alto demais apaga textura e borra bordas suaves de baixo contraste.'],
    ['Cor nas bordas', 'chroma', 'Corrige cor borrada nas bordas (vídeo 4:2:0).'], ['Detalhe', 'detail', 'Realça as mesmas frequências finas que a Nitidez. Os perfis vão até 35%; excesso vira halo e cintilação.'],
@@ -821,41 +822,41 @@
    ['Reconstrução neural', 'neural', 'Rede treinada em streams H.264 limpa blocos antes da nitidez. +45% de GPU em sessão a 30 FPS na bancada do Poco; qualquer valor acima de 0 custa o mesmo.']];
   els.treat = {};
   for (const [label, key, hint] of TREAT_UI) {
-   const c = els.treat[key] = slider({key, label, max: 100, step: 5, scale: 100, notch: natural[key], tag: key === 'neural' ? 'EXP' : null, ghost: ['cleanup', 'deband', 'detail'].includes(key), fmt: s => Math.round(s * 100) + '%'});
-   setT(c.hint, hint);
+   const c = els.treat[key] = slider({key, label: t(label), max: 100, step: 5, scale: 100, notch: natural[key], tag: key === 'neural' ? 'EXP' : null, ghost: ['cleanup', 'deband', 'detail'].includes(key), fmt: s => Math.round(s * 100) + '%'});
+   setT(c.hint, t(hint));
    s3.body.append(c.row);
   }
-  const spatial = choice({key: 'spatialMode', label: 'Limpeza espacial', opts: [['selective', 'Seletiva'], ['legacy', 'Clássica']], hint: () => 'Seletiva (v8) preserva textura; Clássica é a referência da v7.1.'});
+  const spatial = choice({key: 'spatialMode', label: t('Limpeza espacial'), opts: [['selective', t('Seletiva')], ['legacy', t('Clássica')]], hint: () => t('Seletiva (v8) preserva textura; Clássica é a referência da v7.1.')});
   s3.body.append(spatial.row);
   s3.update = updateAjuste;
   // [G] 04 Desempenho e rede
-  const s4 = section('desempenho', '04', 'Desempenho e rede');
+  const s4 = section('desempenho', '04', t('Desempenho e rede'));
   const budgetOrder = 'desliga nesta ordem: estabilidade, saída, antialiasing, neural, degradês, limpeza, detalhe.';
-  els.budget = choice({key: 'gpuBudget', label: 'Aliviar GPU acima de', opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, 'Nunca']], hint: v => v !== 0 && status.measurement === 'cadence' && api.active
-   ? 'Sem cronômetro de GPU neste navegador, 3, 6 e 10 ms se comportam igual: a redução segue a cadência (quadros na tela × recebidos) e só Nunca a desliga. Quando reduz, ' + budgetOrder
-   : (({3: 'Corta etapas cedo; prioriza a fluidez.', 6: 'Equilíbrio padrão.', 10: 'Mantém mais etapas; risco de queda de quadros.', 0: 'Nunca reduz o tratamento automaticamente.'})[v] || '') + ' Acima do limite (p95) ' + budgetOrder});
+  els.budget = choice({key: 'gpuBudget', label: t('Aliviar GPU acima de'), opts: [[3, '3 ms'], [6, '6 ms'], [10, '10 ms'], [0, t('Nunca')]], hint: v => v !== 0 && status.measurement === 'cadence' && api.active
+   ? t('Sem cronômetro de GPU neste navegador, 3, 6 e 10 ms se comportam igual: a redução segue a cadência (quadros na tela × recebidos) e só Nunca a desliga. Quando reduz, {0}', t(budgetOrder))
+   : t(({3: 'Corta etapas cedo; prioriza a fluidez.', 6: 'Equilíbrio padrão.', 10: 'Mantém mais etapas; risco de queda de quadros.', 0: 'Nunca reduz o tratamento automaticamente.'})[v] || '') + ' ' + t('Acima do limite (p95) {0}', t(budgetOrder))});
   const budget = els.budget;
   els.gpuText = h('b'); els.gpuFill = h('i', {class: 'bxif-meter-fill'}); els.gpuTick = h('span', {class: 'bxif-meter-pos'}, h('i', {class: 'bxif-meter-tick'}));
   els.gpuMeter = h('div', {class: 'bxif-meter bxif-x'}, els.gpuFill, h('span', {class: 'bxif-meter-clip'}, els.gpuTick));
   els.gpuNote = h('div', {class: 'bxif-out', 'data-hide': ''}); els.adaptation = h('div', {class: 'bxif-out', 'data-bxif-out': 'adaptation'});
   els.gpu = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-out': 'gpu'},
-   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, els.gpuCap = h('span', {text: 'Tratamento (GPU p95)'}), els.gpuText), els.gpuMeter, els.gpuNote, els.adaptation);
+   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, els.gpuCap = h('span', {text: t('Tratamento (GPU p95)')}), els.gpuText), els.gpuMeter, els.gpuNote, els.adaptation);
   els.latTotal = h('b'); els.latBar = h('div', {class: 'bxif-stackbar'}, h('span'), h('span'), h('span'), h('span'), h('span'));
   const legend = key => { const v = h('span'); return {row: h('div', null, h('i', {class: 'bxif-sw-i'}), h('span', {text: key + ' '}), v), v}; };
-  els.leg = [legend('Rede (RTT)'), legend('Buffer'), legend('Decodificação'), legend('Tratamento'), legend('Espera da Fluidez')];
+  els.leg = [legend(t('Rede (RTT)')), legend(t('Buffer')), legend(t('Decodificação')), legend(t('Tratamento')), legend(t('Espera da Fluidez'))];
   els.latency = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-out': 'latency'},
-   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: 'Atraso estimado do vídeo'}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
-   h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: 'Soma de médias e percentis de trechos diferentes, que podem se sobrepor: uma estimativa, não uma medida. Não é o atraso do controle à tela (não inclui controle, jogo, compositor nem tela).'}));
+   h('div', {class: 'bxif-total bxif-x', style: 'margin-top:0'}, h('span', {text: t('Atraso estimado do vídeo')}), els.latTotal), h('div', {class: 'bxif-x', style: 'margin-top:0'}, els.latBar),
+   h('div', {class: 'bxif-legend bxif-x'}, ...els.leg.map(x => x.row)), h('div', {class: 'bxif-foot bxif-x', text: t('Soma de médias e percentis de trechos diferentes, que podem se sobrepor: uma estimativa, não uma medida. Não é o atraso do controle à tela (não inclui controle, jogo, compositor nem tela).')}));
   els.stream = h('div', {'data-bxif-out': 'stream'}); els.decoder = h('div', {'data-bxif-out': 'decoder'}); els.quality = h('div', {'data-bxif-out': 'quality'}); els.drops = h('div', {'data-bxif-out': 'drops'});
   // Spec 3 item 11 (docs/medicoes/spec3/*item11*): on the Vostro at 30 FPS, display p95 50 → 34 ms and
   // about −0.5 ms of GPU per frame; at 60 FPS the frames shown fell from 58-59 to 44 FPS. On the Poco F7
   // no gain. Tearing was not evaluated. The attribute is fixed when the canvas is created.
-  els.desync = toggle({key: 'desynchronized', label: 'Baixa latência (desynchronized)', tag: 'EXP', get: () => valueOf('desynchronized'), set: (v, e) => commit('desynchronized', v, e),
-   hint: 'Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.'});
+  els.desync = toggle({key: 'desynchronized', label: t('Baixa latência (desynchronized)'), tag: 'EXP', get: () => valueOf('desynchronized'), set: (v, e) => commit('desynchronized', v, e),
+   hint: t('Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.')});
   els.desyncOut = out('desynchronized'); els.desync.row.append(els.desyncOut);
   // Spec 4 (docs/spec4-webgpu.md): WebGPU renderer with the same filters; Auto stays on WebGL2 until WebGPU
   // has met both acceptance criteria on that GPU. A failure falls back to WebGL2 without a reload.
-  els.renderer = choice({key: 'renderer', label: 'Renderizador', tag: 'EXP', opts: [['auto', 'Auto'], ['webgl2', 'WebGL2'], ['webgpu', 'WebGPU']], hint: v => (({
+  els.renderer = choice({key: 'renderer', label: t('Renderizador'), tag: 'EXP', opts: [['auto', 'Auto'], ['webgl2', 'WebGL2'], ['webgpu', 'WebGPU']], hint: v => t(({
    auto: 'Escolhe o WebGL2, salvo numa GPU em que o WebGPU já foi medido com imagem igual e custo igual ou menor.', webgl2: 'O renderizador de sempre.',
    webgpu: 'Mesmos filtros em WebGPU: lê o quadro sem cópia e mede a GPU com timestamp. Temporal e Reconstrução neural continuam no WebGL2. Se falhar, volta ao WebGL2 sem recarregar.'})[v] || '')});
   els.rendererOut = out('renderer'); els.renderer.row.append(els.rendererOut);
@@ -863,21 +864,21 @@
   // decoding time the site reports to it. Both are read when a game starts.
   const streamRows = [];
   if (typeof BxPlayStream !== 'undefined') {
-   els.streamRes = choice({key: 'streamResolution', label: 'Resolução do stream', opts: [['auto', 'Auto'], ['1080p', '1080p'], ['1080p-hq', '1080p HQ']], hint: v => (({
+   els.streamRes = choice({key: 'streamResolution', label: t('Resolução do stream'), opts: [['auto', 'Auto'], ['1080p', '1080p'], ['1080p-hq', '1080p HQ']], hint: v => t(({
     auto: 'O que o site pede: neste celular costuma ser 720p (H.264 Baseline).', '1080p': 'Declara Windows e tela 1920×1080 ao servidor, como o Better xCloud: 1080p H.264 Main. Mais decodificação e latência no celular.',
-    '1080p-hq': 'Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.'})[v] || '') + ' Vale no próximo jogo: saia e entre de novo.'});
-   els.preventDrops = toggle({key: 'preventDrops', label: 'Impedir queda de resolução', get: () => valueOf('preventDrops'), set: (v, e) => commit('preventDrops', v, e),
-    hint: 'O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.'});
+    '1080p-hq': 'Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.'})[v] || '') + ' ' + t('Vale no próximo jogo: saia e entre de novo.')});
+   els.preventDrops = toggle({key: 'preventDrops', label: t('Impedir queda de resolução'), get: () => valueOf('preventDrops'), set: (v, e) => commit('preventDrops', v, e),
+    hint: t('O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.')});
    streamRows.push(els.streamRes.row, els.preventDrops.row);
   }
   s4.body.append(...streamRows, budget.row, els.renderer.row, els.desync.row, els.gpu,els.latency, h('div', {class: 'bxif-lines', style: 'margin-top:4px'}, els.stream, els.decoder, els.quality, els.drops));
   s4.update = updateDesempenho;
   // [H] 05 Ferramentas
-  const s5 = section('ferramentas', '05', 'Indicadores e ferramentas');
-  els.diag = toggle({key: 'diagnostic', label: 'Diagnóstico', sub: 'Colorir imagem', get: () => api.diagnostic, set: v => { api.diagnostic = v; if (lastSnap) { updateHeader(); updateSummaries(lastSnap); } },
-   hint: 'Colore a imagem para confirmar que o tratamento está rodando. Não é salvo.'});
-  els.measureStart = button('Iniciar medição', 'primary');
-  els.measureExport = button('Encerrar e exportar medição');
+  const s5 = section('ferramentas', '05', t('Indicadores e ferramentas'));
+  els.diag = toggle({key: 'diagnostic', label: t('Diagnóstico'), sub: t('Colorir imagem'), get: () => api.diagnostic, set: v => { api.diagnostic = v; if (lastSnap) { updateHeader(); updateSummaries(lastSnap); } },
+   hint: t('Colore a imagem para confirmar que o tratamento está rodando. Não é salvo.')});
+  els.measureStart = button(t('Iniciar medição'), 'primary');
+  els.measureExport = button(t('Encerrar e exportar medição'));
   els.measureLine = h('div', {class: 'bxif-val bxif-status', 'data-bxif-out': 'measure'});
   els.measureMsg = 'Pronta'; els.measureAt = 0;
   // Awaitable handlers (the harness awaits .onclick()); disabled only while running and unfocused.
@@ -892,29 +893,29 @@
   els.measureExport.onclick = () => busy(els.measureExport, async () => {
    const report = await api.exportMeasurement(); els.measureMsg = !report ? 'Nenhuma medição em andamento' : report.saved ? 'Medição exportada' : 'Medição sem quadros tratados: nada exportado'; els.measureAt = 0;
   });
-  const measureRow = h('div', {class: 'bxif-row bxif-stack bxif-has-val', 'data-bxif-row': 'measure'}, labelCell('Medição').el, h('div', {class: 'bxif-ctl bxif-btns'}, els.measureStart, els.measureExport), els.measureLine,
-   h('div', {class: 'bxif-hint', text: 'Grava tempos de GPU e ritmo; exporta um JSON. Não mede a latência do controle.'}));
-  els.copyBox = h('textarea', {class: 'bxif-copy', readonly: '', rows: '6', tabIndex: -1, 'data-hide': '', 'aria-label': 'Configuração'});
-  els.copy = button('Copiar configuração', null, async () => {
+  const measureRow = h('div', {class: 'bxif-row bxif-stack bxif-has-val', 'data-bxif-row': 'measure'}, labelCell(t('Medição')).el, h('div', {class: 'bxif-ctl bxif-btns'}, els.measureStart, els.measureExport), els.measureLine,
+   h('div', {class: 'bxif-hint', text: t('Grava tempos de GPU e ritmo; exporta um JSON. Não mede a latência do controle.')}));
+  els.copyBox = h('textarea', {class: 'bxif-copy', readonly: '', rows: '6', tabIndex: -1, 'data-hide': '', 'aria-label': t('Configuração')});
+  els.copy = button(t('Copiar configuração'), null, async () => {
    const text = api.configText(); els.copyBox.value = text;
-   if (await api.copyText(text)) flashLabel(els.copy, 'Configuração copiada', 'Copiar configuração');
-   else { setT(els.copy._label, 'Copie o texto abaixo'); setA(els.copyBox, 'data-hide', null); els.copyBox.select(); }
+   if (await api.copyText(text)) flashLabel(els.copy, t('Configuração copiada'), t('Copiar configuração'));
+   else { setT(els.copy._label, t('Copie o texto abaixo')); setA(els.copyBox, 'data-hide', null); els.copyBox.select(); }
   });
-  els.reset = button('Restaurar tratamento', 'danger', onReset);
+  els.reset = button(t('Restaurar tratamento'), 'danger', onReset);
   els.reset.append(h('i', {class: 'bxif-count', 'aria-hidden': 'true'}));
-  const toolRow = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-row': 'tools'}, labelCell('Configuração').el, h('div', {class: 'bxif-ctl bxif-btns'}, els.copy, els.copyBox, els.reset),
-   h('div', {class: 'bxif-hint', text: 'Volta o tratamento ao padrão medido. Os indicadores no jogo não mudam.'}));
-  const about = subSection('como', 'Como funciona', [
+  const toolRow = h('div', {class: 'bxif-row bxif-stack', 'data-bxif-row': 'tools'}, labelCell(t('Configuração')).el, h('div', {class: 'bxif-ctl bxif-btns'}, els.copy, els.copyBox, els.reset),
+   h('div', {class: 'bxif-hint', text: t('Volta o tratamento ao padrão medido. Os indicadores no jogo não mudam.')}));
+  const about = subSection('como', t('Como funciona'), [
    'Saída Auto: renderiza na altura real do vídeo na tela; em celulares usa FSR e aplica a nitidez no tamanho final; em HDMI 1080p fica nativa.',
    'Fluidez: processa cada quadro ao chegar e o exibe num relógio constante. Equilibrada segue o servidor; Máxima impõe 30/60 fixo.',
    'Captura direta: recebe os quadros do decodificador sem passar pelo elemento de vídeo, que mostra no máximo um quadro por atualização da tela.',
    'Suavidade: pede um alvo de buffer ao navegador, que pode ajustá-lo; mais regularidade com mais latência, sem atraso máximo garantido.',
    'Reconstrução neural (experimental): limpa blocos antes da nitidez; +45% de GPU em sessão a 30 FPS (bancada do Poco), com qualquer valor acima de 0. Degradês altos e Antialiasing suavizam textura.',
-   'v9: padrões medidos em streams H.264 tipo xCloud. Tudo fica salvo para todos os jogos.'].map(t => h('p', {text: t})));
+   'v9: padrões medidos em streams H.264 tipo xCloud. Tudo fica salvo para todos os jogos.'].map(x => h('p', {text: t(x)})));
   s5.body.append(hud.row, els.corner.row, els.diag.row, measureRow, toolRow, about);
   s5.update = updateMeasure;
   for (const s of sections) { r.append(s.el); s.setOpen(!!ui.open[s.id]); }
-  r.append(h('div', {class: 'bxif-foot-line', text: 'Salvo para todos os jogos · Tratamento de imagem ' + VERSION}));
+  r.append(h('div', {class: 'bxif-foot-line', text: t('Salvo para todos os jogos · Tratamento de imagem {0}', VERSION)}));
   r.addEventListener('focusout', e => runDeferred(e.relatedTarget));
   // Held D-pad presses never set html[data-active-input]: any focus not caused by a pointer shows the ring.
   // Chromium's focus scroll ignores scroll-margin, so a control landing under the sticky selector is
@@ -940,12 +941,12 @@
   b._flash = setTimeout(() => { flashes.delete(b); b._flash = 0; setT(b._label, back); }, ms);
  }
  let resetTimer = 0;
- function disarm() { clearTimeout(resetTimer); resetTimer = 0; setA(els.reset, 'data-armed', null); setA(els.reset.lastChild, 'data-run', null); setT(els.reset._label, 'Restaurar tratamento'); }
+ function disarm() { clearTimeout(resetTimer); resetTimer = 0; setA(els.reset, 'data-armed', null); setA(els.reset.lastChild, 'data-run', null); setT(els.reset._label, t('Restaurar tratamento')); }
  // Two presses within 4 s; focus stays on the button.
  function onReset() {
   if (!resetTimer) {
    if (els.reset._flash) { clearTimeout(els.reset._flash); flashes.delete(els.reset); els.reset._flash = 0; }
-   setT(els.reset._label, 'Confirmar restauração'); setA(els.reset, 'data-armed', true);
+   setT(els.reset._label, t('Confirmar restauração')); setA(els.reset, 'data-armed', true);
    requestAnimationFrame(() => { if (resetTimer) setA(els.reset.lastChild, 'data-run', true); });
    resetTimer = setTimeout(disarm, 4000);
    return;
@@ -953,19 +954,19 @@
   disarm();
   cancelPending();
   api.reset(); syncAll(); afterCommit('reset');
-  flashLabel(els.reset, 'Tratamento restaurado', 'Restaurar tratamento');
+  flashLabel(els.reset, t('Tratamento restaurado'), t('Restaurar tratamento'));
  }
 
  /* =============================== Updates =============================== */
  function updateDependents() {
   const fl = valueOf('fluidity'), direct = api.directSupported();
   setDisabled(els.capture, fl === 'off' || !direct);
-  els.capture.setReason(fl === 'off' ? 'Disponível com a Fluidez ligada.' : !direct ? 'Este navegador não permite a captura direta.' : '');
+  els.capture.setReason(fl === 'off' ? t('Disponível com a Fluidez ligada.') : !direct ? t('Este navegador não permite a captura direta.') : '');
   setHidden(els.corner.row, valueOf('hud') === 'off');
-  els.mode.lab.setTag(settings.mode !== 'filtered' ? 'Comparando' : '', 'ok');
-  setT(els.sharp.hint, '0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.' + (valueOf('scaler') === 'sgsr' ? ' Com SGSR, define a força dele (2 → 1,0).' : ''));
+  els.mode.lab.setTag(settings.mode !== 'filtered' ? t('Comparando') : '', 'ok');
+  setT(els.sharp.hint, t('0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.') + (valueOf('scaler') === 'sgsr' ? ' ' + t('Com SGSR, define a força dele (2 → 1,0).') : ''));
   const o = valueOf('output');
-  setT(els.output.lab.tx, 'Resolução de saída' + (['auto', 'native', '1440', '2160'].includes(o) ? '' : ` (${o}p)`));
+  setT(els.output.lab.tx, t('Resolução de saída') + (['auto', 'native', '1440', '2160'].includes(o) ? '' : ` (${o}p)`));
   setA(els.qp, 'data-hide', valueOf('adaptive') ? null : '');
   updateDesync();
   updateRenderer();
@@ -975,28 +976,28 @@
  function updateRenderer() {
   const r = status.renderer; if (!r) return;
   const name = r.active === 'webgpu' ? 'WebGPU' : 'WebGL2', parts = [];
-  if (r.state === 'starting') parts.push(['Preparando o WebGPU…', 'lab']);
-  else if (status.mode !== 'waiting') parts.push(['Ativo: ' + name + (r.active === 'webgpu' && r.adapter ? ' (' + [r.adapter.vendor, r.adapter.architecture].filter(Boolean).join(' ') + ')' : ''), r.state === 'fallback' ? 'ok' : 'good']);
+  if (r.state === 'starting') parts.push([t('Preparando o WebGPU…'), 'lab']);
+  else if (status.mode !== 'waiting') parts.push([t('Ativo: {0}', name + (r.active === 'webgpu' && r.adapter ? ' (' + [r.adapter.vendor, r.adapter.architecture].filter(Boolean).join(' ') + ')' : '')), r.state === 'fallback' ? 'ok' : 'good']);
   if (r.reason && r.state !== 'starting') parts.push([r.reason, r.state === 'fallback' ? 'ok' : 'lab']);
   setParts(els.rendererOut, parts);
  }
  // The canvas keeps the attribute it was created with: a change shows as pending until the next session.
  function updateDesync() {
   const want = !!valueOf('desynchronized'), now = status.desynchronized;
-  if (now === null || now === undefined) setParts(els.desyncOut, want ? [['Aplicado ao abrir o próximo jogo.', 'lab']] : []);
-  else if (now === want) setParts(els.desyncOut, want ? [['Ativo nesta sessão', 'good']] : []);
-  else setParts(els.desyncOut, [[want ? 'Liga na próxima sessão (reabra o jogo ou recarregue).' : 'Desliga na próxima sessão (reabra o jogo ou recarregue).', 'lab']]);
+  if (now === null || now === undefined) setParts(els.desyncOut, want ? [[t('Aplicado ao abrir o próximo jogo.'), 'lab']] : []);
+  else if (now === want) setParts(els.desyncOut, want ? [[t('Ativo nesta sessão'), 'good']] : []);
+  else setParts(els.desyncOut, [[t(want ? 'Liga na próxima sessão (reabra o jogo ou recarregue).' : 'Desliga na próxima sessão (reabra o jogo ou recarregue).'), 'lab']]);
  }
  function updatePreset(focused) {
   if (focused !== undefined) els.chipFocus = focused;
   const active = api.preset(), p = api.presets[active];
   for (const b of els.chips) setA(b, 'aria-pressed', String(b.dataset.preset === active));
-  setT(els.presetPick, p ? p.label : '');
-  els.presetLab.setTag(p ? '' : 'Personalizado');
+  setT(els.presetPick, p ? t(p.label) : '');
+  els.presetLab.setTag(p ? '' : t('Personalizado'));
   const f = els.chipFocus && api.presets[els.chipFocus];
-  setT(els.presetDesc, f ? f.description : p ? p.description : 'Valores ajustados à mão. Escolha um perfil para voltar a um ponto medido.');
+  setT(els.presetDesc, t(f ? f.description : p ? p.description : 'Valores ajustados à mão. Escolha um perfil para voltar a um ponto medido.'));
  }
- function updateHeader() { const w = stateWord(); setT(els.pillWord, w.word); setA(els.pill, 'data-g', w.grade); }
+ function updateHeader() { const w = stateWord(); setT(els.pillWord, t(w.word)); setA(els.pill, 'data-g', w.grade); }
  // Errors first, then warnings with a fix one press away (they must never hide behind "+N"), then the
  // rest. The block is rebuilt only when the set of warnings changes; texts (e.g. the loss %) update in place.
  const ACTIONABLE = new Set(['output', 'renderer']);
@@ -1020,17 +1021,17 @@
   setA(els.warns, 'data-hide', list.length ? null : '');
   for (const w of shown) {
    const text = h('span', {class: 'bxif-warn-text', text: w.text}); els.warnText.set(w.key, text);
-   const tx = h('div', {class: 'bxif-warn-tx'}, text, WARN_HINT[w.key] ? h('span', {class: 'bxif-warn-hint', text: WARN_HINT[w.key]}) : null);
+   const tx = h('div', {class: 'bxif-warn-tx'}, text, WARN_HINT[w.key] ? h('span', {class: 'bxif-warn-hint', text: t(WARN_HINT[w.key])}) : null);
    let action = null;
-   if (w.key === 'output') action = button('Usar Auto', 'sm', e => { commit('output', 'auto', e); syncAll(); });
-   if (w.key === 'renderer') action = button('Ir para Renderizador', 'sm', focusRenderer);
+   if (w.key === 'output') action = button(t('Usar Auto'), 'sm', e => { commit('output', 'auto', e); syncAll(); });
+   if (w.key === 'renderer') action = button(t('Ir para Renderizador'), 'sm', focusRenderer);
    // Audit C02: an explicit way back from the automatic reduction, without changing the settings.
-   if (w.key === 'aa-cut' || w.key === 'temporal-cut' || w.key === 'neural-cut') action = button('Religar', 'sm', () => { api.restoreBudget?.(); updateWarnings(true); });
+   if (w.key === 'aa-cut' || w.key === 'temporal-cut' || w.key === 'neural-cut') action = button(t('Religar'), 'sm', () => { api.restoreBudget?.(); updateWarnings(true); });
    els.warns.append(h('div', {class: 'bxif-warn', 'data-level': w.level}, h('i', {class: 'bxif-badge', 'data-c': w.level === 'info' ? 'i' : '!', 'aria-hidden': 'true'}), tx, action));
   }
   if (list.length > 3) {
    const rest = list.length - 3;
-   els.warnMore = button(els.warnsAll ? 'Mostrar menos' : rest === 1 ? 'Mostrar +1 aviso' : `Mostrar +${rest} avisos`, null, () => {
+   els.warnMore = button(els.warnsAll ? t('Mostrar menos') : rest === 1 ? t('Mostrar +1 aviso') : t('Mostrar +{0} avisos', rest), null, () => {
     els.warnsAll = !els.warnsAll; updateWarnings(true); els.warnMore?.focus({preventScroll: true});
    });
    els.warnMore.className = 'bxif-warn-more';
@@ -1047,22 +1048,22 @@
   if (DEC_SHORT[n.decoder]) { sep(); parts.push([DEC_SHORT[n.decoder], G('dec-kind', s.gDecoder)]); }
   if (num(n.bitrateMbps)) { sep(); parts.push([fmt(n.bitrateMbps, 1) + ' Mb/s', G('bitrate', s.gBitrate)]); }
   if (num(s.qp)) { sep(); parts.push(['QP ' + fmtInt(s.qp), G('qp', s.gQp)]); }
-  if (num(n.lossPct)) { sep(); parts.push(['perda ' + fmt(n.lossPct, 1) + '%', G('loss', s.gLoss)]); }
+  if (num(n.lossPct)) { sep(); parts.push([t('perda {0}%', fmt(n.lossPct, 1)), G('loss', s.gLoss)]); }
  }
  function updateLive(s) {
   const k = els.k, on = s.on, p = s.p;
   const kp = (t, value, unit, g, subParts) => { setT(t.num, value); setT(t.unit, unit); setA(t.val, 'data-g', g); setA(t.dotWrap, 'data-g', g); setParts(t.sub, subParts); };
-  kp(k.fps, on ? fmtInt(s.fps) : '—', '', on ? G('fps', s.gFps) : 'none', [['de ' + s.N, null]]);
+  kp(k.fps, on ? fmtInt(s.fps) : '—', '', on ? G('fps', s.gFps) : 'none', [[t('de {0}', s.N), null]]);
   kp(k.pacing, on && p ? '±' + fmt(p.deviationMs, 1) : '—', on && p ? 'ms' : '', on && p ? G('dev', s.gDev) : 'none', [['p95 ', null], [on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', s.gP95) : 'none']]);
   kp(k.hitches, on && p ? String(p.hitches) : '—', '', on && p ? G('hit', s.gHit) : 'none',
-   s.missed === null && s.direct ? [['captura direta', 'good']] : [['pulados ', null], [s.missed === null ? '—' : String(s.missed), G('miss', s.gMiss)]]);
-  kp(k.latency, s.lat.total === null ? '—' : '≈' + fmtInt(s.lat.total), s.lat.total === null ? '' : 'ms', G('total', s.gTotal), [['rede ', null], [fmtMs(s.lat.rtt), G('rtt', s.gRtt)]]);
+   s.missed === null && s.direct ? [[t('captura direta'), 'good']] : [[t('pulados') + ' ', null], [s.missed === null ? '—' : String(s.missed), G('miss', s.gMiss)]]);
+  kp(k.latency, s.lat.total === null ? '—' : '≈' + fmtInt(s.lat.total), s.lat.total === null ? '' : 'ms', G('total', s.gTotal), [[t('rede') + ' ', null], [fmtMs(s.lat.rtt), G('rtt', s.gRtt)]]);
   drawSparkline(els.spark, status.intervals, {count: 240, T: s.T, dim: !on});
   setT(els.sparkT, fmt(s.T, 1) + ' ms');
   const parts = [];
   setA(els.meta, 'data-idle', !on && status.mode !== 'error' || null);
-  if (status.mode === 'error') parts.push(['Erro: ' + (status.error || 'falha no tratamento'), 'bad']);
-  else if (!on) { parts.push([api.playHost ? 'Sem quadros recentes do tratamento. Entre num jogo: a imagem é filtrada assim que o stream começa.' : 'Sem quadros recentes do tratamento. Selecione WebGL2 durante o jogo para filtrar a imagem.', 'lab']); netParts(s, parts); if (parts[1]) parts.splice(1, 1); }
+  if (status.mode === 'error') parts.push([t('Erro: {0}', status.error || t('falha no tratamento')), 'bad']);
+  else if (!on) { parts.push([t(api.playHost ? 'Sem quadros recentes do tratamento. Entre num jogo: a imagem é filtrada assim que o stream começa.' : 'Sem quadros recentes do tratamento. Selecione WebGL2 durante o jogo para filtrar a imagem.'), 'lab']); netParts(s, parts); if (parts[1]) parts.splice(1, 1); }
   else {
    const r = parseRes();
    if (r) parts.push([r.h + 'p', s.net?.height ? G('height', s.gHeight) : null], [' → ', 'dim'], [r.oh + 'p', null]);
@@ -1075,33 +1076,33 @@
  function updateSummaries(s) {
   const [s1, s2, s3, s4, s5] = sections;
   const fl = valueOf('fluidity'), p = s.p;
-  const fParts = [[FLU[fl] || '', null]];
-  if (s.on && p) { fParts.push([' · ±' + fmt(p.deviationMs, 1) + ' ms', null]); if (p.hitches > 0) fParts.push([` · ${p.hitches} trav.`, null]); }
+  const fParts = [[t(FLU[fl] || ''), null]];
+  if (s.on && p) { fParts.push([' · ±' + fmt(p.deviationMs, 1) + ' ms', null]); if (p.hitches > 0) fParts.push([' · ' + t('{0} trav.', p.hitches), null]); }
   setParts(s1.sum, fParts); setA(s1.sum, 'data-g', s.on && p ? worst(G('dev', s.gDev), G('hit', s.gHit)) : null);
   const preset = api.presets[api.preset()];
-  if (settings.mode !== 'filtered') { setParts(s2.sum, [['Comparando: ' + (settings.mode === 'cas' ? 'Só nitidez' : 'Original'), null]]); setA(s2.sum, 'data-g', 'ok'); }
-  else { setParts(s2.sum, [[(preset ? preset.label : 'Personalizado') + ' · Nitidez ' + fmt(settings.sharpness, 1) + (settings.scaler === 'sgsr' ? ' · SGSR' : ''), null]]); setA(s2.sum, 'data-g', null); }
+  if (settings.mode !== 'filtered') { setParts(s2.sum, [[t('Comparando: {0}', t(settings.mode === 'cas' ? 'Só nitidez' : 'Original')), null]]); setA(s2.sum, 'data-g', 'ok'); }
+  else { setParts(s2.sum, [[t(preset ? preset.label : 'Personalizado') + ' · ' + t('Nitidez {0}', fmt(settings.sharpness, 1)) + (settings.scaler === 'sgsr' ? ' · SGSR' : ''), null]]); setA(s2.sum, 'data-g', null); }
   const active = TREAT.filter(k => settings[k] > 0).length;
-  setParts(s3.sum, [[`${active} de 7 ativos` + (adaptiveApplying() ? ' · adaptado' : ''), null]]);
+  setParts(s3.sum, [[t('{0} de 7 ativos', active) + (adaptiveApplying() ? ' · ' + t('adaptado') : ''), null]]);
   setParts(s4.sum, [['GPU ', null], [s.gpuShow === null ? '—' : (s.gpu === null ? '≈' : '') + fmtMs(s.gpuShow) + ' ms', G(s.gpu !== null ? 'gpu' : 'gpu-est', s.gGpuShow)], [' · Lat. ', null], [s.lat.total === null ? '—' : fmtInt(s.lat.total) + ' ms', G('total', s.gTotal)]]);
-  if (api.measuring) { setParts(s5.sum, [['Medindo ' + (clock() || '…'), null]]); setA(s5.sum, 'data-g', 'ok'); }
-  else if (api.diagnostic) { setParts(s5.sum, [['Diagnóstico ligado', null]]); setA(s5.sum, 'data-g', 'info'); }
-  else { setParts(s5.sum, [['Indicadores: ' + ({off: 'desligados', compact: 'Compacto', full: 'Completo'}[settings.hud] || ''), null]]); setA(s5.sum, 'data-g', null); }
+  if (api.measuring) { setParts(s5.sum, [[t('Medindo {0}', clock() || '…'), null]]); setA(s5.sum, 'data-g', 'ok'); }
+  else if (api.diagnostic) { setParts(s5.sum, [[t('Diagnóstico ligado'), null]]); setA(s5.sum, 'data-g', 'info'); }
+  else { setParts(s5.sum, [[t('Indicadores: {0}', t({off: 'desligados', compact: 'Compacto', full: 'Completo'}[settings.hud] || '')), null]]); setA(s5.sum, 'data-g', null); }
  }
  function updateFluidez(s) {
   const fl = valueOf('fluidity'), cap = s.cap, n = s.net;
   if (fl === 'off') setParts(els.captureOut, []);
-  else if (cap.active) setParts(els.captureOut, [['Captura direta · ' + fmtThousands(cap.frames) + ' quadros', 'good']]);
-  else if (valueOf('capture') === 'direct' && cap.reason) setParts(els.captureOut, [[cap.reason, /encerrado/i.test(cap.reason) ? 'lab' : 'ok']]);
-  else if (valueOf('capture') === 'direct') setParts(els.captureOut, [['Captura direta: aguardando o vídeo', 'lab']]);
-  else setParts(els.captureOut, [['Captura pelo vídeo', 'lab']]);
+  else if (cap.active) setParts(els.captureOut, [[t('Captura direta · {0} quadros', fmtThousands(cap.frames)), 'good']]);
+  else if (valueOf('capture') === 'direct' && cap.reason) setParts(els.captureOut, [[cap.reason, cap.ended ? 'lab' : 'ok']]);
+  else if (valueOf('capture') === 'direct') setParts(els.captureOut, [[t('Captura direta: aguardando o vídeo'), 'lab']]);
+  else setParts(els.captureOut, [[t('Captura pelo vídeo'), 'lab']]);
   setA(els.captureOut, 'data-hide', fl === 'off' || null);
   const sm = status.smoothing, req = sm ? sm.requestedMs : settings.smoothing;
-  setParts(els.smoothOut, [['Buffer: ' + (req ? 'alvo ' + req + ' ms' + (sm && SMOOTH_STATE[sm.state] ? ' (' + SMOOTH_STATE[sm.state] + ')' : '') : 'automático') + ' · medido ', 'lab'],
+  setParts(els.smoothOut, [[t('Buffer: {0} · medido', req ? t('alvo {0} ms', req) + (sm && SMOOTH_STATE[sm.state] ? ' (' + t(SMOOTH_STATE[sm.state]) + ')' : '') : t('automático')) + ' ', 'lab'],
    [n && num(n.bufferMs) ? fmtMs(n.bufferMs) + ' ms' : '—', G('buf', s.gBuf)]]);
   if (els.refresh) {
-   const R = refreshNow(), parts = [[R > 0 ? `Fixada em ${R} Hz pelo app` : 'O sistema decide a taxa', 'lab']];
-   if (R > 0 && R % s.N) parts.push([` · não é múltiplo de ${s.N} FPS`, 'ok']);
+   const R = refreshNow(), parts = [[R > 0 ? t('Fixada em {0} Hz pelo app', R) : t('O sistema decide a taxa'), 'lab']];
+   if (R > 0 && R % s.N) parts.push([' · ' + t('não é múltiplo de {0} FPS', s.N), 'ok']);
    setParts(els.refreshOut, parts);
    if (!els.refresh.row.contains(doc.activeElement)) els.refresh.sync();
   }
@@ -1109,29 +1110,29 @@
   cellSet(els.pipe.srv, o?.server, o?.server ? fmt(o.server.meanMs, 1) + ' ms' : '—', 'srv', s.gSrv);
   cellSet(els.pipe.arr, o?.arrival, o?.arrival ? fmt(o.arrival.meanMs, 1) + ' ms' : '—', 'arr', s.gArr);
   cellSet(els.pipe.scr, s.p, s.p ? 'p95 ' + fmtMs(s.p.p95Ms) : '—', 'dev', s.gDev);
-  const p = s.p, pacing = [['Travadas ', 'lab'], [p ? String(p.hitches) : '—', p ? G('hit', s.gHit) : 'none']];
-  if (s.missed === null && s.direct) pacing.push([' · Pulados ', 'lab'], ['0 (captura direta)', 'good']);
-  else pacing.push([' · Pulados ', 'lab'], [s.missed === null ? '—' : String(s.missed), G('miss', s.gMiss)], [o && num(o.presented) ? ' de ' + o.presented : '', 'lab']);
+  const p = s.p, pacing = [[t('Travadas') + ' ', 'lab'], [p ? String(p.hitches) : '—', p ? G('hit', s.gHit) : 'none']];
+  if (s.missed === null && s.direct) pacing.push([' · ' + t('Pulados') + ' ', 'lab'], [t('0 (captura direta)'), 'good']);
+  else pacing.push([' · ' + t('Pulados') + ' ', 'lab'], [s.missed === null ? '—' : String(s.missed), G('miss', s.gMiss)], [o && num(o.presented) ? ' ' + t('de {0}', o.presented) : '', 'lab']);
   setParts(els.pacingLine, pacing);
   const f = s.fl;
   if (f) {
    const rate = s.dropRate;
-   setParts(els.fluLine, [['Espera da Fluidez ', 'lab'], [num(f.extraMs) ? '+' + fmtMs(f.extraMs) + ' ms' : '—', G('wait', s.gWait)], [' · descartados ', 'lab'],
+   setParts(els.fluLine, [[t('Espera da Fluidez') + ' ', 'lab'], [num(f.extraMs) ? '+' + fmtMs(f.extraMs) + ' ms' : '—', G('wait', s.gWait)], [' · ' + t('descartados') + ' ', 'lab'],
     [num(rate) ? fmtInt(rate) + '/min' : '—', G('drops', grade('drops', rate))]]);
   } else setParts(els.fluLine, []);
   setA(els.fluLine, 'data-hide', f ? null : '');
  }
  function updateNitidez(s) {
-  setParts(els.outputOut, [[status.resolution || '—', null], [num(status.display) && status.display > 0 ? ' · vídeo na tela ' + status.display + 'p' : '', 'lab']]);
+  setParts(els.outputOut, [[status.resolution || '—', null], [num(status.display) && status.display > 0 ? ' · ' + t('vídeo na tela {0}p', status.display) : '', 'lab']]);
   setA(els.outputOut, 'data-hide', s.on && status.resolution ? null : '');
   const a = status.adaptive;
-  if (!valueOf('adaptive')) { setParts(els.adaptiveOut, [['Desligado: usa os valores do Ajuste fino.', 'lab']]); setA(els.qpPos, 'data-hide', ''); return; }
-  if (settings.mode !== 'filtered') setParts(els.adaptiveOut, [['Pausado durante a Comparação.', 'ok']]);
-  else if (!a) setParts(els.adaptiveOut, [[status.net && num(status.net.bitrateMbps) && !num(status.net.qp) ? 'Este aparelho não informa o QP: estimando pela taxa de bits…' : 'Aguardando o QP do stream…', 'lab']]);
+  if (!valueOf('adaptive')) { setParts(els.adaptiveOut, [[t('Desligado: usa os valores do Ajuste fino.'), 'lab']]); setA(els.qpPos, 'data-hide', ''); return; }
+  if (settings.mode !== 'filtered') setParts(els.adaptiveOut, [[t('Pausado durante a Comparação.'), 'ok']]);
+  else if (!a) setParts(els.adaptiveOut, [[t(status.net && num(status.net.bitrateMbps) && !num(status.net.qp) ? 'Este aparelho não informa o QP: estimando pela taxa de bits…' : 'Aguardando o QP do stream…'), 'lab']]);
   else {
-   const k = a.scales || {}, scales = [' → limpeza ×' + fmt(k.cleanup, 2) + ' · degradês ×' + fmt(k.deband, 2) + ' · detalhe ×' + fmt(k.detail, 2), 'lab'];
-   if (a.source === 'bitrate') setParts(els.adaptiveOut, [['Estimado pela taxa de bits (sem QP neste aparelho): ', 'lab'], [fmt(a.bitsPerPixel, 2) + ' bit/pixel', null], [' ≈ QP ', 'lab'], [fmtInt(a.qpEstimate), G('qp', grade('qp', a.qpEstimate))], [' · nível ', 'lab'], [fmt(a.level, 1), null], scales]);
-   else setParts(els.adaptiveOut, [['QP ', 'lab'], [fmtInt(a.qp), G('qp-now', grade('qp', a.qp))], [' · médio ', 'lab'], [fmt(a.qpMean, 1), G('qp', s.gQp)], [' · nível ', 'lab'], [fmt(a.level, 1), null], scales]);
+   const k = a.scales || {}, scales = [' → ' + t('limpeza ×{0} · degradês ×{1} · detalhe ×{2}', fmt(k.cleanup, 2), fmt(k.deband, 2), fmt(k.detail, 2)), 'lab'];
+   if (a.source === 'bitrate') setParts(els.adaptiveOut, [[t('Estimado pela taxa de bits (sem QP neste aparelho):') + ' ', 'lab'], [fmt(a.bitsPerPixel, 2) + ' bit/pixel', null], [' ≈ QP ', 'lab'], [fmtInt(a.qpEstimate), G('qp', grade('qp', a.qpEstimate))], [' · ' + t('nível') + ' ', 'lab'], [fmt(a.level, 1), null], scales]);
+   else setParts(els.adaptiveOut, [['QP ', 'lab'], [fmtInt(a.qp), G('qp-now', grade('qp', a.qp))], [' · ' + t('médio') + ' ', 'lab'], [fmt(a.qpMean, 1), G('qp', s.gQp)], [' · ' + t('nível') + ' ', 'lab'], [fmt(a.level, 1), null], scales]);
   }
   const pos = a && num(a.qpMean) ? a.qpMean : a && num(a.qpEstimate) ? a.qpEstimate : null;
   if (pos !== null) { setA(els.qpPos, 'data-hide', null); setS(els.qpPos, 'transform', `translateX(${(Math.min(1, Math.max(0, (pos - 20) / 16)) * 100).toFixed(1)}%)`); }
@@ -1140,11 +1141,11 @@
  const NEURAL_TAG = {cut: ['Cortada', 'ok'], 'no-float': ['Sem float', 'ok'], running: ['Rodando', 'good']};
  function updateAjuste() {
   const applying = adaptiveApplying(), k = status.adaptive?.scales || {}, nt = NEURAL_TAG[status.neural] || ['EXP', null];
-  els.treat.neural.lab.setTag(nt[0], nt[1]);
+  els.treat.neural.lab.setTag(nt[0] === 'EXP' ? nt[0] : t(nt[0]), nt[1]);
   // Audit C02: the value asked for stays on the slider; the tag says when the GPU budget turned it off.
   const cuts = settings.mode === 'filtered' && api.active ? status.effective?.cuts : null;
-  els.treat.antialias.lab.setTag(cuts?.antialias ? 'Cortado' : '', 'ok');
-  els.treat.temporal.lab.setTag(cuts?.temporal ? 'Cortado' : '', 'ok');
+  els.treat.antialias.lab.setTag(cuts?.antialias ? t('Cortado') : '', 'ok');
+  els.treat.temporal.lab.setTag(cuts?.temporal ? t('Cortado') : '', 'ok');
   for (const key of ['cleanup', 'deband', 'detail']) {
    const c = els.treat[key];
    if (applying && num(k[key])) {
@@ -1159,29 +1160,29 @@
   const L = settings.gpuBudget || 10, gpuG = G('gpu', s.gGpu);
   els.budget.updateHint();
   // status.measurement starts as 'cadence' and is only known once a frame is published: before that, the neutral texts.
-  setT(els.gpuCap, status.measurement === 'cadence' && s.on ? 'Tratamento (GPU ≈ fence, p95)' : 'Tratamento (GPU p95)');
+  setT(els.gpuCap, status.measurement === 'cadence' && s.on ? t('Tratamento (GPU ≈ fence, p95)') : t('Tratamento (GPU p95)'));
   if (status.measurement === 'cadence' && s.on && s.gpuEst !== null) {
    // Fence estimate against the frame interval (33 ms at 30 FPS): an upper bound, it includes queued work.
    const T = 1000 / s.N, scaleMax = Math.max(2 * T, s.gpuEst), g = G('gpu-est', s.gGpuEst);
    setA(els.gpuMeter, 'data-hide', null);
-   setT(els.gpuText, `≈${fmtMs(s.gpuEst)} ms de ${fmtInt(T)} ms por quadro`); setA(els.gpuText, 'data-g', g);
+   setT(els.gpuText, t('≈{0} ms de {1} ms por quadro', fmtMs(s.gpuEst), fmtInt(T))); setA(els.gpuText, 'data-g', g);
    setS(els.gpuFill, 'transform', `scaleX(${(s.gpuEst / scaleMax).toFixed(3)})`); setA(els.gpuFill, 'data-g', g);
    setS(els.gpuTick, 'transform', `translateX(${(T / scaleMax * 100).toFixed(1)}%)`);
-   setT(els.gpuNote, 'Estimado por fence (sem cronômetro de GPU neste navegador): limite superior, até a GPU concluir o quadro, com a fila. A redução automática segue a cadência.'); setA(els.gpuNote, 'data-hide', null);
+   setT(els.gpuNote, t('Estimado por fence (sem cronômetro de GPU neste navegador): limite superior, até a GPU concluir o quadro, com a fila. A redução automática segue a cadência.')); setA(els.gpuNote, 'data-hide', null);
   } else if (status.measurement === 'cadence' && s.on) {
    setT(els.gpuText, '—'); setA(els.gpuText, 'data-g', 'none'); setS(els.gpuFill, 'transform', 'scaleX(0)'); setA(els.gpuMeter, 'data-hide', '');
-   setT(els.gpuNote, 'Sem cronômetro de GPU neste navegador: o valor virá de um fence (limite superior); a redução automática segue a cadência.'); setA(els.gpuNote, 'data-hide', null);
+   setT(els.gpuNote, t('Sem cronômetro de GPU neste navegador: o valor virá de um fence (limite superior); a redução automática segue a cadência.')); setA(els.gpuNote, 'data-hide', null);
   } else {
    const p95 = s.gpu, scaleMax = Math.max(2 * L, p95 || 0);
    setA(els.gpuMeter, 'data-hide', null);
-   setT(els.gpuText, p95 === null ? '—' : `${fmtMs(p95)} ms de ${L} ms`); setA(els.gpuText, 'data-g', p95 === null ? 'none' : gpuG);
+   setT(els.gpuText, p95 === null ? '—' : t('{0} ms de {1} ms', fmtMs(p95), L)); setA(els.gpuText, 'data-g', p95 === null ? 'none' : gpuG);
    setS(els.gpuFill, 'transform', `scaleX(${p95 === null ? 0 : (p95 / scaleMax).toFixed(3)})`); setA(els.gpuFill, 'data-g', gpuG);
    setS(els.gpuTick, 'transform', `translateX(${(L / scaleMax * 100).toFixed(1)}%)`);
    setA(els.gpuNote, 'data-hide', '');
   }
   // Every cut of the current budget, oldest first (audit C02): a later cut no longer hides an earlier one.
   const cutList = s.on && status.cuts?.length ? status.cuts.map(c => c.reason) : status.adaptation && s.on ? [status.adaptation] : [];
-  setParts(els.adaptation, cutList.length ? cutList.flatMap((r, i) => [[(i ? ' · ' : '') + '↓ ' + r, 'ok']]) : [['Nenhuma redução automática', 'dim']]);
+  setParts(els.adaptation, cutList.length ? cutList.flatMap((r, i) => [[(i ? ' · ' : '') + '↓ ' + r, 'ok']]) : [[t('Nenhuma redução automática'), 'dim']]);
   const lat = s.lat, flOn = valueOf('fluidity') !== 'off', segs = [lat.rtt, lat.buffer, lat.decode, lat.gpu, flOn ? lat.wait : 0];
   [...els.latBar.children].forEach((sp, i) => setS(sp, 'flex-grow', String(num(segs[i]) ? Math.max(0, +segs[i].toFixed(1)) : 0)));
   setT(els.latTotal, lat.total === null ? '—' : '≈' + fmtInt(lat.total) + ' ms'); setA(els.latTotal, 'data-g', G('total', s.gTotal));
@@ -1189,17 +1190,17 @@
   legend.forEach(([v, key, g], i) => { setT(els.leg[i].v, num(v) ? fmtMs(v) + ' ms' : '—'); setA(els.leg[i].v, 'data-g', num(v) ? G(key, g) : 'none'); });
   setA(els.leg[4].row, 'data-hide', flOn ? null : '');
   const n = s.net;
-  if (!n) { setParts(els.stream, [['Sem estatísticas do stream (abra um jogo).', 'lab']]); for (const el of [els.decoder, els.quality, els.drops]) setParts(el, []); return; }
-  setParts(els.stream, [['Vídeo recebido ', 'lab'], [n.width && n.height ? n.width + '×' + n.height : '—', n.height ? G('height', s.gHeight) : 'none'], [' · ' + fmtInt(n.fpsReceived) + ' FPS · ' + (n.codec || '—'), null]]);
-  setParts(els.decoder, [['Decodificação ', 'lab'], [{hardware: 'hardware', software: 'software (CPU)'}[n.decoder] || 'não informada', G('dec-kind', s.gDecoder)],
+  if (!n) { setParts(els.stream, [[t('Sem estatísticas do stream (abra um jogo).'), 'lab']]); for (const el of [els.decoder, els.quality, els.drops]) setParts(el, []); return; }
+  setParts(els.stream, [[t('Vídeo recebido') + ' ', 'lab'], [n.width && n.height ? n.width + '×' + n.height : '—', n.height ? G('height', s.gHeight) : 'none'], [' · ' + fmtInt(n.fpsReceived) + ' FPS · ' + (n.codec || '—'), null]]);
+  setParts(els.decoder, [[t('Decodificação') + ' ', 'lab'], [t({hardware: 'hardware', software: 'software (CPU)'}[n.decoder] || 'não informada'), G('dec-kind', s.gDecoder)],
    [(n.implementation ? ' (' + n.implementation + ')' : '') + ' · ', null], [fmtMs(n.decodeMs) + ' ms', G('dec', s.gDec)]]);
-  setParts(els.quality, [['Bitrate ', 'lab'], [num(n.bitrateMbps) ? fmt(n.bitrateMbps, 1) + ' Mb/s' : '—', G('bitrate', s.gBitrate)], [' · perda ', 'lab'], [num(n.lossPct) ? fmt(n.lossPct, 1) + '%' : '—', G('loss', s.gLoss)],
-   ...(s.qpEst !== null ? [[' · QP ', 'lab'], ['≈' + fmtInt(s.qpEst) + ' (pela taxa de bits)', G('qp', grade('qp', s.qpEst))]] : [[' · QP ', 'lab'], [fmtInt(s.qp), G('qp', s.gQp)]])]);
-  setParts(els.drops, [['Decodificador (1 s): ', 'lab'], [fmtInt(n.framesDropped) + ' descartados', n.framesDropped > 0 ? 'ok' : null], [' · ', 'lab'], [fmtInt(n.freezes) + ' congelamentos', n.freezes > 0 ? 'ok' : null]]);
+  setParts(els.quality, [['Bitrate ', 'lab'], [num(n.bitrateMbps) ? fmt(n.bitrateMbps, 1) + ' Mb/s' : '—', G('bitrate', s.gBitrate)], [' · ' + t('perda') + ' ', 'lab'], [num(n.lossPct) ? fmt(n.lossPct, 1) + '%' : '—', G('loss', s.gLoss)],
+   ...(s.qpEst !== null ? [[' · QP ', 'lab'], ['≈' + fmtInt(s.qpEst) + ' ' + t('(pela taxa de bits)'), G('qp', grade('qp', s.qpEst))]] : [[' · QP ', 'lab'], [fmtInt(s.qp), G('qp', s.gQp)]])]);
+  setParts(els.drops, [[t('Decodificador (1 s):') + ' ', 'lab'], [t('{0} descartados', fmtInt(n.framesDropped)), n.framesDropped > 0 ? 'ok' : null], [' · ', 'lab'], [t('{0} congelamentos', fmtInt(n.freezes)), n.freezes > 0 ? 'ok' : null]]);
  }
  function updateMeasure() {
-  setT(els.measureStart._label, api.measuring ? 'Reiniciar medição' : 'Iniciar medição');
-  setParts(els.measureLine, [[api.measuring ? 'Medindo · ' + (clock() || '…') : els.measureMsg || 'Pronta', api.measuring ? 'ok' : 'lab']]);
+  setT(els.measureStart._label, t(api.measuring ? 'Reiniciar medição' : 'Iniciar medição'));
+  setParts(els.measureLine, [[api.measuring ? t('Medindo · {0}', clock() || '…') : t(els.measureMsg || 'Pronta'), api.measuring ? 'ok' : 'lab']]);
  }
 
  /* ------------------------------ Android refresh rate ------------------------------ */
@@ -1211,9 +1212,9 @@
   const values = [0, ...refreshRates()], cur = refreshNow();
   if (!values.includes(cur)) values.push(cur);
   let last = cur;
-  els.refresh = choice({key: 'refreshRate', label: 'Taxa da tela', tag: 'APP', opts: values.map(v => [v, v ? v + ' Hz' : 'Sistema']), get: refreshNow,
+  els.refresh = choice({key: 'refreshRate', label: t('Taxa da tela'), tag: 'APP', opts: values.map(v => [v, v ? v + ' Hz' : t('Sistema')]), get: refreshNow,
    set: v => { if (v === last) return; last = v; try { window.BxAndroid.setRefreshRate(v); } catch {} verdict.dirty = true; },
-   hint: () => '60 ou 120 Hz são múltiplos de 30/60 FPS e evitam tremulação; 90 Hz desalinha o ritmo.'});
+   hint: () => t('60 ou 120 Hz são múltiplos de 30/60 FPS e evitam tremulação; 90 Hz desalinha o ritmo.')});
   els.refreshOut = out('refresh'); els.refresh.row.append(els.refreshOut);
   els.smooth.row.after(els.refresh.row);
  }
@@ -1222,35 +1223,35 @@
  const verdict = {shown: null, cand: null, action: null, dirty: true};
  function evaluate(s) {
   const fl = valueOf('fluidity'), act = (label, fn) => ({label, fn});
-  const turnOn = act('Ligar Fluidez', e => commit('fluidity', 'balanced', e));
-  if (!s.p) return {text: 'Sem dados de ritmo ainda.', g: 'none'};
+  const turnOn = act(t('Ligar Fluidez'), e => commit('fluidity', 'balanced', e));
+  if (!s.p) return {text: t('Sem dados de ritmo ainda.'), g: 'none'};
   const D = s.gDev, S = s.gSrv, Ar = s.gArr, arBad = Ar === 'ok' || Ar === 'bad', dBad = D === 'ok' || D === 'bad', N = s.N;
   if (s.missed !== null && s.missed >= 3) {
-   if (fl !== 'off' && valueOf('capture') === 'video' && api.directSupported()) return {text: 'Quadros pulados antes do tratamento: a captura direta evita isso.', g: 'bad', a: act('Usar captura direta', e => commit('capture', 'direct', e))};
-   if (fl === 'off') return {text: 'Quadros pulados antes do tratamento: a Fluidez com captura direta evita isso.', g: 'bad', a: turnOn};
-   return {text: 'Quadros pulados: a GPU está sem folga. Reduza a Resolução de saída ou o limite da GPU.', g: 'bad'};
+   if (fl !== 'off' && valueOf('capture') === 'video' && api.directSupported()) return {text: t('Quadros pulados antes do tratamento: a captura direta evita isso.'), g: 'bad', a: act(t('Usar captura direta'), e => commit('capture', 'direct', e))};
+   if (fl === 'off') return {text: t('Quadros pulados antes do tratamento: a Fluidez com captura direta evita isso.'), g: 'bad', a: turnOn};
+   return {text: t('Quadros pulados: a GPU está sem folga. Reduza a Resolução de saída ou o limite da GPU.'), g: 'bad'};
   }
   // Frames dropped by the pacer are skipped content even when the interval on screen looks steady.
   if (fl !== 'off' && grade('drops', s.dropRate) === 'bad') {
-   const a = valueOf('capture') === 'video' && api.directSupported() ? act('Usar captura direta', e => commit('capture', 'direct', e)) : fl === 'max' ? act('Usar Equilibrada', e => commit('fluidity', 'balanced', e)) : null;
-   return {text: `A Fluidez está descartando quadros (${fmtInt(s.dropRate)}/min): eles chegam juntos demais.`, g: 'ok', a};
+   const a = valueOf('capture') === 'video' && api.directSupported() ? act(t('Usar captura direta'), e => commit('capture', 'direct', e)) : fl === 'max' ? act(t('Usar Equilibrada'), e => commit('fluidity', 'balanced', e)) : null;
+   return {text: t('A Fluidez está descartando quadros ({0}/min): eles chegam juntos demais.', fmtInt(s.dropRate)), g: 'ok', a};
   }
-  if (D === 'good' && s.p.hitches === 0) return {text: 'Ritmo estável.' + (arBad && fl !== 'off' ? ' A Fluidez está compensando a rede.' : ''), g: 'good'};
+  if (D === 'good' && s.p.hitches === 0) return {text: t('Ritmo estável.') + (arBad && fl !== 'off' ? ' ' + t('A Fluidez está compensando a rede.') : ''), g: 'good'};
   const R = refreshNow();
   if (R > 0 && R % N) {
    const to = refreshRates().includes(120) ? 120 : 60;
-   return {text: `Tela em ${R} Hz não é múltiplo de ${N} FPS: use 60 ou 120 Hz.`, g: 'ok', a: act(`Usar ${to} Hz`, () => { try { window.BxAndroid.setRefreshRate(to); } catch {} })};
+   return {text: t('Tela em {0} Hz não é múltiplo de {1} FPS: use 60 ou 120 Hz.', R, N), g: 'ok', a: act(t('Usar {0} Hz', to), () => { try { window.BxAndroid.setRefreshRate(to); } catch {} })};
   }
-  if (S === 'bad') return {text: 'O jogo/servidor está irregular. A Fluidez Máxima uniformiza (com mais espera).', g: 'ok', a: fl !== 'max' ? act('Usar Máxima', e => commit('fluidity', 'max', e)) : null};
-  if (arBad && dBad && fl === 'off') return {text: 'A rede está oscilando. A Fluidez Equilibrada corrige.', g: 'ok', a: turnOn};
-  if (arBad && fl !== 'off' && settings.smoothing === 0 && s.p.hitches >= 1) return {text: 'Chegada irregular mesmo com a Fluidez: mais buffer ajuda.', g: 'ok', a: act('Suavidade 33 ms', e => commit('smoothing', 33, e))};
+  if (S === 'bad') return {text: t('O jogo/servidor está irregular. A Fluidez Máxima uniformiza (com mais espera).'), g: 'ok', a: fl !== 'max' ? act(t('Usar Máxima'), e => commit('fluidity', 'max', e)) : null};
+  if (arBad && dBad && fl === 'off') return {text: t('A rede está oscilando. A Fluidez Equilibrada corrige.'), g: 'ok', a: turnOn};
+  if (arBad && fl !== 'off' && settings.smoothing === 0 && s.p.hitches >= 1) return {text: t('Chegada irregular mesmo com a Fluidez: mais buffer ajuda.'), g: 'ok', a: act(t('Suavidade 33 ms'), e => commit('smoothing', 33, e))};
   if (fl !== 'off' && s.fl && num(s.fl.extraMs) && s.fl.extraMs > s.T)
-   return {text: `Espera alta (+${fmtMs(s.fl.extraMs)} ms).` + (fl === 'max' ? ' A Equilibrada espera menos.' : ''), g: 'ok', a: fl === 'max' ? act('Usar Equilibrada', e => commit('fluidity', 'balanced', e)) : null};
+   return {text: t('Espera alta (+{0} ms).', fmtMs(s.fl.extraMs)) + (fl === 'max' ? ' ' + t('A Equilibrada espera menos.') : ''), g: 'ok', a: fl === 'max' ? act(t('Usar Equilibrada'), e => commit('fluidity', 'balanced', e)) : null};
   if (dBad && Ar === 'good') {
-   if (fl === 'off') return {text: 'Oscilação no aparelho/tela. Ative a Fluidez.', g: 'ok', a: turnOn};
-   return {text: 'Oscilação no aparelho/tela.' + (window.BxAndroid ? ' Fixe a tela em 60/120 Hz.' : ' Confira se a TV está em 60 Hz.'), g: 'ok'};
+   if (fl === 'off') return {text: t('Oscilação no aparelho/tela. Ative a Fluidez.'), g: 'ok', a: turnOn};
+   return {text: t('Oscilação no aparelho/tela.') + ' ' + t(window.BxAndroid ? 'Fixe a tela em 60/120 Hz.' : 'Confira se a TV está em 60 Hz.'), g: 'ok'};
   }
-  return {text: 'Ritmo oscilando.', g: 'ok'};
+  return {text: t('Ritmo oscilando.'), g: 'ok'};
  }
  // New verdicts commit after 2 identical evaluations 2 s apart; settings changes re-evaluate at once.
  function updateVerdict(s, force) {
@@ -1273,6 +1274,7 @@
   try {
    const row = root?.parentElement && [...root.parentElement.children].find(e => e.prefKey === 'video.processing.sharpness');
    row?.classList.toggle('bxif-native-muted', api.nativePref('video.player.type') === 'webgl2');
+   row?.setAttribute('data-bxif-note', t('Substituída pela Nitidez do Tratamento de imagem'));
   } catch {}
  }
  function readSticky() {
@@ -1342,8 +1344,8 @@
   for (const k of [...pending.keys()]) flush(k);
   for (const b of flashes) { clearTimeout(b._flash); b._flash = 0; }
   flashes.clear();
-  if (els.copy) setT(els.copy._label, 'Copiar configuração');
-  if (resetTimer) disarm(); else if (els.reset) setT(els.reset._label, 'Restaurar tratamento');
+  if (els.copy) setT(els.copy._label, t('Copiar configuração'));
+  if (resetTimer) disarm(); else if (els.reset) setT(els.reset._label, t('Restaurar tratamento'));
   ro?.disconnect(); ro = null;
  }
  function observe() {

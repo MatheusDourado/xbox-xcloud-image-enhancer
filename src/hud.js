@@ -3,6 +3,7 @@
 // settings.hud 'off' nothing exists and no timer runs.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document, ui = api.ui;
+ const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
  if (!ui) { api.hud = {update() {}, timers: () => 0}; return; }
  const {fmt, fmtMs, fmtInt, grade, createHysteresis, dropRate, drawSparkline, sizeCanvas, stateWord, snapshot, ensureStyle, LEVEL} = ui;
  const CSS = `
@@ -116,7 +117,7 @@
   const rit = minCh(field(), 4), trav = minCh(field(), 2), lat = minCh(field(), 3);
   const chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')], l3 = E('div', 'bxif-h-l3', chips[0].e, chips[1].e);
   off(l3, true);
-  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab('RIT'), rit.e, lab('TRAV'), trav.e, lab('LAT'), lat.e), l3);
+  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab(t('RIT')), rit.e, lab(t('TRAV')), trav.e, lab('LAT'), lat.e), l3);
   return {kind: 'card', dot: d, fps, tag, badge, cv, rit, trav, lat, chips, chipEls: chips.map(c => c.e), l3, spark: {count: 60, w: 56, h: 12}};
  }
  function buildLateral(w, full) {
@@ -129,27 +130,27 @@
   cv.style.width = sw + 'px';
   // Completo on the phone: the same column with every indicator, still inside the black bar.
   let extra = null;
-  const rows = [cap('RIT'), line(rit.e)];
+  const rows = [cap(t('RIT')), line(rit.e)];
   if (full) {
    extra = {p95: field(), desc: field(), wait: field(), br: field(), qp: field(), loss: field()};
-   extra.descRows = [cap('DESC/MIN'), line(extra.desc.e)]; extra.waitRows = [cap('ESPERA'), line(extra.wait.e)];
-   rows.push(line(sub('p95 '), extra.p95.e), cap('TRAV'), line(trav.e), ...extra.descRows, ...extra.waitRows, cap('LAT'), line(lat.e),
-    cap('MB/S'), line(extra.br.e), cap('QP'), line(extra.qp.e), cap('PERDA'), line(extra.loss.e));
-  } else rows.push(cap('TRAV'), line(trav.e), cap('LAT'), line(lat.e));
+   extra.descRows = [cap(t('DESC/MIN')), line(extra.desc.e)]; extra.waitRows = [cap(t('ESPERA')), line(extra.wait.e)];
+   rows.push(line(sub('p95 '), extra.p95.e), cap(t('TRAV')), line(trav.e), ...extra.descRows, ...extra.waitRows, cap('LAT'), line(lat.e),
+    cap('MB/S'), line(extra.br.e), cap('QP'), line(extra.qp.e), cap(t('PERDA')), line(extra.loss.e));
+  } else rows.push(cap(t('TRAV')), line(trav.e), cap('LAT'), line(lat.e));
   el.append(E('div', 'bxif-h-col', line(d.e, fps.e), line(lab('FPS')), cv, ...rows, ...chipRows, badgeRow, tagRow));
   return {kind: 'lateral', dot: d, fps, tag, badge, cv, rit, trav, lat, chips, chipEls: chipRows, badgeEl: badgeRow, tagEl: tagRow, extra, spark: {count: 60, w: sw / s, h: full ? 16 : 12}};
  }
  function buildFull() {
   const d = dot(), word = field('bxif-h-word', ''), fps = field('bxif-h-big'), cv = E('canvas', 'bxif-h-spark');
-  const dev = field(), devUnit = sub(' ms · p95 '), p95 = field(), hit = field(), missParts = [sub(' · pul '), null], miss = field(), descParts = [sub(' · desc '), null, sub('/min')], desc = field();
+  const dev = field(), devUnit = sub(' ms · p95 '), p95 = field(), hit = field(), missParts = [sub(' · ' + t('pul') + ' '), null], miss = field(), descParts = [sub(' · ' + t('desc') + ' '), null, sub('/min')], desc = field();
   missParts[1] = miss.e; descParts[1] = desc.e;
   const wait = field(), capSep = sub(' · '), cap = field();
   const total = field(), bar = E('span', 'bxif-h-bar', E('i'), E('i'), E('i'), E('i'), E('i'));
-  const leg = ['R', 'B', 'D', 'T', 'E'].map((k, i) => ({k: sub((i ? ' · ' : '') + k + ' '), v: field()}));
+  const leg = ['R', 'B', 'D', 'T', t('E')].map((k, i) => ({k: sub((i ? ' · ' : '') + k + ' '), v: field()}));
   const vin = field(), vout = field(), codec = field('bxif-h-s', ''), dec = field();
   const br = field(), qp = field(), loss = field();
   const wbadge = field('bxif-h-badge', ''), wtext = field('bxif-h-val', '');
-  const row = (k, ...kids) => E('div', 'bxif-h-row', lab(k), E('span', 'bxif-h-val', ...kids));
+  const row = (k, ...kids) => E('div', 'bxif-h-row', lab(t(k)), E('span', 'bxif-h-val', ...kids));
   const warn = E('div', 'bxif-h-grp', E('div', 'bxif-h-warn', wbadge.e, wtext.e));
   off(warn, true);
   const legEl = E('div', 'bxif-h-leg'), videoRow = row('Vídeo', vin.e, sub('→'), vout.e, sub(' · '), codec.e, sub(' · '), dec.e);
@@ -157,9 +158,9 @@
   if (s === 1) { off(legEl, true); off(videoRow, true); }
   for (const x of leg) legEl.append(x.k, x.v.e);
   el.append(E('div', 'bxif-h-head', d.e, word.e, fps.e, lab('FPS')), cv,
-   E('div', 'bxif-h-grp', row('Ritmo', dev.e, devUnit, p95.e), row('Quadros', sub('trav '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
-   E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab('Atraso est.'), total.e, bar), legEl),
-   E('div', 'bxif-h-grp', videoRow, row('Rede', br.e, sub(' Mb/s · QP '), qp.e, sub(' · perda '), loss.e)),
+   E('div', 'bxif-h-grp', row('Ritmo', dev.e, devUnit, p95.e), row('Quadros', sub(t('trav') + ' '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
+   E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab(t('Atraso est.')), total.e, bar), legEl),
+   E('div', 'bxif-h-grp', videoRow, row('Rede', br.e, sub(' Mb/s · QP '), qp.e, sub(' · ' + t('perda') + ' '), loss.e)),
    warn);
   return {kind: 'full', dot: d, word, fps, cv, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,
    spark: {count: 240, w: 220, h: 24}};
@@ -235,7 +236,7 @@
    put(f.trav, on && p ? String(p.hitches) : '—', hitG);
    put(f.lat, x.lat.total === null ? '—' : fmtInt(x.lat.total), totalG);
    const tag = w.tag || (neuralOff ? 'SEM NEURAL' : '');
-   put(f.tag, tag, w.tag ? w.grade : 'ok'); off(f.tagEl || f.tag.e, !tag);
+   put(f.tag, tag && t(tag), w.tag ? w.grade : 'ok'); off(f.tagEl || f.tag.e, !tag);
    put(f.badge, x.warnCount ? '!' + x.warnCount : '', warnG); off(f.badgeEl || f.badge.e, !x.warnCount);
    // Line 3: at most two alerts, bad ones only, in priority order. An alert needs the bad grade on two
    // ticks to appear and leaves as soon as the value is back to good (never "PERDA 0,0%" in red).
@@ -249,19 +250,19 @@
     put(e.qp, fmtInt(x.qp), G('qp', x.gQp));
     put(e.loss, num(net?.lossPct) ? fmt(net.lossPct, 1) + '%' : '—', G('loss', x.gLoss));
    }
-   add('miss', x.gMiss, 'PUL ' + x.missed);
-   add('loss', x.gLoss, 'PERDA ' + fmt(net?.lossPct, 1) + '%');
+   add('miss', x.gMiss, t('PUL {0}', x.missed));
+   add('loss', x.gLoss, t('PERDA {0}%', fmt(net?.lossPct, 1)));
    add('qp', x.gQp, 'QP ' + fmtInt(x.qp));
    add('bitrate', x.gBitrate, fmt(net?.bitrateMbps, 1) + ' Mb/s');
-   add('decoder', x.gDecoder, 'DECOD CPU');
+   add('decoder', x.gDecoder, t('DECOD CPU'));
    add('height', x.gHeight, net?.height + 'p');
-   add('wait', x.gWait, 'ESP +' + fmtInt(x.fl?.extraMs));
+   add('wait', x.gWait, t('ESP +{0}', fmtInt(x.fl?.extraMs)));
    add('gpu', x.gGpuShow, (x.gpu !== null ? 'GPU ' : 'GPU ≈fence ') + fmt(x.gpuShow, 1));
    for (let i = 0; i < CHIPS; i++) { put(f.chips[i], alerts[i] || '', null); off(f.chipEls[i], !alerts[i]); }
    if (f.l3) off(f.l3, !alerts.length);
    look = look || alerts.length > 0;
   } else {
-   put(f.word, w.word + (neuralOff ? ' · SEM NEURAL' : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
+   put(f.word, t(w.word) + (neuralOff ? ' · ' + t('SEM NEURAL') : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
    put(f.dev, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.p95, on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', x.gP95) : 'none');
    put(f.hit, on && p ? String(p.hitches) : '—', hitG);
@@ -272,9 +273,9 @@
    for (const e of f.descParts) off(e, !flOn);
    if (flOn) put(f.desc, num(rate) ? fmtInt(rate) : '—', G('drops', grade('drops', rate)));
    if (flOn) put(f.wait, x.fl && num(x.fl.extraMs) ? '+' + fmtMs(x.fl.extraMs) + ' ms' : '—', G('wait', x.gWait));
-   else put(f.wait, 'desligada', 'none');
+   else put(f.wait, t('desligada'), 'none');
    off(f.capSep, !flOn); off(f.cap.e, !flOn);
-   if (flOn) put(f.cap, x.direct ? 'Direta' : settings.capture === 'direct' ? 'Direta→vídeo' : 'Vídeo', x.gCapture === 'ok' ? 'ok' : null);
+   if (flOn) put(f.cap, t(x.direct ? 'Direta' : settings.capture === 'direct' ? 'Direta→vídeo' : 'Vídeo'), x.gCapture === 'ok' ? 'ok' : null);
    put(f.total, x.lat.total === null ? '—' : '≈' + fmtInt(x.lat.total) + ' ms', totalG);
    const l = x.lat, segs = [l.rtt, l.buffer, l.decode, l.gpu, flOn ? l.wait : 0];
    for (let i = 0; i < 5; i++) prop(f.bar.children[i], 'flex-grow', String(num(segs[i]) ? Math.max(0, +segs[i].toFixed(1)) : 0));

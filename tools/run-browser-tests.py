@@ -39,7 +39,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def run_page(browser, port, page_name):
-    page = browser.new_page()
+    # pt-BR: the harnesses assert the source (pt-BR) texts; tests/i18n.test.cjs covers the other languages.
+    page = browser.new_page(locale='pt-BR')
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     try:
