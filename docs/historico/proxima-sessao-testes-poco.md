@@ -4,7 +4,7 @@ Este é um checklist de handoff para a sessão de testes no aparelho. O detalhe 
 - seção 9 de [auditoria-play-xbox-com.md](auditoria-play-xbox-com.md): comandos, Perfetto e snippets;
 - [release-v10.1.0.md](release-v10.1.0.md): o que mudou nesta versão.
 
-O formato da medição exportada (schema 3) está em [api-imagefilter.md](api-imagefilter.md#medição--relatório-de-apiexportmeasurement-schema-3).
+O formato da medição exportada (schema 3) está em [api-imagefilter.md](../api-imagefilter.md#medição--relatório-de-apiexportmeasurement-schema-3).
 
 ## 0. Preparar
 

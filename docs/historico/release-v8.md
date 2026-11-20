@@ -13,6 +13,6 @@ Testes e medições foram no Apple M4/ANGLE Metal. **Qualidade percebida, latên
 
 Comece em saída nativa, CAS 2, Performance, orçamento 3 ms. Substitua o conteúdo do script no Tampermonkey e recarregue o xCloud; mantenha apenas uma versão ativa.
 
-Documentação no repositório: `docs/research-v8.md`, `docs/validation-v8.md`, `docs/third-party-v8.md`.
+Documentação no repositório: `docs/historico/research-v8.md`, `docs/historico/validation-v8.md`, `docs/third-party-v8.md`.
 
 SHA-256 do asset: `1627c209446ab4788d580f9e0f5dc0bf4c099becf407fece7b12db1121ab910b`.

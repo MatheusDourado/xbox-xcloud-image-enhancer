@@ -31,7 +31,7 @@ html = r'''<!doctype html><meta charset="utf-8"><pre id="result">Running</pre>
  const glRead=(name)=>{const t=name?glE.targets[name]:null;gl.bindFramebuffer(gl.FRAMEBUFFER,t?t.fbo:null);const w=t?t.w:glc.width,h=t?t.h:glc.height,p=new Uint8Array(w*h*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,p);gl.bindFramebuffer(gl.FRAMEBUFFER,null);return p;};
  const diff=(a,b)=>{if(a.length!==b.length)return {size:[a.length,b.length]};let max=0,sum=0,over1=0,n=0;for(let i=0;i<a.length;i++){if((i&3)===3)continue;const d=Math.abs(a[i]-b[i]);n++;sum+=d;if(d>max)max=d;if(d>1)over1++;}return {max,mean:+(sum/n).toFixed(5),over1Pct:+(over1*100/n).toFixed(4)};};
  // Tolerance: what the WebGL2 renderer already ships with. Spec 3 accepted mediump on the Adreno 825 with
- // the whole render() up to 0.47% of values above 1 level from highp (docs/spec3-implementacao.md, item 2):
+ // the whole render() up to 0.47% of values above 1 level from highp (docs/historico/spec3-implementacao.md, item 2):
  // here at most 0.5% above 1 level and a mean of 0.05 level. The WGSL ports are f32 and the GL side highp, so
  // on the Iris Xe they match almost byte for byte; on the Adreno 825 the Vulkan and GLES compilers round
  // differently (worst measured: mean 0.025 level, 0.16% above 1 level). Different devices (headless Chromium

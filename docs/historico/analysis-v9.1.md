@@ -1,6 +1,6 @@
 # Análise v9.1 — "DLSS para streaming": até onde dá para ir
 
-Relato do Poco F7 com a v9: o banding sumiu, mas a nitidez, mesmo no máximo, "não parece natural, não parece o console". Esta análise mede por quê e testa duas ideias no estilo DLSS. Usa a bancada da v9 (`docs/analysis-v9.md`) e acrescenta medição em sequência de quadros.
+Relato do Poco F7 com a v9: o banding sumiu, mas a nitidez, mesmo no máximo, "não parece natural, não parece o console". Esta análise mede por quê e testa duas ideias no estilo DLSS. Usa a bancada da v9 (`docs/historico/analysis-v9.md`) e acrescenta medição em sequência de quadros.
 
 ## 1. Por que a nitidez não parece natural: cintilação
 

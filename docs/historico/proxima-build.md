@@ -1,6 +1,6 @@
 # Próxima build — o que entra (a partir dos testes de 2026-11-09 no Poco F7)
 
-As evidências e os números estão em [medicoes/poco-nfs-2026-11-09/README.md](medicoes/poco-nfs-2026-11-09/README.md). Este arquivo é a lista de trabalho. Cada item tem estado e origem.
+As evidências e os números estão em [medicoes/poco-nfs-2026-11-09/README.md](../medicoes/poco-nfs-2026-11-09/README.md). Este arquivo é a lista de trabalho. Cada item tem estado e origem.
 
 ## Já no código (APK `android/dist/xcloud-imagefilter-10.1.1.apk`, release v10.1.1-beta.1)
 
@@ -45,7 +45,7 @@ As evidências e os números estão em [medicoes/poco-nfs-2026-11-09/README.md](
 3. **O app compõe a ~90–120 Hz para um vídeo de 30 FPS.**
    - Quase todos os quadros da camada do app vêm marcados `buffer_stuffing` no SurfaceFlinger, com milhares de `app_deadline`.
    - Investigar o que redesenha a cada vsync: loop rAF da Fluidez (`ensurePacer`/`tick`), HUD completo, canvas `desynchronized`. Usar `Surface.setFrameRate` pela ponte ou não chamar `present` sem quadro novo.
-4. **`BxAndroid.setRefreshRate` não muda a tela no HyperOS.** O pedido vira só um limite de renderização de 60 Hz da camada do app, e o painel fica em 120 Hz. Fixar 60 Hz piorou o ritmo na corrida 2. Rever a orientação "fixe 60 Hz" do checklist (`docs/proxima-sessao-testes-poco.md`) e o texto do painel.
+4. **`BxAndroid.setRefreshRate` não muda a tela no HyperOS.** O pedido vira só um limite de renderização de 60 Hz da camada do app, e o painel fica em 120 Hz. Fixar 60 Hz piorou o ritmo na corrida 2. Rever a orientação "fixe 60 Hz" do checklist (`docs/historico/proxima-sessao-testes-poco.md`) e o texto do painel.
 
 ### Médio
 5. **Rede neural a 60 FPS: cabe com folga curta.** No Gears 4 em 1080p60, com o aparelho frio, a GPU real ficou em ~76% (12,4–13 de 16,7 ms) e o ritmo se manteve. Nos menus a 60 FPS com a CPU limitada (corrida 5), não coube. Proposta: desligar a rede automaticamente quando a ocupação real passar de ~85% ou houver limitação térmica, não só pelo FPS; repetir o A/B com janelas curtas (o da corrida 12 coincidiu com morte e renascimento).

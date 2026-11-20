@@ -1,6 +1,6 @@
 # Spec 3 — Implementação
 
-Registro da Spec 3 na branch `claude/specs-autonomas`, seguindo o ranking de `docs/spec2-estudo.md`. Dados brutos em `docs/medicoes/spec3/`, ferramentas em `tools/device/spec3/`. Nada foi publicado: sem push, sem versão nova, sem APK.
+Registro da Spec 3 na branch `claude/specs-autonomas`, seguindo o ranking de `docs/historico/spec2-estudo.md`. Dados brutos em `docs/medicoes/spec3/`, ferramentas em `tools/device/spec3/`. Nada foi publicado: sem push, sem versão nova, sem APK.
 
 ## Resumo
 

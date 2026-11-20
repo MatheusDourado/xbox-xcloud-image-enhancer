@@ -12,6 +12,6 @@ Validação local (Chromium com GPU emulada, não no Dell): 22 testes Node, 53 v
 
 Comece em saída Automática, Nitidez 3–5, Detalhe 35–60%, Degradês 30–50%, AA 0–25% e orçamento 6 ms. Degradês e AA altos suavizam textura. Substitua o conteúdo do script no Tampermonkey e recarregue o xCloud; mantenha só uma versão ativa.
 
-Documentação: `docs/validation-v8.6.md`.
+Documentação: `docs/historico/validation-v8.6.md`.
 
 SHA-256 do asset: `24b1128743a80574c9818dd688448675c51ffc33531996de16f36e20ac906a03`.

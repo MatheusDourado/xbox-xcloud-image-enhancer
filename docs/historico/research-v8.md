@@ -10,7 +10,7 @@ O objetivo é reduzir artefatos visíveis sem apagar cabelo, vegetação, tecido
 
 ## 1. Evidência local e limites do equipamento
 
-Foram lidos `README.md`, `docs/validation-v3.md`, `src/restoration-engine.js`, shaders em `src/shaders/`, integração em `src/image-filter.js`, geração de CAS em `tools/build.py`, player e harness de desempenho.
+Foram lidos `README.md`, `docs/historico/validation-v3.md`, `src/restoration-engine.js`, shaders em `src/shaders/`, integração em `src/image-filter.js`, geração de CAS em `tools/build.py`, player e harness de desempenho.
 
 Achados na base:
 
@@ -168,6 +168,6 @@ Registro mínimo por execução: `data, commit, corpus/hash, aparelho, driver, b
 | 2 | `src/shaders/spatial.glsl`, regressões/qualidade | P1 isolado, mesma quantidade de passes/targets; aprovar textura e custo |
 | 3 | `tools/build.py`, shader RCAS próprio, avisos de terceiros | A/B de P2A e P2B; escolher por qualidade equivalente e custo, manter CAS como fallback |
 | 4 | harness temporal; depois `motion.glsl`/`temporal.glsl` se justificado | Primeiro ampliar evidência; só então corrigir confiança ou testar alternativa estática |
-| 5 | `docs/validation-v3.md` ou novo registro v8 e roteiro Dell | Resultados reproduzíveis, limitações, preset aprovado; decidir release em tarefa posterior |
+| 5 | `docs/historico/validation-v3.md` ou novo registro v8 e roteiro Dell | Resultados reproduzíveis, limitações, preset aprovado; decidir release em tarefa posterior |
 
 Conclusão da pesquisa: há uma v8 plausível sem trocar a plataforma. O investimento inicial de maior valor é **medir corretamente no Dell e tornar a correção espacial mais seletiva**, mantendo o custo estrutural atual. RCAS é o experimento seguinte mais delimitado. Não existe evidência para habilitar temporal por padrão, forçar 4K ou prometer ganho de performance no hardware alvo.

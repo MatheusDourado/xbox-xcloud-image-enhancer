@@ -1,6 +1,6 @@
 # v9 — pós-processamento ajustado por medição (PC e Android)
 
-Userscript `6.7.12-imagefilter.9` e app Android **9.0**. Os padrões foram escolhidos numa bancada objetiva: cenas de referência limpas, stream H.264 4:2:0 tipo xCloud a 10/15/20 Mbps e o pipeline WebGL real comparado com a referência. Detalhes em `docs/analysis-v9.md`.
+Userscript `6.7.12-imagefilter.9` e app Android **9.0**. Os padrões foram escolhidos numa bancada objetiva: cenas de referência limpas, stream H.264 4:2:0 tipo xCloud a 10/15/20 Mbps e o pipeline WebGL real comparado com a referência. Detalhes em `docs/historico/analysis-v9.md`.
 
 - **Nitidez USM só na luma** (novo padrão, intensidade 3): com a mesma nitidez da v8.6, tem mais fidelidade (SSIM 0,930 contra 0,913), 11% menos ruído do encoder amplificado e não realça os blocos de cor do 4:2:0. CAS, RCAS e "seguir menu nativo" continuam selecionáveis.
 - **Saída Automática na resolução real da tela**: no celular (ex.: Poco F7, ~1220–1280 px), o FSR amplia e a nitidez é aplicada já no tamanho final, em vez de o navegador esticar o canvas depois. Resultado: +19% a +27% de detalhe com a mesma fidelidade. No Dell com HDMI 1080p continua nativa.

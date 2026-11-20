@@ -35,7 +35,7 @@ Primeira medição num aparelho real: Poco F7 (Android 16, WebView Chrome 155) c
 
 ## Medição com ritmo (`schema: 2`)
 
-Formato completo em [api-imagefilter.md](api-imagefilter.md#medição--relatório-de-apiexportmeasurement-schema-2).
+Formato completo em [api-imagefilter.md](../api-imagefilter.md#medição--relatório-de-apiexportmeasurement-schema-2).
 
 - **Por configuração**, intervalos entre quadros:
   - **exibidos** (`display`);

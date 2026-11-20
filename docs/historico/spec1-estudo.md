@@ -48,7 +48,7 @@ Faixa das medianas de três rodadas, em 1080p salvo indicação. Filtros dentro 
 
 Passadas de apoio: `spatial` vazio 0,47–0,58 (Poco) e 1,12–1,18 (Vostro); `spatial` padrão 2,12–2,54 e 1,84–1,93; `present` em 1280p 0,35–0,39 e 1,05–1,14.
 
-**Ganho:** nada foi medido nesta spec, porque a bancada `tools/eval` precisa de `ffmpeg`, que não existe nesta máquina e o documento não autoriza baixar. Os valores acima vêm dos registros da v9 e da v9.1. `docs/analysis-v9.md` compara configurações, não filtros isolados: v9 padrão SSIM 0,930 contra 0,942 do stream sem filtro, com detalhe 0,97 contra 0,71; no perfil Poco, FSR para 1280p com USM 3 tem detalhe 0,67 contra 0,53 do 1080p esticado.
+**Ganho:** nada foi medido nesta spec, porque a bancada `tools/eval` precisa de `ffmpeg`, que não existe nesta máquina e o documento não autoriza baixar. Os valores acima vêm dos registros da v9 e da v9.1. `docs/historico/analysis-v9.md` compara configurações, não filtros isolados: v9 padrão SSIM 0,930 contra 0,942 do stream sem filtro, com detalhe 0,97 contra 0,71; no perfil Poco, FSR para 1280p com USM 3 tem detalhe 0,67 contra 0,53 do 1080p esticado.
 
 ## Método e cuidados
 
@@ -154,7 +154,7 @@ Inclusive o CAS original do Better xCloud, que era `mediump` e o `tools/build.py
 - **Implementação:** shader WebGL2 próprio, sem ONNX nem TensorFlow.js. `tools/nn_glsl.py` embute os pesos de `src/nn/restore.json` como constantes.
 - **Rede:** `conv3×3(1→8) → ReLU → conv1×1(8→8) → ReLU → conv3×3(8→1)`, só na luma, somada à imagem. Cerca de 210 multiplicações por pixel.
 - **Passadas:** duas, com duas texturas RGBA16F intermediárias, à frente do `spatial`.
-- **Treino:** JAX em CPU, pares de luma H.264 a 8–25 Mb/s contra render limpo (`tools/nn/`, `docs/analysis-v9.1.md`).
+- **Treino:** JAX em CPU, pares de luma H.264 a 8–25 Mb/s contra render limpo (`tools/nn/`, `docs/historico/analysis-v9.1.md`).
 - **Custo:** 1,96–2,21 ms na Adreno 825 e 4,07–4,18 ms na Iris Xe, em 1080p; cerca de 40% sobre o caminho padrão do Poco. A estimativa anterior era +31%, em GPU emulada.
 - **Ganho registrado:** SSIM 0,930 → 0,934 em 1080p e 0,917 → 0,917 no perfil Poco 1280p, com mais halo.
 

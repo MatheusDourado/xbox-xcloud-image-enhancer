@@ -1,6 +1,6 @@
 """Training pairs for the neural restoration: decoded xCloud-like H.264 luma -> clean luma.
 
-Uses textures that are NOT in the evaluation set (see docs/analysis-v10.md), the same
+Uses textures that are NOT in the evaluation set (see docs/historico/analysis-v9.1.md), the same
 camera motion and x264 settings as tools/eval, bitrates 8-25 Mbps.
 Usage: python3 tools/nn/make_train_set.py <training texture dir> [scenes]
 Output: output/nn/train.npz (uint8 patches, input and target luma).

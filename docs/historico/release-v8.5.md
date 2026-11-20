@@ -17,6 +17,6 @@ Custo medido no Apple M4 (não no Dell): cor + detalhe somam cerca de 0,5 ms em 
 
 Comece em saída Automática, CAS 2, orçamento 6 ms, Cor nas bordas 50% e Detalhe 35%. Substitua o conteúdo do script no Tampermonkey e recarregue o xCloud; mantenha só uma versão ativa.
 
-Documentação: `docs/validation-v8.5.md`.
+Documentação: `docs/historico/validation-v8.5.md`.
 
 SHA-256 do asset: `8deb7232debd48bbfac90d7cca892d0720a9907859bc6cca917cee133fdd993d`.

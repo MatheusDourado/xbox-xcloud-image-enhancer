@@ -5,8 +5,8 @@ Userscripts `6.7.12-imagefilter.10.1.1` (www.xbox.com, sobre o Better xCloud 6.7
 ## Origem
 
 Primeira sessão de depuração ao vivo no Poco F7 (2026-11-09), com Perfetto, medição do app, gravador na página e A/B automático durante NFS Hot Pursuit Remastered (30 FPS) e Gears of War 4 (60 FPS). Evidências, números e conclusões:
-- [medicoes/poco-nfs-2026-11-09/README.md](medicoes/poco-nfs-2026-11-09/README.md): as 12 corridas e os testes de perfil e de taxa de tela;
-- [medicoes/poco-nfs-2026-11-09/CONCLUSOES.md](medicoes/poco-nfs-2026-11-09/CONCLUSOES.md): descobertas, gargalos, lacunas e barreiras;
+- [medicoes/poco-nfs-2026-11-09/README.md](../medicoes/poco-nfs-2026-11-09/README.md): as 12 corridas e os testes de perfil e de taxa de tela;
+- [medicoes/poco-nfs-2026-11-09/CONCLUSOES.md](../medicoes/poco-nfs-2026-11-09/CONCLUSOES.md): descobertas, gargalos, lacunas e barreiras;
 - [proxima-build.md](proxima-build.md): a lista de trabalho para a próxima versão.
 
 **Esta build já rodou no Poco:** Gears 4 em 1080p60 H.264 Main, sem nenhum patch externo.
