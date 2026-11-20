@@ -33,7 +33,7 @@ uv run -p 3.12 --no-project tools/build.py   # só o build (precisa de Python 3.
 android/build.sh           # APK (Linux; ver android/README.md)
 ```
 
-Ferramentas: Node 22, `uv` (traz Python 3.12, `uvx ruff`), `npx` (Biome). LSP para agentes: `npm i -g typescript-language-server typescript pyright` + plugins `typescript-lsp` e `pyright-lsp` do marketplace oficial do Claude Code.
+Ferramentas: Node 22, `uv` (traz Python 3.12, `uvx ruff`), `npx` (Biome). LSP para agentes: `npm i -g --prefix ~/.local typescript-language-server typescript pyright` (`~/.local/bin` no PATH; sem sudo) + plugins `typescript-lsp` e `pyright-lsp` do marketplace oficial do Claude Code.
 
 ## Esteira
 
