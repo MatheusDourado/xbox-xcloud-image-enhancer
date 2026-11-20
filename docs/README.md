@@ -8,7 +8,7 @@ Na raiz de `docs/` fica só o que vale para a versão atual. O resto está organ
 - [play-xbox-com.md](play-xbox-com.md): como o suporte ao site novo (play.xbox.com) funciona.
 - [spec4-webgpu.md](spec4-webgpu.md): renderizador WebGPU (decisões, medições, testes).
 - [third-party-v8.md](third-party-v8.md): código de terceiros e licenças (o nome é da v8; o conteúdo continua valendo).
-- [release-v10.1.3.md](release-v10.1.3.md): notas da versão atual (o CI publica a release a partir deste arquivo).
+- [release-v10.2.0.md](release-v10.2.0.md): notas da versão atual (o CI publica a release a partir deste arquivo).
 
 ## Medições
 

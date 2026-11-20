@@ -14,7 +14,7 @@ Versão nova: `$ARGUMENTS` (formato `X.Y.Z`; sufixo `-beta.N` só na tag, vira p
    - `src/panel.js` (`VERSION`), `src/restoration-engine.js` (`version` do relatório e nome do arquivo de diagnóstico), `src/i18n.js` (comentário);
    - `tools/build.py` (`BxBuild.version`, `@version` dos dois userscripts, mensagem final);
    - `android/AndroidManifest.xml` (`versionName` e `versionCode` `MMmmpp`);
-   - `tests/engine.test.cjs`, `tools/browser-harness.py`;
+   - `tests/engine.test.cjs`, `tools/browser-harness.py`, `tools/capture-harness.py` (há também a forma com ponto escapado em regex, `10\.1\.3`: procure as duas);
    - `README.md` (versão atual, nome do APK, linha nova na tabela do histórico), `android/README.md`.
    `BuildConfigInfo.java` é atualizado pelo `android/build.sh`; atualize-o também para o commit ficar coerente.
 3. **Conferir**: `git grep -n "<versão anterior>" -- ':!docs/historico' ':!docs/superpowers'` só pode listar a linha do histórico no README e a nota anterior.
