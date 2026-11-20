@@ -1,4 +1,4 @@
-# v10.1.3 (pré-lançamento) — textos em inglês e espanhol
+# v10.1.3 — textos em inglês e espanhol
 
 Userscripts `6.7.12-imagefilter.10.1.3` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.1.3-play` (play.xbox.com), app Android **10.1.3** (`versionCode` 100103). Inclui tudo da [v10.1.2](release-v10.1.2.md). Só os textos mudaram: tratamento, padrões e medição são os mesmos da v10.1.2.
 
@@ -19,3 +19,4 @@ Userscripts `6.7.12-imagefilter.10.1.3` (www.xbox.com, sobre o Better xCloud 6.7
 - As traduções ficam em `src/i18n.json` (`{"texto pt": {"en": "…", "es": "…"}}`). Novo idioma = nova coluna nesse arquivo e o código em `SUPPORTED`.
 - `tests/i18n.test.cjs` falha se um `t('…')` não tiver inglês e espanhol, ou se os marcadores `{0}` diferirem entre idiomas. Os testes de navegador rodam em pt-BR.
 - O relatório de medição exportado não mudou de formato. Os textos dos avisos e motivos dentro dele saem no idioma da interface.
+- O APK passou a ser gerado com o Android SDK da imagem do runner (build-tools com `aapt` e `d8`), sem apt. A assinatura é a mesma: instala por cima da 10.1.1/10.1.2.
