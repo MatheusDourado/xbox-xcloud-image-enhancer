@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.2.0';
+ const VERSION = 'v10.2.1';
  const num = v => typeof v === 'number' && Number.isFinite(v);
  const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
 
@@ -194,9 +194,10 @@
   s.L = settings.gpuBudget || 10; s.gGpu = grade('gpu', s.gpu, {L: s.L});
   s.gpuEst = on && status.measurement !== 'gpu' && num(status.gpuEstimate?.p95) ? status.gpuEstimate.p95 : null; s.gGpuEst = grade('gpu-est', s.gpuEst, {T});
   s.gpuShow = s.gpu !== null ? s.gpu : s.gpuEst; s.gGpuShow = s.gpu !== null ? s.gGpu : s.gGpuEst;
-  // GPU load in percent: the whole GPU when the app can read it; otherwise the treatment's GPU time against the frame
-  // time (gpuPctEst true: the treatment only, and the fence estimate reads high on WebGL2).
-  s.gpuPctEst = !num(status.gpuBusy); s.gpuPct = !s.gpuPctEst ? status.gpuBusy : on && s.gpuShow !== null && T > 0 ? Math.round(s.gpuShow * 100 / T) : null;
+  // GPU load in percent: the whole GPU when the app can read it; otherwise the treatment's measured GPU time against
+  // the frame time (gpuPctEst true). The fence estimate is not used: it is the time until the GPU finished the frame,
+  // queueing included, and on the Poco F7 with Fluidez it read 190-650% of the frame time. null: no measurement.
+  s.gpuMs = s.gpu; s.gpuPctEst = !num(status.gpuBusy); s.gpuPct = !s.gpuPctEst ? status.gpuBusy : s.gpu !== null && T > 0 ? Math.round(s.gpu * 100 / T) : null;
   s.gGpuPct = s.gpuPct === null ? 'none' : s.gpuPct >= 90 ? 'bad' : s.gpuPct >= 75 ? 'ok' : 'good';
   s.gBitrate = grade('bitrate', n?.bitrateMbps, {height: n?.height});
   s.qp = num(status.adaptive?.qpMean) ? status.adaptive.qpMean : n && num(n.qp) ? n.qp : null; s.gQp = grade('qp', s.qp);

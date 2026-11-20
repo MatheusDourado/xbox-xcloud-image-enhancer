@@ -216,7 +216,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:4,version:'10.2.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:4,version:'10.2.1',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT,frames:FRAME_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||frameCut||segments.length>=256,eventsTruncated:eventsCut,
         // Schema 4 (audit C09): frames = [id, segment, renderedMs, presentedMs, state]; passes[] lists the sequences
         // as scheduled (a deferred last pass is marked @present); presentation says how many of them ran.
@@ -346,6 +346,10 @@
         for(const f of queue)if(f.p==null)schedule(f);
         let pick=-1;for(let i=0;i<queue.length;i++)if(queue[i].p<=now+lead)pick=i;
         if(pick<0)return null;
+        // Several due at this refresh (captured closer together than a refresh, or after a stall): the newest
+        // waits for the next refresh instead of replacing the one before it. Dropping that one also left a
+        // hole right after it (Poco F7 at 60 Hz: 8.9% of the frames dropped, display p95 33 ms).
+        if(pick>0)pick--;
         if(pick>0)dropped+=pick;
         const f=queue.splice(0,pick+1).pop();f.shown=now;
         const delay=now-f.arrival;extra=extra===null?delay:extra*.9+delay*.1;
@@ -391,7 +395,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.2.0-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.2.1-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}

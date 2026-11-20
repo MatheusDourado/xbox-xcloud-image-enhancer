@@ -1,6 +1,6 @@
 # v10.2.0 — frame time e GPU no HUD, tela a 60 Hz e pedido de 1440p
 
-Userscripts `6.7.12-imagefilter.10.2.0` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.0-play` (play.xbox.com), app Android **10.2.0** (`versionCode` 100200). Inclui tudo da [v10.1.3](historico/release-v10.1.3.md). Nenhum filtro de imagem mudou: tratamento e padrões são os mesmos.
+Userscripts `6.7.12-imagefilter.10.2.0` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.0-play` (play.xbox.com), app Android **10.2.0** (`versionCode` 100200). Inclui tudo da [v10.1.3](release-v10.1.3.md). Nenhum filtro de imagem mudou: tratamento e padrões são os mesmos.
 
 Esta versão saiu sem medição no aparelho. O voto de 60 Hz, o pedido de 1440p e a leitura da carga da GPU foram testados só na lógica (testes Node e de navegador). O efeito real no Poco F7 ainda precisa ser medido.
 
@@ -31,5 +31,5 @@ Esta versão saiu sem medição no aparelho. O voto de 60 Hz, o pedido de 1440p 
 
 ## Para quem mexe no código
 - `status.panelHz` e `status.gpuBusy` (também na linha do tempo da medição); aviso `panel-hz`.
-- `streamResolution: '1440p'` e `status.stream.qhd` ([play-xbox-com.md](play-xbox-com.md)); ponte `getDisplayHz()` e `getGpuBusy()` ([api-imagefilter.md](api-imagefilter.md)).
-- Decisões e o que ficou fora da pesquisa: [design](superpowers/specs/2026-11-20-v10-2-ritmo-fonte-design.md).
+- `streamResolution: '1440p'` e `status.stream.qhd` ([play-xbox-com.md](../play-xbox-com.md)); ponte `getDisplayHz()` e `getGpuBusy()` ([api-imagefilter.md](../api-imagefilter.md)).
+- Decisões e o que ficou fora da pesquisa: [design](../superpowers/specs/2026-11-20-v10-2-ritmo-fonte-design.md).

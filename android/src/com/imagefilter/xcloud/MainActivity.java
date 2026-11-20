@@ -131,11 +131,21 @@ public class MainActivity extends Activity {
         }
         /** Whole-GPU load in percent (Adreno kgsl sysfs), or -1 when the system does not let the app read it. */
         @JavascriptInterface public int getGpuBusy() {
-            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader("/sys/class/kgsl/kgsl-3d0/gpu_busy_percentage"))) {
-                return Integer.parseInt(reader.readLine().replaceAll("[^0-9]", ""));
-            } catch (Exception error) {
-                return -1;
+            // Whichever node this system lets an app read: a percentage, or "busy total" counters of the last window.
+            for (String path : new String[]{"/sys/class/kgsl/kgsl-3d0/gpu_busy_percentage", "/sys/class/kgsl/kgsl-3d0/gpubusy", "/sys/kernel/gpu/gpu_busy"}) {
+                try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(path))) {
+                    String[] parts = reader.readLine().trim().split("[^0-9]+");
+                    if (parts.length >= 2 && path.endsWith("gpubusy")) {
+                        long total = Long.parseLong(parts[1]);
+                        if (total > 0) return (int) (Long.parseLong(parts[0]) * 100 / total);
+                    } else if (parts.length >= 1 && !path.endsWith("gpubusy")) {
+                        return Integer.parseInt(parts[0]);
+                    }
+                } catch (Exception error) {
+                    // Not readable here: try the next node.
+                }
             }
+            return -1;
         }
         @JavascriptInterface public String getAppInfo() { return BuildConfigInfo.VERSION; }
         @JavascriptInterface public void setRefreshRate(final int hz) {

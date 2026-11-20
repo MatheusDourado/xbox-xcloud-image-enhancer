@@ -15,7 +15,7 @@ on:
         required: false
         default: ''
       notes:
-        description: 'Arquivo de notas (ex.: docs/release-v10.2.0.md)'
+        description: 'Arquivo de notas (ex.: docs/release-v10.2.1.md)'
         required: false
         default: ''
       target:
