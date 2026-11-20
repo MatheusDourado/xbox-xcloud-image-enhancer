@@ -17,7 +17,7 @@
     if(['auto','webgl2','webgpu'].includes(value.renderer))result.renderer=value.renderer;
     // play.xbox.com only (src/play/prelude.js): the resolution asked of the server and the decode-time cap. Read
     // when a stream starts. Default 1080p with the cap: the new site asks 720p, and the server drops 1080p without it.
-    if(['auto','1080p','1080p-hq'].includes(value.streamResolution))result.streamResolution=value.streamResolution;
+    if(['auto','1080p','1080p-hq','1440p'].includes(value.streamResolution))result.streamResolution=value.streamResolution;
     if(typeof value.preventDrops==='boolean')result.preventDrops=value.preventDrops;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
     if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;

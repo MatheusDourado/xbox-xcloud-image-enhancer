@@ -19,7 +19,7 @@ Pode ser instalado junto com o app oficial: o pacote é outro (`com.imagefilter.
 - **Stream em 1080p**: o xCloud escolhe a resolução pelo sistema informado e manda 720p para Android. Na primeira execução, o app ajusta a **Resolução alvo** do Better xCloud para **1080p (HQ)**, que se apresenta ao servidor como TV. Se você mudar essa opção, a sua escolha é mantida. Vale a partir da próxima sessão de jogo.
 - **Marcado como jogo** (Android Game Mode / HyperOS Game Turbo): adicione o app ao Game Turbo para manter CPU e GPU em desempenho. O downscaling e a troca de FPS pelo sistema ficam desligados.
 - O painel mostra se a decodificação é por hardware (MediaCodec) e o DT por quadro. No Android, ~5–15 ms é normal mesmo com hardware.
-- **Taxa da tela**: no painel, *Taxa da tela (app)* fixa 60/90/120 Hz (ou deixa o sistema decidir). A escolha fica salva no app.
+- **Taxa da tela**: no painel, *Taxa da tela (app)* fixa 60/90/120 Hz (ou deixa o sistema decidir). A escolha fica salva no app. No Android 15+ o app também registra o voto de taxa de quadros do próprio WebView e desliga o aumento de taxa por toque. O sistema pode ignorar o pedido (o HyperOS já ignorou): o painel e o HUD avisam quando a tela segue a 90/120 Hz com o jogo a 60 FPS.
 - **Suavidade**: alvo de buffer solicitado ao navegador, independente do renderizador; o painel informa suporte e o atraso medido. Não é uma garantia de latência máxima.
 - Botão B do controle não fecha o jogo (Android converte B não tratado em "voltar").
 - **Exportar medição** salva o JSON em `Downloads/xCloud ImageFilter`; **Copiar configuração** usa a área de transferência do sistema.

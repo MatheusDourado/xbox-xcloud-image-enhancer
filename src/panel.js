@@ -864,9 +864,10 @@
   // decoding time the site reports to it. Both are read when a game starts.
   const streamRows = [];
   if (typeof BxPlayStream !== 'undefined') {
-   els.streamRes = choice({key: 'streamResolution', label: t('Resolução do stream'), opts: [['auto', 'Auto'], ['1080p', '1080p'], ['1080p-hq', '1080p HQ']], hint: v => t(({
+   els.streamRes = choice({key: 'streamResolution', label: t('Resolução do stream'), opts: [['auto', 'Auto'], ['1080p', '1080p'], ['1080p-hq', '1080p HQ'], ['1440p', '1440p']], hint: v => t(({
     auto: 'O que o site pede: neste celular costuma ser 720p (H.264 Baseline).', '1080p': 'Declara Windows e tela 1920×1080 ao servidor, como o Better xCloud: 1080p H.264 Main. Mais decodificação e latência no celular.',
-    '1080p-hq': 'Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.'})[v] || '') + ' ' + t('Vale no próximo jogo: saia e entre de novo.')});
+    '1080p-hq': 'Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.',
+    '1440p': 'Experimental: declara TV (Tizen) com tela 2560×1440 e pede 1440p ao servidor, que decide o que envia. Confira a resolução recebida no HUD.'})[v] || '') + ' ' + t('Vale no próximo jogo: saia e entre de novo.')});
    els.preventDrops = toggle({key: 'preventDrops', label: t('Impedir queda de resolução'), get: () => settingValue('preventDrops'), set: (v, e) => commit('preventDrops', v, e),
     hint: t('O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.')});
    streamRows.push(els.streamRes.row, els.preventDrops.row);

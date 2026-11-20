@@ -58,11 +58,11 @@ public class MainActivity extends Activity {
 
         prefs = getSharedPreferences("app", MODE_PRIVATE);
         refreshRates = supportedRefreshRates();
-        applyRefreshRate(prefs.getInt("refreshRate", 0));
 
         webView = new WebView(this);
         webView.setBackgroundColor(Color.BLACK);
         setContentView(webView);
+        applyRefreshRate(prefs.getInt("refreshRate", 0));
         hideSystemBars();
 
         WebSettings settings = webView.getSettings();
@@ -125,6 +125,10 @@ public class MainActivity extends Activity {
     private final class Bridge {
         @JavascriptInterface public String getRefreshRates() { return refreshRates; }
         @JavascriptInterface public int getRefreshRate() { return prefs.getInt("refreshRate", 0); }
+        /** Refresh rate the panel is running at right now, whatever was asked for. */
+        @JavascriptInterface public double getDisplayHz() {
+            try { return getWindowManager().getDefaultDisplay().getRefreshRate(); } catch (Exception error) { return 0; }
+        }
         @JavascriptInterface public String getAppInfo() { return BuildConfigInfo.VERSION; }
         @JavascriptInterface public void setRefreshRate(final int hz) {
             prefs.edit().putInt("refreshRate", Math.max(0, hz)).apply();
@@ -195,6 +199,7 @@ public class MainActivity extends Activity {
     /**
      * 0 lets the system choose (it may switch rates on its own). Otherwise the window asks for the
      * mode with the current resolution and the closest refresh rate, so frame pacing stays constant.
+     * Whether the system obeyed is read back by the panel (Bridge.getDisplayHz).
      */
     private void applyRefreshRate(int hz) {
         WindowManager.LayoutParams params = getWindow().getAttributes();
@@ -213,6 +218,16 @@ public class MainActivity extends Activity {
             }
         }
         getWindow().setAttributes(params);
+        // Android 15+ (the app compiles against API 34, hence reflection): the WebView's own frame rate vote, and no
+        // touch boost, which otherwise raises the rate on every touch. With 0 both return to the system default.
+        if (Build.VERSION.SDK_INT >= 35) {
+            try {
+                View.class.getMethod("setRequestedFrameRate", float.class).invoke(webView, hz > 0 ? (float) hz : Float.NaN);
+                android.view.Window.class.getMethod("setFrameRateBoostOnTouchEnabled", boolean.class).invoke(getWindow(), hz <= 0);
+            } catch (Exception error) {
+                android.util.Log.w("XCloudImageFilter", "frame rate vote failed", error);
+            }
+        }
     }
 
     /** Applies the userscript @match/@exclude rules, top frame only, once per document. */

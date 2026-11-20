@@ -114,15 +114,15 @@
  function buildCard() {
   const d = dot(), fps = field('bxif-h-fps'), tag = field('bxif-h-tag', ''), badge = field('bxif-h-badge', ''), cv = E('canvas', 'bxif-h-spark');
   off(tag.e, true); off(badge.e, true);
-  const rit = minCh(field(), 4), trav = minCh(field(), 2), lat = minCh(field(), 3);
+  const rit = minCh(field(), 9), trav = minCh(field(), 2), lat = minCh(field(), 3);
   const chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')], l3 = E('div', 'bxif-h-l3', chips[0].e, chips[1].e);
   off(l3, true);
-  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab(t('RIT')), rit.e, lab(t('TRAV')), trav.e, lab('LAT'), lat.e), l3);
+  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab('MS'), rit.e, lab(t('TRAV')), trav.e, lab('LAT'), lat.e), l3);
   return {kind: 'card', dot: d, fps, tag, badge, cv, rit, trav, lat, chips, chipEls: chips.map(c => c.e), l3, spark: {count: 60, w: 56, h: 12}};
  }
  function buildLateral(w, full) {
   const d = dot(), fps = field('bxif-h-fps'), tag = field('bxif-h-tag', ''), badge = field('bxif-h-badge', ''), cv = E('canvas', 'bxif-h-spark');
-  const rit = field(), trav = field(), lat = field(), chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')];
+  const rit = field(), ritDev = field('bxif-h-s'), trav = field(), lat = field(), chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')];
   const line = (...kids) => E('div', null, ...kids), cap = text => { const e = line(lab(text)); e.className = 'bxif-h-cap'; return e; };
   const chipRows = chips.map(c => line(c.e)), badgeRow = line(badge.e), tagRow = line(tag.e);
   for (const e of [...chipRows, badgeRow, tagRow]) off(e, true);
@@ -130,7 +130,7 @@
   cv.style.width = sw + 'px';
   // Completo on the phone: the same column with every indicator, still inside the black bar.
   let extra = null;
-  const rows = [cap(t('RIT')), line(rit.e)];
+  const rows = [cap('MS'), line(rit.e), line(ritDev.e)];
   if (full) {
    extra = {p95: field(), desc: field(), wait: field(), br: field(), qp: field(), loss: field()};
    extra.descRows = [cap(t('DESC/MIN')), line(extra.desc.e)]; extra.waitRows = [cap(t('ESPERA')), line(extra.wait.e)];
@@ -138,11 +138,11 @@
     cap('MB/S'), line(extra.br.e), cap('QP'), line(extra.qp.e), cap(t('PERDA')), line(extra.loss.e));
   } else rows.push(cap(t('TRAV')), line(trav.e), cap('LAT'), line(lat.e));
   el.append(E('div', 'bxif-h-col', line(d.e, fps.e), line(lab('FPS')), cv, ...rows, ...chipRows, badgeRow, tagRow));
-  return {kind: 'lateral', dot: d, fps, tag, badge, cv, rit, trav, lat, chips, chipEls: chipRows, badgeEl: badgeRow, tagEl: tagRow, extra, spark: {count: 60, w: sw / s, h: full ? 16 : 12}};
+  return {kind: 'lateral', dot: d, fps, tag, badge, cv, rit, ritDev, trav, lat, chips, chipEls: chipRows, badgeEl: badgeRow, tagEl: tagRow, extra, spark: {count: 60, w: sw / s, h: full ? 16 : 12}};
  }
  function buildFull() {
   const d = dot(), word = field('bxif-h-word', ''), fps = field('bxif-h-big'), cv = E('canvas', 'bxif-h-spark');
-  const dev = field(), devUnit = sub(' ms · p95 '), p95 = field(), hit = field(), missParts = [sub(' · ' + t('pul') + ' '), null], miss = field(), descParts = [sub(' · ' + t('desc') + ' '), null, sub('/min')], desc = field();
+  const mean = field(), dev = field(), p95 = field(), hit = field(), missParts = [sub(' · ' + t('pul') + ' '), null], miss = field(), descParts = [sub(' · ' + t('desc') + ' '), null, sub('/min')], desc = field();
   missParts[1] = miss.e; descParts[1] = desc.e;
   const wait = field(), capSep = sub(' · '), cap = field();
   const total = field(), bar = E('span', 'bxif-h-bar', E('i'), E('i'), E('i'), E('i'), E('i'));
@@ -158,11 +158,11 @@
   if (s === 1) { off(legEl, true); off(videoRow, true); }
   for (const x of leg) legEl.append(x.k, x.v.e);
   el.append(E('div', 'bxif-h-head', d.e, word.e, fps.e, lab('FPS')), cv,
-   E('div', 'bxif-h-grp', row('Ritmo', dev.e, devUnit, p95.e), row('Quadros', sub(t('trav') + ' '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
+   E('div', 'bxif-h-grp', row('Ritmo', mean.e, sub(' ms '), dev.e, sub(' · p95 '), p95.e), row('Quadros', sub(t('trav') + ' '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
    E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab(t('Atraso est.')), total.e, bar), legEl),
    E('div', 'bxif-h-grp', videoRow, row('Rede', br.e, sub(' Mb/s · QP '), qp.e, sub(' · ' + t('perda') + ' '), loss.e)),
    warn);
-  return {kind: 'full', dot: d, word, fps, cv, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,
+  return {kind: 'full', dot: d, word, fps, cv, mean, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,
    spark: {count: 240, w: 220, h: 24}};
  }
 
@@ -232,7 +232,10 @@
   const rate = drops.push(x.fl ? x.fl.dropped : null);
   let look = RANK(overall) > 1 || x.warnCount > 0 || neuralOff || [devG, hitG, totalG, fpsG, missG].some(v => RANK(v) > 1);
   if (f.kind !== 'full') {
-   put(f.rit, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
+   // Frame time on screen: mean interval and its deviation (16,7 ±0,5 is a steady 60 FPS).
+   const dev = on && p ? '±' + fmt(p.deviationMs, 1) : '';
+   if (f.ritDev) { put(f.rit, on && p ? fmt(p.meanMs, 1) : '—', devG); put(f.ritDev, dev, devG); }
+   else put(f.rit, on && p ? fmt(p.meanMs, 1) + ' ' + dev : '—', devG);
    put(f.trav, on && p ? String(p.hitches) : '—', hitG);
    put(f.lat, x.lat.total === null ? '—' : fmtInt(x.lat.total), totalG);
    const tag = w.tag || (neuralOff ? 'SEM NEURAL' : '');
@@ -263,6 +266,7 @@
    look = look || alerts.length > 0;
   } else {
    put(f.word, t(w.word) + (neuralOff ? ' · ' + t('SEM NEURAL') : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
+   put(f.mean, on && p ? fmt(p.meanMs, 1) : '—', devG);
    put(f.dev, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.p95, on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', x.gP95) : 'none');
    put(f.hit, on && p ? String(p.hitches) : '—', hitG);

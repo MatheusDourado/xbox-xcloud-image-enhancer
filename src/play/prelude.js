@@ -38,15 +38,19 @@ var STATES = {currentStream: {peerConnection: null}};
 // frame decoded since its previous read (monotonic, reset when the counters restart). preventDrops is latched by
 // each object on its first read, so turning it on or off mid-game neither jumps the series nor acts before the next game.
 var BxPlayStream = (() => {
- const CAP_MS = 8, OS = {'1080p': 'windows', '1080p-hq': 'tizen'}, PLAY = /\/sessions\/cloud\/play(?:[?#]|$)/i;
+ const CAP_MS = 8, OS = {'1080p': 'windows', '1080p-hq': 'tizen', '1440p': 'tizen'}, PLAY = /\/sessions\/cloud\/play(?:[?#]|$)/i;
  // request: what the last play request asked for; capAt/capCalls/realMs: the last report the cap changed.
- const state = {request: null, capAt: 0, capCalls: 0, realMs: null, error: ''};
+ // qhd: what the 1440p request did on the data channels of the last session (dimensions rewritten, who sent the alias).
+ const state = {request: null, capAt: 0, capCalls: 0, realMs: null, error: '', qhd: {dimensions: 0, alias: null}};
+ // 1440p (experimental): the display declared to the server and the control-channel alias, as native clients send
+ // them (xCloudNative, MIT: StreamProfile.kt, ChannelHandshake.kt). The service still chooses the stream.
+ const QHD = {width: 2560, height: 1440, alias: '1440'}, DIMENSIONS = '/streaming/characteristics/dimensionschanged', ASK = 'userRequestedResolutionUpdate';
  // Per queried object: {on: preventDrops latched at its first read, streams: Map(stats id → {frames, real, out})}.
  const sessions = new WeakMap();
  const prefs = () => window.BxImageFilter?.settings || {};
  const isRequest = v => typeof Request === 'function' && v instanceof Request;
  // Body (JSON text) and x-ms-device-info (JSON text or null) of the play request, declaring osName.
- function rewritePlay(body, deviceInfo, osName) {
+ function rewritePlay(body, deviceInfo, osName, width = 1920, height = 1080) {
   const result = {body, deviceInfo, from: null};
   try {
    const o = JSON.parse(body);
@@ -57,7 +61,7 @@ var BxPlayStream = (() => {
    if (o?.dev && typeof o.dev === 'object') {
     o.dev.os = {...o.dev.os, name: osName, ver: '22631.2715', platform: 'desktop'};
     o.dev.hw = {...o.dev.hw, make: 'Microsoft', model: 'Surface Pro'};
-    o.dev.displayInfo = {dimensions: {widthInPixels: 1920, heightInPixels: 1080}, pixelDensity: {dpiX: 1, dpiY: 1}};
+    o.dev.displayInfo = {dimensions: {widthInPixels: width, heightInPixels: height}, pixelDensity: {dpiX: 1, dpiY: 1}};
     o.dev.browser = {browserName: 'chrome', browserVersion: '130.0'};
     result.deviceInfo = JSON.stringify(o);
    }
@@ -125,7 +129,9 @@ var BxPlayStream = (() => {
    const body = init?.body != null ? init.body : req ? await req.clone().text() : null;
    if (typeof body !== 'string') return nativeFetch.call(self, input, init);
    const headers = new Headers(init?.headers || req?.headers || undefined);
-   const r = rewritePlay(body, headers.get('x-ms-device-info'), osName);
+   const qhd = resolution === '1440p';
+   const r = qhd ? rewritePlay(body, headers.get('x-ms-device-info'), osName, QHD.width, QHD.height) : rewritePlay(body, headers.get('x-ms-device-info'), osName);
+   state.qhd = {dimensions: 0, alias: null};
    if (r.deviceInfo != null) headers.set('x-ms-device-info', r.deviceInfo);
    state.request = {at: Date.now(), resolution, osName, from: r.from, header: r.deviceInfo != null, preventDrops: prefs().preventDrops === true};
    const options = {...init, body: r.body, headers};
@@ -146,6 +152,46 @@ var BxPlayStream = (() => {
   fetch.bxNative = nativeFetch;
   window.fetch = fetch;
  }
+ // A text message leaving a data channel, for 1440p: the display dimensions on 'message' and the resolution alias on
+ // 'control'. kind: 'dimensions' or 'alias' when it was one of them (null otherwise, data untouched).
+ function rewriteChannel(label, data) {
+  try {
+   if (label === 'message' && data.includes(DIMENSIONS)) {
+    const o = JSON.parse(data);
+    if (o.target === DIMENSIONS && typeof o.content === 'string') {
+     const c = {...JSON.parse(o.content), preferredWidth: QHD.width, preferredHeight: QHD.height, safeAreaLeft: 0, safeAreaTop: 0, safeAreaRight: QHD.width, safeAreaBottom: QHD.height, supportsCustomResolution: true};
+     return {kind: 'dimensions', data: JSON.stringify({...o, content: JSON.stringify(c)})};
+    }
+   } else if (label === 'control' && data.includes(ASK)) {
+    const o = JSON.parse(data);
+    if (o.message === ASK) return {kind: 'alias', data: JSON.stringify({...o, resolutionAlias: QHD.alias})};
+   }
+  } catch {}
+  return {kind: null, data};
+ }
+ const channelProto = window.RTCDataChannel?.prototype, nativeSend = channelProto?.send?.bxNative || channelProto?.send;
+ if (typeof nativeSend === 'function' && !channelProto.send.bxNative) {
+  // asked: control channels that already carried the alias; wanted: dimensions went out and the alias is still owed.
+  const asked = new WeakSet();let control = null, wanted = false;
+  const send = function send(data) {
+   if (prefs().streamResolution !== '1440p' || this == null) return nativeSend.apply(this, arguments);
+   const label = this.label;if (label === 'control') control = this;
+   const r = typeof data === 'string' ? rewriteChannel(label, data) : {kind: null, data};
+   const result = nativeSend.call(this, r.data);
+   try {
+    if (r.kind === 'dimensions') { state.qhd.dimensions++;wanted = true; }
+    if (r.kind === 'alias') { asked.add(this);state.qhd.alias = 'site';wanted = false; }
+    // The site sent no request of its own: ours follows the dimensions, once per control channel.
+    // A control channel that already carried it is the previous session's: wait for the new one.
+    if (wanted && control && control.readyState === 'open' && !asked.has(control)) {
+     wanted = false;asked.add(control);nativeSend.call(control, JSON.stringify({message: ASK, resolutionAlias: QHD.alias}));state.qhd.alias = 'own';
+    }
+   } catch (error) { state.error = String(error); }
+   return result;
+  };
+  send.bxNative = nativeSend;
+  channelProto.send = send;
+ }
  // The prototype that owns getStats: the native one, under TrackedPeerConnection above.
  const owner = proto => { while (proto && !Object.prototype.hasOwnProperty.call(proto, 'getStats')) proto = Object.getPrototypeOf(proto); return proto; };
  wrapStats(owner(window.RTCPeerConnection?.prototype));
@@ -154,7 +200,7 @@ var BxPlayStream = (() => {
  function info() {
   const s = prefs();
   return {resolution: s.streamResolution ?? null, preventDrops: s.preventDrops === true, request: state.request && {...state.request},
-   capActive: Date.now() - state.capAt < 5000, capMs: CAP_MS, realDecodeMs: state.realMs, capCalls: state.capCalls, error: state.error || null};
+   capActive: Date.now() - state.capAt < 5000, capMs: CAP_MS, realDecodeMs: state.realMs, capCalls: state.capCalls, qhd: {...state.qhd}, error: state.error || null};
  }
- return {CAP_MS, OS, state, rewritePlay, capReport, realStats, info};
+ return {CAP_MS, OS, state, rewritePlay, rewriteChannel, capReport, realStats, info};
 })();
