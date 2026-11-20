@@ -5,7 +5,9 @@ on:
     branches: [main, 'claude/**']
     # Tag v* publica a release (filtro de paths não vale para tags). Hífen na tag = pré-lançamento.
     tags: ['v*']
-    paths: ['src/**', 'tools/**', 'tests/**', 'android/**', 'script.js', 'player/**', '.github/workflows/build-release.yml']
+    paths: ['src/**', 'tools/**', 'tests/**', 'android/**', 'script.js', 'player/**', 'biome.json', 'ruff.toml', '.github/workflows/build-release.yml']
+  # Every PR gets the same checks before merge; the release step below only runs for tags/dispatch.
+  pull_request:
   workflow_dispatch:
     inputs:
       tag:
@@ -47,14 +49,10 @@ jobs:
           test -n "$BT" || { echo "::error::Nenhum build-tools com aapt em $ANDROID_HOME"; exit 1; }
           echo "$BT" >> "$GITHUB_PATH"
           echo "build-tools: $BT"
-      - name: Userscript e testes
-        run: |
-          python3 tools/build.py
-          git diff --exit-code -- better-xcloud-image-filter.user.js xcloud-image-filter-play.user.js output/restoration.bundle.js || { echo "::error::Arquivos gerados desatualizados: rode python3 tools/build.py e faça commit"; exit 1; }
-          node --test tests/*.cjs
-          node --check better-xcloud-image-filter.user.js
-          node --check xcloud-image-filter-play.user.js
-          node --check player/player.js
+      - uses: astral-sh/setup-uv@v10.3.3
+      - name: Userscript, testes e lint
+        # Same script the agents' skill and Stop hook run (tools/check.sh); CI=true also fails on stale generated files.
+        run: tools/check.sh rapido
       - name: Regressões WebGL e DOM
         run: |
           python3 -m pip install playwright==1.60.0
