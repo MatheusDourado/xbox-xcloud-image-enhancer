@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.2.1';
+ const VERSION = 'v10.2.2';
  const num = v => typeof v === 'number' && Number.isFinite(v);
  const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
 
@@ -435,14 +435,14 @@
 .bxif-x{margin-top:8px}
 .bxif-stackbar{display:flex;gap:1px;height:8px;margin-top:8px;border-radius:3px;overflow:hidden;background:var(--bxif-bg0)}
 .bxif-stackbar>span{flex:0 1 0;min-width:0}
-.bxif-stackbar>span:nth-child(1){background:#d7dbe2}.bxif-stackbar>span:nth-child(2){background:#a9afba}.bxif-stackbar>span:nth-child(3){background:#7c8391}.bxif-stackbar>span:nth-child(4){background:#565c68}
-.bxif-stackbar>span:nth-child(5){background:repeating-linear-gradient(45deg,#a9afba 0 2px,transparent 2px 4px)}
+.bxif-stackbar>span:nth-child(1){background:#5aa9ff}.bxif-stackbar>span:nth-child(2){background:#b48cff}.bxif-stackbar>span:nth-child(3){background:#ff9f5a}.bxif-stackbar>span:nth-child(4){background:#5fd38d}
+.bxif-stackbar>span:nth-child(5){background:repeating-linear-gradient(45deg,#e879c6 0 2px,transparent 2px 4px)}
 .bxif-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 14px;margin-top:8px;font-size:var(--bxif-fs-read)}
 .bxif-legend>div{display:flex;align-items:center;gap:7px;min-width:0;white-space:nowrap}
 .bxif-legend>div>span:nth-child(2){flex:1;min-width:0;color:var(--bxif-t2);overflow:hidden;text-overflow:ellipsis}
 .bxif-sw-i{flex:none;width:9px;height:9px;border-radius:2px}
-.bxif-legend>div:nth-child(1) .bxif-sw-i{background:#d7dbe2}.bxif-legend>div:nth-child(2) .bxif-sw-i{background:#a9afba}.bxif-legend>div:nth-child(3) .bxif-sw-i{background:#7c8391}
-.bxif-legend>div:nth-child(4) .bxif-sw-i{background:#565c68}.bxif-legend>div:nth-child(5) .bxif-sw-i{background:repeating-linear-gradient(45deg,#a9afba 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px #a9afba}
+.bxif-legend>div:nth-child(1) .bxif-sw-i{background:#5aa9ff}.bxif-legend>div:nth-child(2) .bxif-sw-i{background:#b48cff}.bxif-legend>div:nth-child(3) .bxif-sw-i{background:#ff9f5a}
+.bxif-legend>div:nth-child(4) .bxif-sw-i{background:#5fd38d}.bxif-legend>div:nth-child(5) .bxif-sw-i{background:repeating-linear-gradient(45deg,#e879c6 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px #e879c6}
 .bxif-total{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:var(--bxif-fs-label);font-weight:500;color:var(--bxif-tl)}
 .bxif-total b{font-size:calc(var(--bxif-fs-val) + 2px);font-weight:600;white-space:nowrap}
 .bxif-foot{font-size:var(--bxif-fs-11);color:var(--bxif-t3);margin-top:8px}

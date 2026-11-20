@@ -386,5 +386,7 @@
  window.addEventListener('pagehide', teardown);
  window.addEventListener('pageshow', e => { if (e.persisted) update(); });
  api.hud = {update, timers: () => (watchTimer ? 1 : 0) + (loopTimer ? 1 : 0) + (fadeTimer ? 1 : 0), get element() { return el; }};
- update();
+ // At document-start (Android app) <head> does not exist yet: a <style> or the HUD put in <html> before it breaks
+ // React's hydration on play.xbox.com, and the site's dialogs (Xbox button guide) stop opening.
+ if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', update, {once: true}); else update();
 })();
