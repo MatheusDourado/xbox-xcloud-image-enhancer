@@ -238,7 +238,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,4);assert.equal(r.version,'10.1.2');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,4);assert.equal(r.version,'10.1.3');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -259,7 +259,7 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v10\.1\.2-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v10\.1\.3-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
 // Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez

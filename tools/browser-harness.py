@@ -69,7 +69,7 @@ probe=r'''
  prefs['video.processing.mode']='quality';player.updateFrame();check(player.gl.getError()===player.gl.NO_ERROR,'Native quality mode remains valid');
  const qualityPixels=readPlayer();check(Math.abs(qualityPixels[(40*128+20)*4]-85)<=1,'Quality halo limiter preserves uniform region luminance');
  const menu=document.createElement('section');document.body.append(menu);BxImageFilter.mountControls(menu);
- check(menu.querySelector('[data-bx-restoration="v10.1.2"]')&&!document.getElementById('bx-image-filter-panel'),'Controls mount inside supplied Better xCloud menu');
+ check(menu.querySelector('[data-bx-restoration="v10.1.3"]')&&!document.getElementById('bx-image-filter-panel'),'Controls mount inside supplied Better xCloud menu');
  const sleep=ms=>new Promise(r=>setTimeout(r,ms)),root=menu.querySelector('.bxif-panel');
  // Better xCloud's D-pad on a focused range: value = parseInt(value) + parseInt(step) * dir, then a non-bubbling 'input'.
  const pad=(el,dir)=>{el.value=(parseInt(el.value)+parseInt(el.step)*dir).toString();el.dispatchEvent(new InputEvent('input'));};
@@ -172,7 +172,7 @@ probe=r'''
   check(!player.bxTiming.pacer&&!Object.keys(player.bxEngine.targets).some(n=>n.startsWith('paced')),'Turning Fluidez off releases its textures and loop');
   const copyButton=[...menu2.querySelectorAll('button')].find(b=>b.textContent==='Copiar configuração');copyButton.click();await new Promise(r=>setTimeout(r,200));
   const exported=JSON.parse(menu2.querySelector('textarea').value);
-  check(exported.treatment&&'smoothing' in exported.treatment&&'stream.video.resolution' in exported.betterXcloud&&exported.build==='6.7.12-imagefilter.10.1.2','Copy configuration exports treatment and Better xCloud settings');
+  check(exported.treatment&&'smoothing' in exported.treatment&&'stream.video.resolution' in exported.betterXcloud&&exported.build==='6.7.12-imagefilter.10.1.3','Copy configuration exports treatment and Better xCloud settings');
   check(exported.status.neural==='off'&&['gpu','cadence'].includes(exported.status.measurement),'Copy configuration carries the neural state and the measurement kind');
   check(!menu2.querySelector('[aria-label="Codec (teste)"]')&&!menu2.querySelector('[data-bxif-key=refreshRate]'),'No codec test; refresh-rate control only inside the Android app');
   delete window.STATES;}

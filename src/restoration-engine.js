@@ -1,5 +1,8 @@
 /* Shared GPU video processing engine. GLSL assets are embedded by tools/build.py. */
 (() => {
+  const t=globalThis.BxI18n?.t||((s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]??m));
+  // target()/targetPair() use a local t: the message is built out here.
+  const incompleteFbo=()=>new Error(t('Framebuffer incompleto'));
   // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
   const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false,renderer:'auto',streamResolution:'1080p',preventDrops:true});
@@ -67,16 +70,16 @@
     if(this.limitMs===0)return;
     if(s.temporal>0&&this.temporalAllowed){this.temporalAllowed=false;step='temporal';
       // Audit C03: with temporal off the AA moves into the spatial pass (fused), which is not the same operator.
-      this.reason='Temporal desligado para preservar fluidez'+(s.antialias>0&&this.antialiasAllowed?' (antialiasing passa ao passe espacial)':'');}
+      this.reason=s.antialias>0&&this.antialiasAllowed?t('Temporal desligado para preservar fluidez (antialiasing passa ao passe espacial)'):t('Temporal desligado para preservar fluidez');}
     else if(s.output!=='native'&&Math.min(Number(s.output),this.outputCap)>this.sourceHeight){
       this.outputCap=Math.min(Number(s.output),this.outputCap)>1440&&this.sourceHeight<1440?1440:this.sourceHeight;step='output';
-      this.reason='Saída reduzida para '+(this.outputCap===this.sourceHeight?'nativa':this.outputCap+'p')+' para preservar fluidez';
+      this.reason=t('Saída reduzida para {0} para preservar fluidez',this.outputCap===this.sourceHeight?t('nativa'):this.outputCap+'p');
     }
-    else if(s.antialias>0&&this.antialiasAllowed){this.antialiasAllowed=false;step='antialias';this.reason='Antialiasing desligado para preservar fluidez';}
-    else if(s.neural>0&&this.neuralAllowed){this.neuralAllowed=false;step='neural';this.reason='Reconstrução neural desligada para preservar fluidez';}
-    else if(s.deband>0&&this.debandScale>0){this.debandScale=Math.max(0,this.debandScale-.5);this.debandTaps=this.debandScale>0?2:0;step='deband';this.reason='Degradês reduzidos para preservar fluidez';}
-    else if(s.cleanup>0&&this.cleanupAllowed){this.cleanupAllowed=false;step='cleanup';this.reason='Limpeza desligada para preservar fluidez';}
-    else if((s.detail>0||s.chroma>0)&&this.enhanceAllowed){this.enhanceAllowed=false;step='enhance';this.reason='Detalhe e cor desligados para preservar fluidez';}
+    else if(s.antialias>0&&this.antialiasAllowed){this.antialiasAllowed=false;step='antialias';this.reason=t('Antialiasing desligado para preservar fluidez');}
+    else if(s.neural>0&&this.neuralAllowed){this.neuralAllowed=false;step='neural';this.reason=t('Reconstrução neural desligada para preservar fluidez');}
+    else if(s.deband>0&&this.debandScale>0){this.debandScale=Math.max(0,this.debandScale-.5);this.debandTaps=this.debandScale>0?2:0;step='deband';this.reason=t('Degradês reduzidos para preservar fluidez');}
+    else if(s.cleanup>0&&this.cleanupAllowed){this.cleanupAllowed=false;step='cleanup';this.reason=t('Limpeza desligada para preservar fluidez');}
+    else if((s.detail>0||s.chroma>0)&&this.enhanceAllowed){this.enhanceAllowed=false;step='enhance';this.reason=t('Detalhe e cor desligados para preservar fluidez');}
     else return;
     // Do not let timings from a more expensive pipeline trigger the next reduction.
     this.values=[];this.over=0;this.cadenceOver=0;this.revision++;
@@ -213,7 +216,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:4,version:'10.1.2',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:4,version:'10.1.3',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT,frames:FRAME_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||frameCut||segments.length>=256,eventsTruncated:eventsCut,
         // Schema 4 (audit C09): frames = [id, segment, renderedMs, presentedMs, state]; passes[] lists the sequences
         // as scheduled (a deferred last pass is marked @present); presentation says how many of them ran.
@@ -388,7 +391,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.1.2-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.1.3-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -541,7 +544,7 @@
       t={w,h,fp,texture:gl.createTexture(),fbo:gl.createFramebuffer()};this.targets[name]=t;this.configure(t.texture);
       gl.texImage2D(gl.TEXTURE_2D,0,fp?gl.RGBA16F:gl.RGBA8,w,h,0,gl.RGBA,fp?gl.HALF_FLOAT:gl.UNSIGNED_BYTE,null);
       gl.bindFramebuffer(gl.FRAMEBUFFER,t.fbo);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,t.texture,0);
-      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('Framebuffer incompleto');return t;
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw incompleteFbo();return t;
     }
     // Two RGBA16F color attachments written by one pass (neural features).
     targetPair(name,w,h){const gl=this.gl;this.usedTargets?.add(name);let t=this.targets[name];if(t&&t.w===w&&t.h===h)return t;
@@ -552,7 +555,7 @@
       for(const [i,texture] of [t.texture,t.second].entries()){this.configure(texture);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
         gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA16F,w,h,0,gl.RGBA,gl.HALF_FLOAT,null);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0+i,gl.TEXTURE_2D,texture,0);}
       gl.drawBuffers([gl.COLOR_ATTACHMENT0,gl.COLOR_ATTACHMENT1]);
-      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw new Error('Framebuffer incompleto');return t;
+      if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw incompleteFbo();return t;
     }
     draw(name,target,w,h,textures={},uniforms={}){
       const gl=this.gl,p=this.programs[name];if(this.trace)this.trace.push(name);gl.bindVertexArray(this.vao);gl.bindFramebuffer(gl.FRAMEBUFFER,target?target.fbo:null);gl.viewport(0,0,w,h);gl.useProgram(p.program);

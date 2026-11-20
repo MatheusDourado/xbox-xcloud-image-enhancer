@@ -6,6 +6,7 @@
 (() => {
  if (window.top !== window) return;
  const api = window.BxImageFilter;
+ const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
  const CSS = `
 video.bxif-play-source{opacity:0 !important}
 canvas.bxif-play-canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none;background:#000;z-index:0}
@@ -96,16 +97,16 @@ canvas.bxif-play-canvas{position:absolute;inset:0;width:100%;height:100%;object-
  // What the script sees, shown at the top of the panel: tells "not running" apart from "no stream found".
  function diagnosis() {
   const videos = [...document.getElementsByTagName('video')], webrtc = videos.filter(isStream).length;
-  const version = (globalThis.BxBuild?.version || '').split('imagefilter.')[1] || '?', lines = [`Script ativo em ${location.hostname} (${NAME} v${version}, sem Better xCloud)`];
+  const version = (globalThis.BxBuild?.version || '').split('imagefilter.')[1] || '?', lines = [t('Script ativo em {0} ({1} v{2}, sem Better xCloud)', location.hostname, NAME, version)];
   let state = 'waiting';
   if (player) {
    const s = api.status;
-   if (s.mode === 'error') { state = 'error'; lines.push('Erro no tratamento: ' + (s.error || 'desconhecido')); }
-   else { state = 'active'; lines.push(`Tratamento ligado ao vídeo do jogo: ${s.resolution || 'aguardando quadro'} (${s.mode})`); }
-  } else if (starting) lines.push('Stream encontrado: iniciando WebGL2…');
-  else if (webrtc) lines.push('Stream encontrado: aguardando o primeiro quadro.');
-  else lines.push(`Nenhum jogo em andamento. Vídeos na página: ${videos.length}, com stream WebRTC: ${webrtc}.`);
-  if (status0.webgl === false) { state = 'error'; lines.push('WebGL2 indisponível neste navegador.'); }
+   if (s.mode === 'error') { state = 'error'; lines.push(t('Erro no tratamento: {0}', s.error || t('desconhecido'))); }
+   else { state = 'active'; lines.push(t('Tratamento ligado ao vídeo do jogo: {0} ({1})', s.resolution || t('aguardando quadro'), s.mode)); }
+  } else if (starting) lines.push(t('Stream encontrado: iniciando WebGL2…'));
+  else if (webrtc) lines.push(t('Stream encontrado: aguardando o primeiro quadro.'));
+  else lines.push(t('Nenhum jogo em andamento. Vídeos na página: {0}, com stream WebRTC: {1}.', videos.length, webrtc));
+  if (status0.webgl === false) { state = 'error'; lines.push(t('WebGL2 indisponível neste navegador.')); }
   return {state, text: lines.join('\n')};
  }
  // WebGL2 support, probed once when the panel first shows the diagnosis (not on every page load).
@@ -252,7 +253,7 @@ canvas.bxif-play-canvas{position:absolute;inset:0;width:100%;height:100%;object-
   dialog.setAttribute('role', 'dialog');dialog.setAttribute('aria-label', NAME);
   const head = document.createElement('div'), title = document.createElement('span'), close = document.createElement('button');
   head.className = 'bxif-play-head';title.className = 'bxif-play-name';title.innerHTML = ICON;title.append(NAME);
-  close.type = 'button';close.textContent = 'Fechar';close.addEventListener('click', () => toggle(false));
+  close.type = 'button';close.textContent = t('Fechar');close.addEventListener('click', () => toggle(false));
   head.append(title, close);
   diag = document.createElement('div');diag.className = 'bxif-play-diag';
   body = document.createElement('div');

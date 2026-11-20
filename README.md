@@ -4,7 +4,7 @@ Tratamento de imagem na GPU e stream em 1080p para o Xbox Cloud Gaming. Funciona
 
 Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 
-**Versão atual: v10.1.1.** Veja [notas da v10.1.1](docs/release-v10.1.1.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
+**Versão atual: v10.1.3.** Veja [notas da v10.1.3](docs/release-v10.1.3.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
 
 ## O que faz
 
@@ -18,13 +18,14 @@ Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 - **Fluidez:** cada quadro é tratado ao chegar e exibido num ritmo constante. Há também captura direta do decodificador.
 - **HUD durante o jogo:** bitrate, decodificação, RTT, frametime e custo de GPU.
 - **Medição exportável** (JSON, schema 3): segmentos por configuração, passes que rodaram, séries de CPU, folga e pipeline, e eventos datados.
+- **Idioma:** painel, HUD e avisos em português, inglês ou espanhol, conforme a região da conta Xbox (outros idiomas usam inglês).
 - **Botão flutuante "xCloud Enhanced"** no play.xbox.com: arrastável, com a posição salva e fora do menu do Xbox. O painel fecha ao tocar fora. Atalho **Alt+Shift+F**.
 
 ## Instalar
 
 ### Android
 
-1. Baixe `xcloud-imagefilter-10.1.1.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
+1. Baixe `xcloud-imagefilter-10.1.3.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
 2. Abra **xCloud Enhanced** (ícone de nuvem com controle). É um app WebView que abre o xCloud com os dois scripts já carregados.
 
 Detalhes em [android/README.md](android/README.md).
@@ -109,13 +110,14 @@ Prioridades em [docs/proxima-build.md](docs/proxima-build.md):
 1. travar a tela em 60 Hz de verdade;
 2. parar a composição sem quadro novo;
 3. avisos de servidor distante e de limitação térmica;
-4. rede neural e renderizador automáticos pela GPU real;
-5. painel em inglês.
+4. rede neural e renderizador automáticos pela GPU real.
 
 ## Histórico
 
 | Versão | Destaques |
 | --- | --- |
+| [v10.1.3](docs/release-v10.1.3.md) | Textos em português, inglês e espanhol, pela região da conta |
+| [v10.1.2](docs/release-v10.1.2.md) | Correções da auditoria da v10.1.1 |
 | [v10.1.1](docs/release-v10.1.1.md) | 1080p e anti-queda no play.xbox.com; nome, ícone e widget xCloud Enhanced; HUD estável; primeiros testes ao vivo no Poco |
 | [v10.1.0](docs/release-v10.1.0.md) | Correções da auditoria do play.xbox.com, avisos da rede neural, medição schema 3 |
 | [v10.0.0](docs/release-v10.0.0.md) | Renderizador WebGPU opcional (Specs 1–4) |

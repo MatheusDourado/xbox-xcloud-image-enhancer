@@ -1,0 +1,1458 @@
+{
+ "(pela taxa de bits)": {
+  "en": "(from bitrate)",
+  "es": "(por la tasa de bits)"
+ },
+ "0 (captura direta)": {
+  "en": "0 (direct capture)",
+  "es": "0 (captura directa)"
+ },
+ "0 desliga. 2–3 é o ponto medido; acima de 4 aumenta a cintilação em movimento.": {
+  "en": "0 turns it off. 2–3 is the measured sweet spot; above 4 flicker in motion increases.",
+  "es": "0 la desactiva. 2–3 es el punto medido; por encima de 4 aumenta el parpadeo en movimiento."
+ },
+ "20 limpo": {
+  "en": "20 clean",
+  "es": "20 limpio"
+ },
+ "36 forte": {
+  "en": "36 heavy",
+  "es": "36 fuerte"
+ },
+ "60 ou 120 Hz são múltiplos de 30/60 FPS e evitam tremulação; 90 Hz desalinha o ritmo.": {
+  "en": "60 or 120 Hz are multiples of 30/60 FPS and avoid judder; 90 Hz misaligns pacing.",
+  "es": "60 o 120 Hz son múltiplos de 30/60 FPS y evitan temblores; 90 Hz desalinea el ritmo."
+ },
+ "A Equilibrada espera menos.": {
+  "en": "Balanced waits less.",
+  "es": "La Equilibrada espera menos."
+ },
+ "A Fluidez está compensando a rede.": {
+  "en": "Smoothness is compensating for the network.",
+  "es": "La Fluidez está compensando la red."
+ },
+ "A Fluidez está descartando quadros ({0}/min): eles chegam juntos demais.": {
+  "en": "Smoothness is dropping frames ({0}/min): they arrive too close together.",
+  "es": "La Fluidez está descartando cuadros ({0}/min): llegan demasiado juntos."
+ },
+ "A GPU não aceitou o quadro direto: usando o vídeo": {
+  "en": "The GPU rejected the direct frame: using the video",
+  "es": "La GPU no aceptó el cuadro directo: usando el video"
+ },
+ "A captura direta parou de entregar quadros: usando o vídeo": {
+  "en": "Direct capture stopped delivering frames: using the video",
+  "es": "La captura directa dejó de entregar cuadros: usando el video"
+ },
+ "A rede está oscilando. A Fluidez Equilibrada corrige.": {
+  "en": "The network is fluctuating. Balanced Smoothness fixes it.",
+  "es": "La red está oscilando. La Fluidez Equilibrada lo corrige."
+ },
+ "A rede precisa de EXT_color_buffer_float; deixe Reconstrução neural em 0 neste aparelho.": {
+  "en": "The network needs EXT_color_buffer_float; keep Neural reconstruction at 0 on this device.",
+  "es": "La red necesita EXT_color_buffer_float; deja Reconstrucción neuronal en 0 en este dispositivo."
+ },
+ "AGUARDANDO": {
+  "en": "WAITING",
+  "es": "ESPERANDO"
+ },
+ "Acima do limite (p95) {0}": {
+  "en": "Above the limit (p95) it {0}",
+  "es": "Por encima del límite (p95) {0}"
+ },
+ "Adaptar à compressão": {
+  "en": "Adapt to compression",
+  "es": "Adaptar a la compresión"
+ },
+ "Aguardando o QP do stream…": {
+  "en": "Waiting for the stream QP…",
+  "es": "Esperando el QP del stream…"
+ },
+ "Ajusta limpeza, degradês e detalhe à compressão (QP) do stream, devagar, sem pulsar.": {
+  "en": "Adjusts cleanup, gradients and detail to the stream's compression (QP), slowly, without pulsing.",
+  "es": "Ajusta limpieza, degradados y detalle a la compresión (QP) del stream, despacio, sin pulsar."
+ },
+ "Ajuste fino": {
+  "en": "Fine tuning",
+  "es": "Ajuste fino"
+ },
+ "Aliviar GPU acima de": {
+  "en": "Ease GPU above",
+  "es": "Aliviar GPU por encima de"
+ },
+ "Antialiasing": {
+  "en": "Antialiasing",
+  "es": "Antialiasing"
+ },
+ "Antialiasing desligado para preservar fluidez": {
+  "en": "Antialiasing turned off to preserve smoothness",
+  "es": "Antialiasing desactivado para preservar la fluidez"
+ },
+ "Antialiasing pedido, mas desligado pela redução automática de GPU.": {
+  "en": "Antialiasing requested, but turned off by the automatic GPU reduction.",
+  "es": "Antialiasing solicitado, pero desactivado por la reducción automática de GPU."
+ },
+ "Aplicado ao abrir o próximo jogo.": {
+  "en": "Applied when the next game opens.",
+  "es": "Se aplica al abrir el próximo juego."
+ },
+ "Ativo nesta sessão": {
+  "en": "Active this session",
+  "es": "Activo en esta sesión"
+ },
+ "Ativo: {0}": {
+  "en": "Active: {0}",
+  "es": "Activo: {0}"
+ },
+ "Atraso est.": {
+  "en": "Est. delay",
+  "es": "Retraso est."
+ },
+ "Atraso estimado do vídeo": {
+  "en": "Estimated video delay",
+  "es": "Retraso estimado del vídeo"
+ },
+ "Atual: FSR 1 EASU amplia e o Método aplica a nitidez.": {
+  "en": "Current: FSR 1 EASU upscales and Method applies sharpening.",
+  "es": "Actual: FSR 1 EASU amplía y el Método aplica la nitidez."
+ },
+ "Baixa latência (desynchronized)": {
+  "en": "Low latency (desynchronized)",
+  "es": "Baja latencia (desynchronized)"
+ },
+ "Better xCloud › Stream: Bitrate máximo → Ilimitado.": {
+  "en": "Better xCloud › Stream: Maximum bitrate → Unlimited.",
+  "es": "Better xCloud › Stream: Bitrate máximo → Ilimitado."
+ },
+ "Better xCloud › Stream: escolha 1080p.": {
+  "en": "Better xCloud › Stream: choose 1080p.",
+  "es": "Better xCloud › Stream: elige 1080p."
+ },
+ "Bitrate baixo": {
+  "en": "Low bitrate",
+  "es": "Bitrate bajo"
+ },
+ "Bitrate máximo limitado a {0} Mb/s no Better xCloud: use Ilimitado.": {
+  "en": "Max bitrate capped at {0} Mb/s in Better xCloud: use Unlimited.",
+  "es": "Bitrate máximo limitado a {0} Mb/s en Better xCloud: usa Ilimitado."
+ },
+ "Buffer": {
+  "en": "Buffer",
+  "es": "Búfer"
+ },
+ "Buffer: {0} · medido": {
+  "en": "Buffer: {0} · measured",
+  "es": "Búfer: {0} · medido"
+ },
+ "CHEGADA": {
+  "en": "ARRIVAL",
+  "es": "LLEGADA"
+ },
+ "Canto": {
+  "en": "Corner",
+  "es": "Esquina"
+ },
+ "Canvas sem contexto WebGPU": {
+  "en": "Canvas has no WebGPU context",
+  "es": "Canvas sin contexto WebGPU"
+ },
+ "Captura de quadros": {
+  "en": "Frame capture",
+  "es": "Captura de cuadros"
+ },
+ "Captura direta indisponível neste navegador": {
+  "en": "Direct capture unavailable in this browser",
+  "es": "Captura directa no disponible en este navegador"
+ },
+ "Captura direta · {0} quadros": {
+  "en": "Direct capture · {0} frames",
+  "es": "Captura directa · {0} cuadros"
+ },
+ "Captura direta: aguardando o vídeo": {
+  "en": "Direct capture: waiting for video",
+  "es": "Captura directa: esperando el vídeo"
+ },
+ "Captura direta: recebe os quadros do decodificador sem passar pelo elemento de vídeo, que mostra no máximo um quadro por atualização da tela.": {
+  "en": "Direct capture: gets frames from the decoder without going through the video element, which shows at most one frame per screen refresh.",
+  "es": "Captura directa: recibe los cuadros del decodificador sin pasar por el elemento de vídeo, que muestra como máximo un cuadro por actualización de pantalla."
+ },
+ "Captura pelo vídeo": {
+  "en": "Capture via video",
+  "es": "Captura por el vídeo"
+ },
+ "Chegada irregular mesmo com a Fluidez: mais buffer ajuda.": {
+  "en": "Uneven arrival even with Smoothness: more buffer helps.",
+  "es": "Llegada irregular incluso con la Fluidez: más búfer ayuda."
+ },
+ "Clássica": {
+  "en": "Classic",
+  "es": "Clásica"
+ },
+ "Colore a imagem para confirmar que o tratamento está rodando. Não é salvo.": {
+  "en": "Tints the image to confirm the treatment is running. Not saved.",
+  "es": "Colorea la imagen para confirmar que el tratamiento está activo. No se guarda."
+ },
+ "Colorir imagem": {
+  "en": "Tint image",
+  "es": "Colorear imagen"
+ },
+ "Com SGSR, define a força dele (2 → 1,0).": {
+  "en": "With SGSR, sets its strength (2 → 1.0).",
+  "es": "Con SGSR, define su fuerza (2 → 1,0)."
+ },
+ "Com o jogo aberto, compare ao vivo à esquerda do menu.": {
+  "en": "With the game open, compare live to the left of the menu.",
+  "es": "Con el juego abierto, compara en vivo a la izquierda del menú."
+ },
+ "Como funciona": {
+  "en": "How it works",
+  "es": "Cómo funciona"
+ },
+ "Compacto": {
+  "en": "Compact",
+  "es": "Compacto"
+ },
+ "Comparando": {
+  "en": "Comparing",
+  "es": "Comparando"
+ },
+ "Comparando: {0}": {
+  "en": "Comparing: {0}",
+  "es": "Comparando: {0}"
+ },
+ "Comparação": {
+  "en": "Comparison",
+  "es": "Comparación"
+ },
+ "Completo": {
+  "en": "Full",
+  "es": "Completo"
+ },
+ "Compressão": {
+  "en": "Compression",
+  "es": "Compresión"
+ },
+ "Configuração": {
+  "en": "Settings",
+  "es": "Configuración"
+ },
+ "Configuração copiada": {
+  "en": "Settings copied",
+  "es": "Configuración copiada"
+ },
+ "Confira se a TV está em 60 Hz.": {
+  "en": "Check that the TV is at 60 Hz.",
+  "es": "Comprueba que la TV esté a 60 Hz."
+ },
+ "Confirmar restauração": {
+  "en": "Confirm reset",
+  "es": "Confirmar restablecimiento"
+ },
+ "Console": {
+  "en": "Console",
+  "es": "Consola"
+ },
+ "Contexto GPU perdido; aguardando restauração": {
+  "en": "GPU context lost; waiting for restore",
+  "es": "Contexto de GPU perdido; esperando restauración"
+ },
+ "Copiar configuração": {
+  "en": "Copy settings",
+  "es": "Copiar configuración"
+ },
+ "Copie o texto abaixo": {
+  "en": "Copy the text below",
+  "es": "Copia el texto de abajo"
+ },
+ "Cor nas bordas": {
+  "en": "Edge color",
+  "es": "Color en bordes"
+ },
+ "Corrige cor borrada nas bordas (vídeo 4:2:0).": {
+  "en": "Fixes blurred color at edges (4:2:0 video).",
+  "es": "Corrige el color borroso en los bordes (vídeo 4:2:0)."
+ },
+ "Corta etapas cedo; prioriza a fluidez.": {
+  "en": "Cuts stages early; favors smoothness.",
+  "es": "Corta etapas pronto; prioriza la fluidez."
+ },
+ "Cortada": {
+  "en": "Cut",
+  "es": "Cortada"
+ },
+ "Cortado": {
+  "en": "Cut",
+  "es": "Cortado"
+ },
+ "DECOD CPU": {
+  "en": "CPU DECODE",
+  "es": "DECOD CPU"
+ },
+ "DESC/MIN": {
+  "en": "DROP/MIN",
+  "es": "DESC/MIN"
+ },
+ "DIAG": {
+  "en": "DIAG",
+  "es": "DIAG"
+ },
+ "DIAGNÓSTICO": {
+  "en": "DIAGNOSTIC",
+  "es": "DIAGNÓSTICO"
+ },
+ "Declara Tizen (TV), como o 1080p (HQ) do Better xCloud. Não medido neste site.": {
+  "en": "Tells the server Tizen (TV), like Better xCloud's 1080p (HQ). Not measured on this site.",
+  "es": "Declara Tizen (TV), como el 1080p (HQ) de Better xCloud. No medido en este sitio."
+ },
+ "Declara Windows e tela 1920×1080 ao servidor, como o Better xCloud: 1080p H.264 Main. Mais decodificação e latência no celular.": {
+  "en": "Tells the server Windows and a 1920×1080 screen, like Better xCloud: 1080p H.264 Main. More decoding and latency on phones.",
+  "es": "Declara Windows y pantalla 1920×1080 al servidor, como Better xCloud: 1080p H.264 Main. Más decodificación y latencia en el móvil."
+ },
+ "Decodificador (1 s):": {
+  "en": "Decoder (1 s):",
+  "es": "Decodificador (1 s):"
+ },
+ "Decodificação": {
+  "en": "Decoding",
+  "es": "Decodificación"
+ },
+ "Decodificação por software (CPU).": {
+  "en": "Software decoding (CPU).",
+  "es": "Decodificación por software (CPU)."
+ },
+ "Degradês": {
+  "en": "Gradients",
+  "es": "Degradados"
+ },
+ "Degradês reduzidos para preservar fluidez": {
+  "en": "Gradients reduced to preserve smoothness",
+  "es": "Degradados reducidos para preservar la fluidez"
+ },
+ "Desempenho e rede": {
+  "en": "Performance and network",
+  "es": "Rendimiento y red"
+ },
+ "Desl.": {
+  "en": "Off",
+  "es": "Desact."
+ },
+ "Desliga na próxima sessão (reabra o jogo ou recarregue).": {
+  "en": "Turns off next session (reopen the game or reload).",
+  "es": "Se desactiva en la próxima sesión (reabre el juego o recarga)."
+ },
+ "Desligada": {
+  "en": "Off",
+  "es": "Desactivada"
+ },
+ "Desligado": {
+  "en": "Off",
+  "es": "Desactivado"
+ },
+ "Desligado: usa os valores do Ajuste fino.": {
+  "en": "Off: uses the Fine tuning values.",
+  "es": "Desactivado: usa los valores del Ajuste fino."
+ },
+ "Detalhe": {
+  "en": "Detail",
+  "es": "Detalle"
+ },
+ "Detalhe e cor desligados para preservar fluidez": {
+  "en": "Detail and color turned off to preserve smoothness",
+  "es": "Detalle y color desactivados para preservar la fluidez"
+ },
+ "Diagnóstico": {
+  "en": "Diagnostic",
+  "es": "Diagnóstico"
+ },
+ "Diagnóstico ligado": {
+  "en": "Diagnostic on",
+  "es": "Diagnóstico activado"
+ },
+ "Direta": {
+  "en": "Direct",
+  "es": "Directa"
+ },
+ "Direta→vídeo": {
+  "en": "Direct→video",
+  "es": "Directa→vídeo"
+ },
+ "Disponível com a Fluidez ligada.": {
+  "en": "Available with Smoothness on.",
+  "es": "Disponible con la Fluidez activada."
+ },
+ "Dispositivo WebGPU perdido: {0}": {
+  "en": "WebGPU device lost: {0}",
+  "es": "Dispositivo WebGPU perdido: {0}"
+ },
+ "E": {
+  "en": "W",
+  "es": "E"
+ },
+ "EASU + nitidez": {
+  "en": "EASU + sharpening",
+  "es": "EASU + nitidez"
+ },
+ "ERRO": {
+  "en": "ERROR",
+  "es": "ERROR"
+ },
+ "ESP +{0}": {
+  "en": "WAIT +{0}",
+  "es": "ESP +{0}"
+ },
+ "ESPERA": {
+  "en": "WAIT",
+  "es": "ESPERA"
+ },
+ "Encerrar e exportar medição": {
+  "en": "Stop and export measurement",
+  "es": "Finalizar y exportar medición"
+ },
+ "Equilibrada": {
+  "en": "Balanced",
+  "es": "Equilibrada"
+ },
+ "Equilíbrio padrão.": {
+  "en": "Default balance.",
+  "es": "Equilibrio predeterminado."
+ },
+ "Erro WebGPU: {0}": {
+  "en": "WebGPU error: {0}",
+  "es": "Error de WebGPU: {0}"
+ },
+ "Erro no tratamento": {
+  "en": "Image treatment error",
+  "es": "Error en el tratamiento"
+ },
+ "Erro no tratamento: {0}": {
+  "en": "Treatment error: {0}",
+  "es": "Error en el tratamiento: {0}"
+ },
+ "Erro: {0}": {
+  "en": "Error: {0}",
+  "es": "Error: {0}"
+ },
+ "Escalador/nitidez": {
+  "en": "Scaler/sharpening",
+  "es": "Escalador/nitidez"
+ },
+ "Escolhe o WebGL2, salvo numa GPU em que o WebGPU já foi medido com imagem igual e custo igual ou menor.": {
+  "en": "Picks WebGL2, except on a GPU where WebGPU was already measured with the same image and equal or lower cost.",
+  "es": "Elige WebGL2, salvo en una GPU donde WebGPU ya se midió con imagen igual y costo igual o menor."
+ },
+ "Espera alta (+{0} ms).": {
+  "en": "High wait (+{0} ms).",
+  "es": "Espera alta (+{0} ms)."
+ },
+ "Espera da Fluidez": {
+  "en": "Smoothness wait",
+  "es": "Espera de Fluidez"
+ },
+ "Estabilidade em movimento": {
+  "en": "Motion stability",
+  "es": "Estabilidad en movimiento"
+ },
+ "Estabilidade em movimento pedida, mas desligada pela redução automática de GPU.": {
+  "en": "Motion stability requested, but turned off by the automatic GPU reduction.",
+  "es": "Estabilidad en movimiento solicitada, pero desactivada por la reducción automática de GPU."
+ },
+ "Este aparelho não informa o QP: estimando pela taxa de bits…": {
+  "en": "This device does not report QP: estimating from bitrate…",
+  "es": "Este dispositivo no informa el QP: estimando por la tasa de bits…"
+ },
+ "Este navegador não permite a captura direta.": {
+  "en": "This browser does not allow direct capture.",
+  "es": "Este navegador no permite la captura directa."
+ },
+ "Estimado pela taxa de bits (sem QP neste aparelho):": {
+  "en": "Estimated from bitrate (no QP on this device):",
+  "es": "Estimado por la tasa de bits (sin QP en este dispositivo):"
+ },
+ "Estimado por fence (sem cronômetro de GPU neste navegador): limite superior, até a GPU concluir o quadro, com a fila. A redução automática segue a cadência.": {
+  "en": "Fence estimate (no GPU timer in this browser): an upper bound, until the GPU finishes the frame, including the queue. Automatic reduction follows the cadence.",
+  "es": "Estimado por fence (sin cronómetro de GPU en este navegador): límite superior, hasta que la GPU termina el cuadro, con la cola. La reducción automática sigue la cadencia."
+ },
+ "Exibe cada quadro assim que chega: menor latência; o ritmo segue a rede.": {
+  "en": "Shows each frame as soon as it arrives: lowest latency; pacing follows the network.",
+  "es": "Muestra cada cuadro en cuanto llega: menor latencia; el ritmo sigue a la red."
+ },
+ "Exibe no ritmo do servidor e corrige a oscilação da rede e da decodificação. Acrescenta poucos ms de espera.": {
+  "en": "Shows at the server's pace and fixes network and decoding jitter. Adds a few ms of wait.",
+  "es": "Muestra al ritmo del servidor y corrige la oscilación de la red y la decodificación. Añade pocos ms de espera."
+ },
+ "FPS, ritmo, travadas e latência num canto pequeno.": {
+  "en": "FPS, pacing, stutters and latency in a small corner.",
+  "es": "FPS, ritmo, tirones y latencia en una esquina pequeña."
+ },
+ "Fechar": {
+  "en": "Close",
+  "es": "Cerrar"
+ },
+ "Fixada em {0} Hz pelo app": {
+  "en": "Locked at {0} Hz by the app",
+  "es": "Fijada en {0} Hz por la app"
+ },
+ "Fixe a tela em 60/120 Hz.": {
+  "en": "Lock the screen at 60/120 Hz.",
+  "es": "Fija la pantalla en 60/120 Hz."
+ },
+ "Fluidez": {
+  "en": "Smoothness",
+  "es": "Fluidez"
+ },
+ "Fluidez, latência, rede e imagem.": {
+  "en": "Smoothness, latency, network and image.",
+  "es": "Fluidez, latencia, red e imagen."
+ },
+ "Fluidez: processa cada quadro ao chegar e o exibe num relógio constante. Equilibrada segue o servidor; Máxima impõe 30/60 fixo.": {
+  "en": "Smoothness: processes each frame on arrival and shows it on a steady clock. Balanced follows the server; Maximum forces a fixed 30/60.",
+  "es": "Fluidez: procesa cada cuadro al llegar y lo muestra con un reloj constante. Equilibrada sigue al servidor; Máxima impone 30/60 fijo."
+ },
+ "Fluxo de vídeo encerrado": {
+  "en": "Video stream ended",
+  "es": "Flujo de video finalizado"
+ },
+ "Framebuffer incompleto": {
+  "en": "Incomplete framebuffer",
+  "es": "Framebuffer incompleto"
+ },
+ "GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.": {
+  "en": "GPU near its limit (estimate): if the pace drops, lower the Output resolution.",
+  "es": "GPU cerca del límite (estimación): si el ritmo cae, reduce la Resolución de salida."
+ },
+ "Grava tempos de GPU e ritmo; exporta um JSON. Não mede a latência do controle.": {
+  "en": "Records GPU times and pacing; exports a JSON. Does not measure controller latency.",
+  "es": "Graba tiempos de GPU y ritmo; exporta un JSON. No mide la latencia del mando."
+ },
+ "Impedir queda de resolução": {
+  "en": "Prevent resolution drops",
+  "es": "Evitar caída de resolución"
+ },
+ "Impedir queda de resolução ativo: o site informa ao servidor {0} ms de decodificação (real: {1} ms).": {
+  "en": "Prevent resolution drops is on: the site reports {0} ms of decoding to the server (actual: {1} ms).",
+  "es": "Evitar caída de resolución activo: el sitio informa al servidor {0} ms de decodificación (real: {1} ms)."
+ },
+ "Impedir queda de resolução ativo: o site informa ao servidor {0} ms de decodificação.": {
+  "en": "Prevent resolution drops is on: the site reports {0} ms of decoding to the server.",
+  "es": "Evitar caída de resolución activo: el sitio informa al servidor {0} ms de decodificación."
+ },
+ "Indicadores e ferramentas": {
+  "en": "Indicators and tools",
+  "es": "Indicadores y herramientas"
+ },
+ "Indicadores no jogo": {
+  "en": "In-game indicators",
+  "es": "Indicadores en el juego"
+ },
+ "Indicadores: {0}": {
+  "en": "Indicators: {0}",
+  "es": "Indicadores: {0}"
+ },
+ "Indisponível: {0}": {
+  "en": "Unavailable: {0}",
+  "es": "No disponible: {0}"
+ },
+ "Inferior direito": {
+  "en": "Bottom right",
+  "es": "Inferior derecha"
+ },
+ "Inferior esquerdo": {
+  "en": "Bottom left",
+  "es": "Inferior izquierda"
+ },
+ "Iniciar medição": {
+  "en": "Start measurement",
+  "es": "Iniciar medición"
+ },
+ "Ir para Renderizador": {
+  "en": "Go to Renderer",
+  "es": "Ir a Renderizador"
+ },
+ "Leve": {
+  "en": "Light",
+  "es": "Ligero"
+ },
+ "Liga na próxima sessão (reabra o jogo ou recarregue).": {
+  "en": "Turns on next session (reopen the game or reload).",
+  "es": "Se activa en la próxima sesión (reabre el juego o recarga)."
+ },
+ "Ligado": {
+  "en": "On",
+  "es": "Activado"
+ },
+ "Ligar Fluidez": {
+  "en": "Turn on Smoothness",
+  "es": "Activar Fluidez"
+ },
+ "Limpeza desligada para preservar fluidez": {
+  "en": "Cleanup turned off to preserve smoothness",
+  "es": "Limpieza desactivada para preservar la fluidez"
+ },
+ "Limpeza espacial": {
+  "en": "Spatial cleanup",
+  "es": "Limpieza espacial"
+ },
+ "Lê os quadros do elemento de vídeo (mais compatível).": {
+  "en": "Reads frames from the video element (more compatible).",
+  "es": "Lee los cuadros del elemento de vídeo (más compatible)."
+ },
+ "Mais contorno e textura; mais cintilação em movimento.": {
+  "en": "More edges and texture; more flicker in motion.",
+  "es": "Más contorno y textura; más parpadeo en movimiento."
+ },
+ "Mais limpeza de blocos e degradês para streams muito comprimidos.": {
+  "en": "More block and gradient cleanup for heavily compressed streams.",
+  "es": "Más limpieza de bloques y degradados para streams muy comprimidos."
+ },
+ "Mantém a resolução do stream.": {
+  "en": "Keeps the stream resolution.",
+  "es": "Mantiene la resolución del stream."
+ },
+ "Mantém mais etapas; risco de queda de quadros.": {
+  "en": "Keeps more stages; risk of dropped frames.",
+  "es": "Mantiene más etapas; riesgo de caída de cuadros."
+ },
+ "Medindo {0}": {
+  "en": "Measuring {0}",
+  "es": "Midiendo {0}"
+ },
+ "Medindo · {0}": {
+  "en": "Measuring · {0}",
+  "es": "Midiendo · {0}"
+ },
+ "Medição": {
+  "en": "Measurement",
+  "es": "Medición"
+ },
+ "Medição exportada": {
+  "en": "Measurement exported",
+  "es": "Medición exportada"
+ },
+ "Medição sem quadros tratados: nada exportado": {
+  "en": "Measurement with no treated frames: nothing exported",
+  "es": "Medición sin cuadros tratados: nada exportado"
+ },
+ "Menos passes na GPU: saída nativa, sem degradês nem detalhe.": {
+  "en": "Fewer GPU passes: native output, no gradients or detail.",
+  "es": "Menos pasadas en la GPU: salida nativa, sin degradados ni detalle."
+ },
+ "Mesmos filtros em WebGPU: lê o quadro sem cópia e mede a GPU com timestamp. Temporal e Reconstrução neural continuam no WebGL2. Se falhar, volta ao WebGL2 sem recarregar.": {
+  "en": "Same filters on WebGPU: reads the frame without a copy and times the GPU with timestamps. Temporal and Neural reconstruction stay on WebGL2. If it fails, it falls back to WebGL2 without reloading.",
+  "es": "Mismos filtros en WebGPU: lee el cuadro sin copia y mide la GPU con timestamp. Temporal y Reconstrucción neuronal siguen en WebGL2. Si falla, vuelve a WebGL2 sin recargar."
+ },
+ "Mostrar +1 aviso": {
+  "en": "Show +1 warning",
+  "es": "Mostrar +1 aviso"
+ },
+ "Mostrar +{0} avisos": {
+  "en": "Show +{0} warnings",
+  "es": "Mostrar +{0} avisos"
+ },
+ "Mostrar menos": {
+  "en": "Show less",
+  "es": "Mostrar menos"
+ },
+ "Máxima": {
+  "en": "Maximum",
+  "es": "Máxima"
+ },
+ "Método": {
+  "en": "Method",
+  "es": "Método"
+ },
+ "NIT": {
+  "en": "SHRP",
+  "es": "NIT"
+ },
+ "Nada sobre o jogo.": {
+  "en": "Nothing over the game.",
+  "es": "Nada sobre el juego."
+ },
+ "Nativa": {
+  "en": "Native",
+  "es": "Nativa"
+ },
+ "Nativo": {
+  "en": "Native",
+  "es": "Nativo"
+ },
+ "Natural": {
+  "en": "Natural",
+  "es": "Natural"
+ },
+ "Nenhum jogo em andamento. Vídeos na página: {0}, com stream WebRTC: {1}.": {
+  "en": "No game in progress. Videos on the page: {0}, with WebRTC stream: {1}.",
+  "es": "Ningún juego en curso. Vídeos en la página: {0}, con stream WebRTC: {1}."
+ },
+ "Nenhum quadro da captura direta: usando o vídeo": {
+  "en": "No frames from direct capture: using the video",
+  "es": "Ningún cuadro de la captura directa: usando el video"
+ },
+ "Nenhuma medição em andamento": {
+  "en": "No measurement in progress",
+  "es": "Ninguna medición en curso"
+ },
+ "Nenhuma redução automática": {
+  "en": "No automatic reduction",
+  "es": "Ninguna reducción automática"
+ },
+ "Nitidez": {
+  "en": "Sharpness",
+  "es": "Nitidez"
+ },
+ "Nitidez 2: menos cintilação de textura, aparência de console.": {
+  "en": "Sharpness 2: less texture flicker, console look.",
+  "es": "Nitidez 2: menos parpadeo de textura, aspecto de consola."
+ },
+ "Nitidez e imagem": {
+  "en": "Sharpness and image",
+  "es": "Nitidez e imagen"
+ },
+ "Nitidez {0}": {
+  "en": "Sharpness {0}",
+  "es": "Nitidez {0}"
+ },
+ "No celular, o modo Compacto usa a faixa preta lateral quando houver espaço.": {
+  "en": "On phones, Compact mode uses the black side bar when there is room.",
+  "es": "En el móvil, el modo Compacto usa la franja negra lateral cuando hay espacio."
+ },
+ "Nunca": {
+  "en": "Never",
+  "es": "Nunca"
+ },
+ "Nunca reduz o tratamento automaticamente.": {
+  "en": "Never reduces the treatment automatically.",
+  "es": "Nunca reduce el tratamiento automáticamente."
+ },
+ "Nítido": {
+  "en": "Sharp",
+  "es": "Nítido"
+ },
+ "O corte vale até mudar a imagem: Religar mede de novo (a GPU pode não acompanhar), ou Aliviar GPU = Nunca.": {
+  "en": "The cut lasts until the image changes: Re-enable measures again (the GPU may not keep up), or Ease GPU = Never.",
+  "es": "El corte vale hasta cambiar la imagen: Reactivar mide de nuevo (la GPU puede no dar abasto), o Aliviar GPU = Nunca."
+ },
+ "O corte vale até mudar a imagem: Religar mede de novo (a GPU pode não acompanhar), ou Aliviar GPU = Nunca. Sem ela, o antialiasing roda no passe espacial.": {
+  "en": "The cut lasts until the image changes: Re-enable measures again (the GPU may not keep up), or Ease GPU = Never. Without it, antialiasing runs in the spatial pass.",
+  "es": "El corte vale hasta cambiar la imagen: Reactivar mide de nuevo (la GPU puede no dar abasto), o Aliviar GPU = Nunca. Sin ella, el antialiasing corre en la pasada espacial."
+ },
+ "O jogo/servidor está irregular. A Fluidez Máxima uniformiza (com mais espera).": {
+  "en": "The game/server is uneven. Maximum Smoothness evens it out (with more wait).",
+  "es": "El juego/servidor es irregular. La Fluidez Máxima lo uniformiza (con más espera)."
+ },
+ "O navegador decide.": {
+  "en": "The browser decides.",
+  "es": "El navegador decide."
+ },
+ "O que o site pede: neste celular costuma ser 720p (H.264 Baseline).": {
+  "en": "What the site asks for: on this phone usually 720p (H.264 Baseline).",
+  "es": "Lo que pide el sitio: en este móvil suele ser 720p (H.264 Baseline)."
+ },
+ "O renderizador de sempre.": {
+  "en": "The usual renderer.",
+  "es": "El renderizador de siempre."
+ },
+ "O servidor está enviando {0}p.": {
+  "en": "The server is sending {0}p.",
+  "es": "El servidor está enviando {0}p."
+ },
+ "O sistema decide a taxa": {
+  "en": "The system decides the rate",
+  "es": "El sistema decide la tasa"
+ },
+ "O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.": {
+  "en": "The site reports the device's decoding time to the server; at ~21 ms (Poco F7) the server drops 1080p to 720p in ~15 s. When on, the site reports at most 8 ms; the panel telemetry still shows the real time. If the video lags or freezes, turn it off. Applies next game.",
+  "es": "El sitio informa al servidor el tiempo de decodificación del dispositivo; con ~21 ms (Poco F7) el servidor baja de 1080p a 720p en ~15 s. Activado, el sitio informa como máximo 8 ms; la telemetría del panel sigue mostrando el tiempo real. Si el vídeo se retrasa o se congela, desactívalo. Vale en el próximo juego."
+ },
+ "ORIG": {
+  "en": "ORIG",
+  "es": "ORIG"
+ },
+ "ORIGINAL": {
+  "en": "ORIGINAL",
+  "es": "ORIGINAL"
+ },
+ "Onde nasce a oscilação": {
+  "en": "Where the jitter starts",
+  "es": "Dónde nace la oscilación"
+ },
+ "Original": {
+  "en": "Original",
+  "es": "Original"
+ },
+ "Oscilação no aparelho/tela.": {
+  "en": "Jitter on the device/screen.",
+  "es": "Oscilación en el dispositivo/pantalla."
+ },
+ "Oscilação no aparelho/tela. Ative a Fluidez.": {
+  "en": "Jitter on the device/screen. Turn on Smoothness.",
+  "es": "Oscilación en el dispositivo/pantalla. Activa la Fluidez."
+ },
+ "PERDA": {
+  "en": "LOSS",
+  "es": "PÉRDIDA"
+ },
+ "PERDA {0}%": {
+  "en": "LOSS {0}%",
+  "es": "PÉRDIDA {0}%"
+ },
+ "PUL {0}": {
+  "en": "SKIP {0}",
+  "es": "OMIT {0}"
+ },
+ "Padrão anterior (v9): nitidez 3, Compressão 50%, Degradês 30%, Detalhe 20%. Mais GPU.": {
+  "en": "Previous default (v9): sharpness 3, Compression 50%, Gradients 30%, Detail 20%. More GPU.",
+  "es": "Estándar anterior (v9): nitidez 3, Compresión 50%, Degradados 30%, Detalle 20%. Más GPU."
+ },
+ "Padrão da Spec 3: nitidez 2, degradês 60%, sem Compressão nem Detalhe (menos GPU, índice visual maior).": {
+  "en": "Spec 3 default: sharpness 2, gradients 60%, no Compression or Detail (less GPU, higher visual score).",
+  "es": "Estándar de la Spec 3: nitidez 2, degradados 60%, sin Compresión ni Detalle (menos GPU, mayor índice visual)."
+ },
+ "Padrão v9": {
+  "en": "v9 default",
+  "es": "Estándar v9"
+ },
+ "Para voltar: Restaurar tratamento, ou Aliviar GPU = Nunca (a GPU pode não acompanhar).": {
+  "en": "To undo: Reset treatment, or Ease GPU = Never (the GPU may not keep up).",
+  "es": "Para volver: Restablecer tratamiento, o Aliviar GPU = Nunca (la GPU puede no dar abasto)."
+ },
+ "Pausado durante a Comparação.": {
+  "en": "Paused during Comparison.",
+  "es": "En pausa durante la Comparación."
+ },
+ "Pede ao navegador um alvo de buffer. Mais buffer deixa o ritmo mais regular, com mais latência. Não garante um atraso máximo.": {
+  "en": "Asks the browser for a buffer target. More buffer makes pacing steadier, with more latency. Does not guarantee a maximum delay.",
+  "es": "Pide al navegador un objetivo de búfer. Más búfer da un ritmo más regular, con más latencia. No garantiza un retraso máximo."
+ },
+ "Perda de pacotes de {0}%.": {
+  "en": "{0}% packet loss.",
+  "es": "Pérdida de paquetes del {0}%."
+ },
+ "Perfil": {
+  "en": "Profile",
+  "es": "Perfil"
+ },
+ "Perfil {0}": {
+  "en": "Profile {0}",
+  "es": "Perfil {0}"
+ },
+ "Personalizado": {
+  "en": "Custom",
+  "es": "Personalizado"
+ },
+ "Prefira Wi-Fi 5 GHz ou cabo.": {
+  "en": "Prefer 5 GHz Wi-Fi or a cable.",
+  "es": "Prefiere Wi-Fi de 5 GHz o cable."
+ },
+ "Preparando o WebGPU (compilação dos shaders)": {
+  "en": "Preparing WebGPU (compiling shaders)",
+  "es": "Preparando WebGPU (compilación de shaders)"
+ },
+ "Preparando o WebGPU…": {
+  "en": "Preparing WebGPU…",
+  "es": "Preparando WebGPU…"
+ },
+ "Pronta": {
+  "en": "Ready",
+  "es": "Lista"
+ },
+ "Pulados": {
+  "en": "Skipped",
+  "es": "Saltados"
+ },
+ "Quadros": {
+  "en": "Frames",
+  "es": "Cuadros"
+ },
+ "Quadros pulados antes do tratamento: a Fluidez com captura direta evita isso.": {
+  "en": "Frames skipped before the treatment: Smoothness with direct capture avoids this.",
+  "es": "Cuadros saltados antes del tratamiento: la Fluidez con captura directa lo evita."
+ },
+ "Quadros pulados antes do tratamento: a captura direta evita isso.": {
+  "en": "Frames skipped before the treatment: direct capture avoids this.",
+  "es": "Cuadros saltados antes del tratamiento: la captura directa lo evita."
+ },
+ "Quadros pulados: a GPU está sem folga. Reduza a Resolução de saída ou o limite da GPU.": {
+  "en": "Skipped frames: the GPU has no headroom. Lower the Output resolution or the GPU limit.",
+  "es": "Cuadros saltados: la GPU no tiene margen. Reduce la Resolución de salida o el límite de GPU."
+ },
+ "RIT": {
+  "en": "PACE",
+  "es": "RIT"
+ },
+ "RITMO NA TELA": {
+  "en": "ON-SCREEN PACING",
+  "es": "RITMO EN PANTALLA"
+ },
+ "Realça as mesmas frequências finas que a Nitidez. Os perfis vão até 35%; excesso vira halo e cintilação.": {
+  "en": "Boosts the same fine frequencies as Sharpness. Profiles go up to 35%; too much becomes halos and flicker.",
+  "es": "Realza las mismas frecuencias finas que la Nitidez. Los perfiles llegan al 35%; el exceso se vuelve halo y parpadeo."
+ },
+ "Recebe cada quadro direto do decodificador: evita quadros pulados.": {
+  "en": "Gets each frame straight from the decoder: avoids skipped frames.",
+  "es": "Recibe cada cuadro directo del decodificador: evita cuadros saltados."
+ },
+ "Recomendado: contorno limpo.": {
+  "en": "Recommended: clean edges.",
+  "es": "Recomendado: contorno limpio."
+ },
+ "Reconstrução neural": {
+  "en": "Neural reconstruction",
+  "es": "Reconstrucción neuronal"
+ },
+ "Reconstrução neural (experimental): limpa blocos antes da nitidez; +45% de GPU em sessão a 30 FPS (bancada do Poco), com qualquer valor acima de 0. Degradês altos e Antialiasing suavizam textura.": {
+  "en": "Neural reconstruction (experimental): cleans blocks before sharpening; +45% GPU in a 30 FPS session (Poco test bench), at any value above 0. High Gradients and Antialiasing soften texture.",
+  "es": "Reconstrucción neuronal (experimental): limpia bloques antes de la nitidez; +45% de GPU en sesión a 30 FPS (prueba del Poco), con cualquier valor por encima de 0. Degradados altos y Antialiasing suavizan la textura."
+ },
+ "Reconstrução neural desligada para preservar fluidez": {
+  "en": "Neural reconstruction turned off to preserve smoothness",
+  "es": "Reconstrucción neuronal desactivada para preservar la fluidez"
+ },
+ "Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.": {
+  "en": "Neural reconstruction requested but not running: turned off by the automatic GPU reduction.",
+  "es": "Reconstrucción neuronal solicitada, pero no se ejecuta: desactivada por la reducción automática de GPU."
+ },
+ "Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).": {
+  "en": "Neural reconstruction requested but not running: this GPU cannot render to floating point (EXT_color_buffer_float).",
+  "es": "Reconstrucción neuronal solicitada, pero no se ejecuta: esta GPU no renderiza en punto flotante (EXT_color_buffer_float)."
+ },
+ "Rede": {
+  "en": "Network",
+  "es": "Red"
+ },
+ "Rede (RTT)": {
+  "en": "Network (RTT)",
+  "es": "Red (RTT)"
+ },
+ "Rede treinada em streams H.264 limpa blocos antes da nitidez. +45% de GPU em sessão a 30 FPS na bancada do Poco; qualquer valor acima de 0 custa o mesmo.": {
+  "en": "A network trained on H.264 streams cleans blocks before sharpening. +45% GPU in a 30 FPS session on the Poco test bench; any value above 0 costs the same.",
+  "es": "Red entrenada con streams H.264 limpia bloques antes de la nitidez. +45% de GPU en sesión a 30 FPS en la prueba del Poco; cualquier valor por encima de 0 cuesta lo mismo."
+ },
+ "Reduz cintilação entre quadros. Custa GPU.": {
+  "en": "Reduces flicker between frames. Costs GPU.",
+  "es": "Reduce el parpadeo entre cuadros. Cuesta GPU."
+ },
+ "Referência: só a nitidez, sem limpeza.": {
+  "en": "Reference: sharpening only, no cleanup.",
+  "es": "Referencia: solo la nitidez, sin limpieza."
+ },
+ "Reiniciar medição": {
+  "en": "Restart measurement",
+  "es": "Reiniciar medición"
+ },
+ "Religar": {
+  "en": "Re-enable",
+  "es": "Reactivar"
+ },
+ "Renderiza na altura real do vídeo na tela (FSR + nitidez no tamanho final). Em HDMI 1080p fica nativa.": {
+  "en": "Renders at the video's real on-screen height (FSR + sharpening at final size). On 1080p HDMI it stays native.",
+  "es": "Renderiza a la altura real del vídeo en pantalla (FSR + nitidez en el tamaño final). En HDMI 1080p queda nativa."
+ },
+ "Renderizador": {
+  "en": "Renderer",
+  "es": "Renderizador"
+ },
+ "Renderizador não é WebGL2: o tratamento está desligado.": {
+  "en": "Renderer is not WebGL2: image treatment is off.",
+  "es": "El renderizador no es WebGL2: el tratamiento está desactivado."
+ },
+ "Resolução alvo abaixo de 1080p.": {
+  "en": "Target resolution below 1080p.",
+  "es": "Resolución objetivo inferior a 1080p."
+ },
+ "Resolução de saída": {
+  "en": "Output resolution",
+  "es": "Resolución de salida"
+ },
+ "Resolução do stream": {
+  "en": "Stream resolution",
+  "es": "Resolución del stream"
+ },
+ "Restaurar tratamento": {
+  "en": "Reset treatment",
+  "es": "Restablecer tratamiento"
+ },
+ "Ritmo": {
+  "en": "Pacing",
+  "es": "Ritmo"
+ },
+ "Ritmo estável.": {
+  "en": "Steady pacing.",
+  "es": "Ritmo estable."
+ },
+ "Ritmo fixo de 30/60 FPS; corrige também jogo/servidor irregular. Um pouco mais de espera.": {
+  "en": "Fixed 30/60 FPS pacing; also fixes an uneven game/server. A bit more wait.",
+  "es": "Ritmo fijo de 30/60 FPS; corrige también juego/servidor irregular. Algo más de espera."
+ },
+ "Ritmo oscilando.": {
+  "en": "Pacing fluctuating.",
+  "es": "Ritmo oscilando."
+ },
+ "Rodando": {
+  "en": "Running",
+  "es": "Activa"
+ },
+ "SEM NEURAL": {
+  "en": "NO NEURAL",
+  "es": "SIN NEURAL"
+ },
+ "SEM QUADROS": {
+  "en": "NO FRAMES",
+  "es": "SIN CUADROS"
+ },
+ "SERVIDOR": {
+  "en": "SERVER",
+  "es": "SERVIDOR"
+ },
+ "SGSR (menos GPU)": {
+  "en": "SGSR (less GPU)",
+  "es": "SGSR (menos GPU)"
+ },
+ "Salvo para todos os jogos · Tratamento de imagem {0}": {
+  "en": "Saved for all games · Image treatment {0}",
+  "es": "Guardado para todos los juegos · Tratamiento de imagen {0}"
+ },
+ "Saída Auto: renderiza na altura real do vídeo na tela; em celulares usa FSR e aplica a nitidez no tamanho final; em HDMI 1080p fica nativa.": {
+  "en": "Auto output: renders at the video's real on-screen height; on phones it uses FSR and sharpens at final size; on 1080p HDMI it stays native.",
+  "es": "Salida Auto: renderiza a la altura real del vídeo en pantalla; en móviles usa FSR y aplica la nitidez en el tamaño final; en HDMI 1080p queda nativa."
+ },
+ "Saída reduzida para {0} para preservar fluidez": {
+  "en": "Output reduced to {0} to preserve smoothness",
+  "es": "Salida reducida a {0} para preservar la fluidez"
+ },
+ "Script ativo em {0} ({1} v{2}, sem Better xCloud)": {
+  "en": "Script active on {0} ({1} v{2}, without Better xCloud)",
+  "es": "Script activo en {0} ({1} v{2}, sin Better xCloud)"
+ },
+ "Segue o Processamento do menu do Better xCloud (CAS/USM).": {
+  "en": "Follows Processing in the Better xCloud menu (CAS/USM).",
+  "es": "Sigue el Procesamiento del menú de Better xCloud (CAS/USM)."
+ },
+ "Seletiva": {
+  "en": "Selective",
+  "es": "Selectiva"
+ },
+ "Seletiva (v8) preserva textura; Clássica é a referência da v7.1.": {
+  "en": "Selective (v8) keeps texture; Classic is the v7.1 reference.",
+  "es": "Selectiva (v8) conserva la textura; Clásica es la referencia de la v7.1."
+ },
+ "Sem adaptador WebGPU": {
+  "en": "No WebGPU adapter",
+  "es": "Sin adaptador WebGPU"
+ },
+ "Sem cronômetro de GPU neste navegador, 3, 6 e 10 ms se comportam igual: a redução segue a cadência (quadros na tela × recebidos) e só Nunca a desliga. Quando reduz, {0}": {
+  "en": "Without a GPU timer in this browser, 3, 6 and 10 ms behave the same: reduction follows the cadence (frames shown × received) and only Never turns it off. When it reduces, it {0}",
+  "es": "Sin cronómetro de GPU en este navegador, 3, 6 y 10 ms se comportan igual: la reducción sigue la cadencia (cuadros en pantalla × recibidos) y solo Nunca la desactiva. Cuando reduce, {0}"
+ },
+ "Sem cronômetro de GPU neste navegador: o valor virá de um fence (limite superior); a redução automática segue a cadência.": {
+  "en": "No GPU timer in this browser: the value will come from a fence (upper bound); automatic reduction follows the cadence.",
+  "es": "Sin cronómetro de GPU en este navegador: el valor vendrá de un fence (límite superior); la reducción automática sigue la cadencia."
+ },
+ "Sem dados de ritmo ainda.": {
+  "en": "No pacing data yet.",
+  "es": "Aún no hay datos de ritmo."
+ },
+ "Sem dispositivo WebGPU: {0}": {
+  "en": "No WebGPU device: {0}",
+  "es": "Sin dispositivo WebGPU: {0}"
+ },
+ "Sem estatísticas do stream (abra um jogo).": {
+  "en": "No stream statistics (open a game).",
+  "es": "Sin estadísticas del stream (abre un juego)."
+ },
+ "Sem float": {
+  "en": "No float",
+  "es": "Sin float"
+ },
+ "Sem menu do Better xCloud neste site: aplica o processamento salvo ({0}; CAS por padrão).": {
+  "en": "No Better xCloud menu on this site: applies the saved processing ({0}; CAS by default).",
+  "es": "Sin menú de Better xCloud en este sitio: aplica el procesamiento guardado ({0}; CAS por defecto)."
+ },
+ "Sem quadros recentes do tratamento. Entre num jogo: a imagem é filtrada assim que o stream começa.": {
+  "en": "No recent treated frames. Enter a game: the image is filtered as soon as the stream starts.",
+  "es": "Sin cuadros recientes del tratamiento. Entra en un juego: la imagen se filtra en cuanto empieza el stream."
+ },
+ "Sem quadros recentes do tratamento. Selecione WebGL2 durante o jogo para filtrar a imagem.": {
+  "en": "No recent treated frames. Select WebGL2 during the game to filter the image.",
+  "es": "Sin cuadros recientes del tratamiento. Selecciona WebGL2 durante el juego para filtrar la imagen."
+ },
+ "Sem tratamento ativo para medir": {
+  "en": "No active treatment to measure",
+  "es": "Sin tratamiento activo para medir"
+ },
+ "Sistema": {
+  "en": "System",
+  "es": "Sistema"
+ },
+ "Snapdragon GSR 1 amplia e dá nitidez numa passada só: menos GPU, um pouco menos de detalhe. Substitui o Método só quando a saída é maior que o stream; em saída nativa fica a nitidez atual.": {
+  "en": "Snapdragon GSR 1 upscales and sharpens in a single pass: less GPU, slightly less detail. Replaces Method only when the output is larger than the stream; at native output the current sharpening stays.",
+  "es": "Snapdragon GSR 1 amplía y da nitidez en una sola pasada: menos GPU, algo menos de detalle. Sustituye al Método solo cuando la salida es mayor que el stream; en salida nativa queda la nitidez actual."
+ },
+ "Soma de médias e percentis de trechos diferentes, que podem se sobrepor: uma estimativa, não uma medida. Não é o atraso do controle à tela (não inclui controle, jogo, compositor nem tela).": {
+  "en": "Sum of means and percentiles of different stages, which may overlap: an estimate, not a measurement. Not the controller-to-screen delay (excludes controller, game, compositor and screen).",
+  "es": "Suma de medias y percentiles de tramos distintos, que pueden solaparse: una estimación, no una medida. No es el retraso del mando a la pantalla (no incluye mando, juego, compositor ni pantalla)."
+ },
+ "Stream encontrado: aguardando o primeiro quadro.": {
+  "en": "Stream found: waiting for the first frame.",
+  "es": "Stream encontrado: esperando el primer cuadro."
+ },
+ "Stream encontrado: iniciando WebGL2…": {
+  "en": "Stream found: starting WebGL2…",
+  "es": "Stream encontrado: iniciando WebGL2…"
+ },
+ "Suavidade": {
+  "en": "Smoothing",
+  "es": "Suavidad"
+ },
+ "Suavidade 33 ms": {
+  "en": "Smoothing 33 ms",
+  "es": "Suavidad 33 ms"
+ },
+ "Suavidade: pede um alvo de buffer ao navegador, que pode ajustá-lo; mais regularidade com mais latência, sem atraso máximo garantido.": {
+  "en": "Smoothing: asks the browser for a buffer target, which it may adjust; steadier with more latency, no guaranteed maximum delay.",
+  "es": "Suavidad: pide al navegador un objetivo de búfer, que puede ajustarlo; más regularidad con más latencia, sin retraso máximo garantizado."
+ },
+ "Suaviza degraus de bloco em áreas lisas; não remove ringing nem mosquito. Pouco efeito acima de ~10 Mb/s.": {
+  "en": "Smooths block steps in flat areas; does not remove ringing or mosquito noise. Little effect above ~10 Mb/s.",
+  "es": "Suaviza escalones de bloque en zonas lisas; no elimina ringing ni mosquito. Poco efecto por encima de ~10 Mb/s."
+ },
+ "Suaviza faixas em céus e sombras; alto demais apaga textura e borra bordas suaves de baixo contraste.": {
+  "en": "Smooths banding in skies and shadows; too high erases texture and blurs soft low-contrast edges.",
+  "es": "Suaviza bandas en cielos y sombras; demasiado alto borra textura y bordes suaves de bajo contraste."
+ },
+ "Suaviza serrilhado; também suaviza textura.": {
+  "en": "Smooths jaggies; also softens texture.",
+  "es": "Suaviza el dentado; también suaviza la textura."
+ },
+ "Substituída pela Nitidez do Tratamento de imagem": {
+  "en": "Replaced by Image treatment Sharpness",
+  "es": "Sustituida por la Nitidez del Tratamiento de imagen"
+ },
+ "Superior direito": {
+  "en": "Top right",
+  "es": "Superior derecha"
+ },
+ "Superior esquerdo": {
+  "en": "Top left",
+  "es": "Superior izquierda"
+ },
+ "SÓ NITIDEZ": {
+  "en": "SHARPEN ONLY",
+  "es": "SOLO NITIDEZ"
+ },
+ "Só nitidez": {
+  "en": "Sharpen only",
+  "es": "Solo nitidez"
+ },
+ "Só para PC em jogos a 30 FPS: ritmo mais estável. A 60 FPS mostrou menos quadros (44 em vez de 58) e no celular não ganhou. Pode causar tearing (imagem rasgada). Vale na próxima sessão.": {
+  "en": "PC only, for 30 FPS games: steadier pacing. At 60 FPS it showed fewer frames (44 instead of 58) and on phones it did not help. May cause tearing. Applies next session.",
+  "es": "Solo para PC en juegos a 30 FPS: ritmo más estable. A 60 FPS mostró menos cuadros (44 en vez de 58) y en el móvil no mejoró. Puede causar tearing (imagen rasgada). Vale en la próxima sesión."
+ },
+ "Só para telas 1440p ou maiores; acima da tela só custa GPU.": {
+  "en": "Only for 1440p or larger screens; above the screen it only costs GPU.",
+  "es": "Solo para pantallas 1440p o mayores; por encima de la pantalla solo cuesta GPU."
+ },
+ "Só para telas 4K; custo alto de GPU.": {
+  "en": "Only for 4K screens; high GPU cost.",
+  "es": "Solo para pantallas 4K; alto costo de GPU."
+ },
+ "TELA": {
+  "en": "SCREEN",
+  "es": "PANTALLA"
+ },
+ "TRATANDO": {
+  "en": "PROCESSING",
+  "es": "PROCESANDO"
+ },
+ "TRAV": {
+  "en": "HITCH",
+  "es": "TIRÓN"
+ },
+ "Taxa da tela": {
+  "en": "Screen refresh rate",
+  "es": "Tasa de pantalla"
+ },
+ "Tela em {0} Hz não é múltiplo de {1} FPS: use 60 ou 120 Hz.": {
+  "en": "Screen at {0} Hz is not a multiple of {1} FPS: use 60 or 120 Hz.",
+  "es": "Pantalla a {0} Hz no es múltiplo de {1} FPS: usa 60 o 120 Hz."
+ },
+ "Tela em {0}p: saída maior só aumenta custo. Use Auto.": {
+  "en": "Display is {0}p: a larger output only adds cost. Use Auto.",
+  "es": "Pantalla en {0}p: una salida mayor solo aumenta el costo. Usa Auto."
+ },
+ "Temporal desligado para preservar fluidez": {
+  "en": "Temporal turned off to preserve smoothness",
+  "es": "Temporal desactivado para preservar la fluidez"
+ },
+ "Temporal desligado para preservar fluidez (antialiasing passa ao passe espacial)": {
+  "en": "Temporal turned off to preserve smoothness (antialiasing moves to the spatial pass)",
+  "es": "Temporal desactivado para preservar la fluidez (el antialiasing pasa al pase espacial)"
+ },
+ "Temporal e Reconstrução neural só rodam no WebGL2: usando WebGL2": {
+  "en": "Temporal and Neural reconstruction only run on WebGL2: using WebGL2",
+  "es": "Temporal y Reconstrucción neuronal solo funcionan en WebGL2: usando WebGL2"
+ },
+ "Tratada": {
+  "en": "Treated",
+  "es": "Tratada"
+ },
+ "Tratamento": {
+  "en": "Treatment",
+  "es": "Tratamiento"
+ },
+ "Tratamento (GPU p95)": {
+  "en": "Treatment (GPU p95)",
+  "es": "Tratamiento (GPU p95)"
+ },
+ "Tratamento (GPU ≈ fence, p95)": {
+  "en": "Treatment (GPU ≈ fence, p95)",
+  "es": "Tratamiento (GPU ≈ fence, p95)"
+ },
+ "Tratamento completo (use esta para jogar).": {
+  "en": "Full treatment (use this to play).",
+  "es": "Tratamiento completo (usa esta para jugar)."
+ },
+ "Tratamento de imagem": {
+  "en": "Image treatment",
+  "es": "Tratamiento de imagen"
+ },
+ "Tratamento ligado ao vídeo do jogo: {0} ({1})": {
+  "en": "Treatment bound to the game video: {0} ({1})",
+  "es": "Tratamiento vinculado al vídeo del juego: {0} ({1})"
+ },
+ "Tratamento restaurado": {
+  "en": "Treatment reset",
+  "es": "Tratamiento restablecido"
+ },
+ "Travadas": {
+  "en": "Stutters",
+  "es": "Tirones"
+ },
+ "Usar Auto": {
+  "en": "Use Auto",
+  "es": "Usar Auto"
+ },
+ "Usar Equilibrada": {
+  "en": "Use Balanced",
+  "es": "Usar Equilibrada"
+ },
+ "Usar Máxima": {
+  "en": "Use Maximum",
+  "es": "Usar Máxima"
+ },
+ "Usar captura direta": {
+  "en": "Use direct capture",
+  "es": "Usar captura directa"
+ },
+ "Usar {0} Hz": {
+  "en": "Use {0} Hz",
+  "es": "Usar {0} Hz"
+ },
+ "Vale no próximo jogo: saia e entre de novo.": {
+  "en": "Applies next game: exit and enter again.",
+  "es": "Vale en el próximo juego: sal y vuelve a entrar."
+ },
+ "Vale também para a referência Só nitidez.": {
+  "en": "Also applies to the Sharpen only reference.",
+  "es": "También vale para la referencia Solo nitidez."
+ },
+ "Valor salvo fora das opções; escolha uma para substituí-lo.": {
+  "en": "Saved value is not an option; pick one to replace it.",
+  "es": "Valor guardado fuera de las opciones; elige una para reemplazarlo."
+ },
+ "Valores ajustados à mão. Escolha um perfil para voltar a um ponto medido.": {
+  "en": "Hand-tuned values. Pick a profile to return to a measured point.",
+  "es": "Valores ajustados a mano. Elige un perfil para volver a un punto medido."
+ },
+ "Volta o tratamento ao padrão medido. Os indicadores no jogo não mudam.": {
+  "en": "Returns the treatment to the measured default. In-game indicators do not change.",
+  "es": "Devuelve el tratamiento al valor medido predeterminado. Los indicadores en el juego no cambian."
+ },
+ "Vídeo": {
+  "en": "Video",
+  "es": "Vídeo"
+ },
+ "Vídeo puro, sem tratamento.": {
+  "en": "Raw video, no treatment.",
+  "es": "Vídeo puro, sin tratamiento."
+ },
+ "Vídeo recebido": {
+  "en": "Received video",
+  "es": "Vídeo recibido"
+ },
+ "WebGL2 indisponível neste navegador.": {
+  "en": "WebGL2 unavailable in this browser.",
+  "es": "WebGL2 no disponible en este navegador."
+ },
+ "WebGPU falhou, usando WebGL2: {0}": {
+  "en": "WebGPU failed, using WebGL2: {0}",
+  "es": "WebGPU falló, usando WebGL2: {0}"
+ },
+ "WebGPU indisponível": {
+  "en": "WebGPU unavailable",
+  "es": "WebGPU no disponible"
+ },
+ "WebGPU indisponível neste navegador: usando WebGL2": {
+  "en": "WebGPU unavailable in this browser: using WebGL2",
+  "es": "WebGPU no disponible en este navegador: usando WebGL2"
+ },
+ "aceito": {
+  "en": "accepted",
+  "es": "aceptado"
+ },
+ "adaptado": {
+  "en": "adapted",
+  "es": "adaptado"
+ },
+ "aguardando quadro": {
+  "en": "waiting for frame",
+  "es": "esperando cuadro"
+ },
+ "aguardando vídeo": {
+  "en": "waiting for video",
+  "es": "esperando vídeo"
+ },
+ "alvo {0} ms": {
+  "en": "target {0} ms",
+  "es": "objetivo {0} ms"
+ },
+ "automático": {
+  "en": "automatic",
+  "es": "automático"
+ },
+ "captura direta": {
+  "en": "direct capture",
+  "es": "captura directa"
+ },
+ "de {0}": {
+  "en": "of {0}",
+  "es": "de {0}"
+ },
+ "desc": {
+  "en": "drop",
+  "es": "desc"
+ },
+ "descartados": {
+  "en": "dropped",
+  "es": "descartados"
+ },
+ "desconhecido": {
+  "en": "unknown",
+  "es": "desconocido"
+ },
+ "desliga nesta ordem: estabilidade, saída, antialiasing, neural, degradês, limpeza, detalhe.": {
+  "en": "turns off in this order: stability, output, antialiasing, neural, gradients, cleanup, detail.",
+  "es": "desactiva en este orden: estabilidad, salida, antialiasing, neuronal, degradados, limpieza, detalle."
+ },
+ "desligada": {
+  "en": "off",
+  "es": "desactivada"
+ },
+ "desligados": {
+  "en": "off",
+  "es": "desactivados"
+ },
+ "falha no tratamento": {
+  "en": "treatment failure",
+  "es": "fallo del tratamiento"
+ },
+ "falhou": {
+  "en": "failed",
+  "es": "falló"
+ },
+ "hardware": {
+  "en": "hardware",
+  "es": "hardware"
+ },
+ "limpeza ×{0} · degradês ×{1} · detalhe ×{2}": {
+  "en": "cleanup ×{0} · gradients ×{1} · detail ×{2}",
+  "es": "limpieza ×{0} · degradados ×{1} · detalle ×{2}"
+ },
+ "médio": {
+  "en": "mean",
+  "es": "medio"
+ },
+ "nativa": {
+  "en": "native",
+  "es": "nativa"
+ },
+ "não informada": {
+  "en": "not reported",
+  "es": "no informada"
+ },
+ "não suportado": {
+  "en": "not supported",
+  "es": "no compatible"
+ },
+ "não é múltiplo de {0} FPS": {
+  "en": "not a multiple of {0} FPS",
+  "es": "no es múltiplo de {0} FPS"
+ },
+ "nível": {
+  "en": "level",
+  "es": "nivel"
+ },
+ "parcial": {
+  "en": "partial",
+  "es": "parcial"
+ },
+ "perda": {
+  "en": "loss",
+  "es": "pérdida"
+ },
+ "perda {0}%": {
+  "en": "loss {0}%",
+  "es": "pérdida {0}%"
+ },
+ "pul": {
+  "en": "skip",
+  "es": "omit"
+ },
+ "pulados": {
+  "en": "skipped",
+  "es": "saltados"
+ },
+ "rede": {
+  "en": "network",
+  "es": "red"
+ },
+ "software (CPU)": {
+  "en": "software (CPU)",
+  "es": "software (CPU)"
+ },
+ "trav": {
+  "en": "hitch",
+  "es": "tirón"
+ },
+ "v9: padrões medidos em streams H.264 tipo xCloud. Tudo fica salvo para todos os jogos.": {
+  "en": "v9: defaults measured on xCloud-like H.264 streams. Everything is saved for all games.",
+  "es": "v9: valores medidos en streams H.264 tipo xCloud. Todo se guarda para todos los juegos."
+ },
+ "vídeo na tela {0}p": {
+  "en": "video on screen {0}p",
+  "es": "vídeo en pantalla {0}p"
+ },
+ "{0} congelamentos": {
+  "en": "{0} freezes",
+  "es": "{0} congelamientos"
+ },
+ "{0} de 7 ativos": {
+  "en": "{0} of 7 active",
+  "es": "{0} de 7 activos"
+ },
+ "{0} descartados": {
+  "en": "{0} dropped",
+  "es": "{0} descartados"
+ },
+ "{0} ms de {1} ms": {
+  "en": "{0} ms of {1} ms",
+  "es": "{0} ms de {1} ms"
+ },
+ "{0} trav.": {
+  "en": "{0} stutt.",
+  "es": "{0} tir."
+ },
+ "≈{0} ms de {1} ms por quadro": {
+  "en": "≈{0} ms of {1} ms per frame",
+  "es": "≈{0} ms de {1} ms por cuadro"
+ }
+}

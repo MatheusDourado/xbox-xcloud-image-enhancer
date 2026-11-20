@@ -4,6 +4,7 @@
    frame import and draws live here. Neural restoration and temporal stay in WebGL2 (rendererSupports). */
 (() => {
   const R=globalThis.BxRestoration;
+  const t=globalThis.BxI18n?.t||((s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]??m));
   // Field order of each WGSL uniform struct (all f32; padded to 16 bytes).
   const PACK={
     spatial:u=>[u.cleanup,u.deband,u.chroma,u.detail,u.antialias,u.debandTaps,u.quantize?1:0,u.selective?1:0],
@@ -46,8 +47,8 @@
       this.pipelineLayouts={tex:device.createPipelineLayout({bindGroupLayouts:[this.layouts.tex]}),ext:device.createPipelineLayout({bindGroupLayouts:[this.layouts.ext]})};
       this.sampler=device.createSampler({magFilter:'linear',minFilter:'linear',addressModeU:'clamp-to-edge',addressModeV:'clamp-to-edge'});
       this.dummy=device.createBuffer({size:16,usage:GPUBufferUsage.UNIFORM});
-      device.lost.then(info=>this.fail('Dispositivo WebGPU perdido: '+(info.message||info.reason)));
-      device.addEventListener('uncapturederror',e=>this.fail('Erro WebGPU: '+String(e.error?.message||e.error).slice(0,300)));
+      device.lost.then(info=>this.fail(t('Dispositivo WebGPU perdido: {0}',info.message||info.reason)));
+      device.addEventListener('uncapturederror',e=>this.fail(t('Erro WebGPU: {0}',String(e.error?.message||e.error).slice(0,300))));
     }
     // A failure (device lost, validation error) stops this renderer for good; the owner falls back to WebGL2.
     fail(reason){if(this.failed)return;this.failed=reason;try{this.onfail?.(reason);}catch{}}
@@ -233,15 +234,15 @@
   async function create(canvas,options={}){
     // unavailable: no WebGPU here (no API, adapter or device), as opposed to a failure of this renderer.
     const unavailable=m=>Object.assign(new Error(m),{unavailable:true});
-    if(!navigator.gpu)throw unavailable('WebGPU indisponível');
-    const adapter=await navigator.gpu.requestAdapter({powerPreference:options.powerPreference||'high-performance'});if(!adapter)throw unavailable('Sem adaptador WebGPU');
+    if(!navigator.gpu)throw unavailable(t('WebGPU indisponível'));
+    const adapter=await navigator.gpu.requestAdapter({powerPreference:options.powerPreference||'high-performance'});if(!adapter)throw unavailable(t('Sem adaptador WebGPU'));
     const requiredFeatures=['timestamp-query'].filter(f=>adapter.features.has(f)&&options.timestamps!==false);
-    let device;try{device=await adapter.requestDevice({requiredFeatures});}catch(e){throw unavailable('Sem dispositivo WebGPU: '+(e.message||e));}
-    const context=canvas.getContext('webgpu');if(!context){device.destroy();throw new Error('Canvas sem contexto WebGPU');}
+    let device;try{device=await adapter.requestDevice({requiredFeatures});}catch(e){throw unavailable(t('Sem dispositivo WebGPU: {0}',e.message||e));}
+    const context=canvas.getContext('webgpu');if(!context){device.destroy();throw new Error(t('Canvas sem contexto WebGPU'));}
     const format=options.format||navigator.gpu.getPreferredCanvasFormat();
     context.configure({device,format,alphaMode:'opaque',usage:GPUTextureUsage.RENDER_ATTACHMENT|(options.readable?GPUTextureUsage.COPY_SRC:0)});
     const engine=new GpuEngine(device,context,format,options);engine.adapter=info(adapter);
-    const t=performance.now();try{await engine.warm();}catch(e){engine.destroy();throw e;}engine.warmMs=performance.now()-t;
+    const t0=performance.now();try{await engine.warm();}catch(e){engine.destroy();throw e;}engine.warmMs=performance.now()-t0;
     if(engine.failed){const r=engine.failed;engine.destroy();throw new Error(r);}
     return engine;
   }

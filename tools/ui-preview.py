@@ -181,11 +181,11 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden}
 '''
 
 
-def write_page():
+def write_page(lang='pt-BR'):
     stats = ('<div class="bx-stats-bar bx-gone" data-position="top-right" data-stats="[time][fps][ping][dt][btr][pl]">'
              + ''.join(f'<div class="bx-stat-{k}"><label>{k.upper()}</label><span>{v}</span></div>'
                        for k, v in [('time', '00:12:41'), ('fps', '60'), ('ping', '24ms'), ('dt', '4.1ms'), ('btr', '16.2 Mbps'), ('pl', '0 (0.00%)')]) + '</div>')
-    html = ('<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+    html = ('<!doctype html><html lang="' + lang + '"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             '<title>UI preview</title><style>' + better_xcloud_css() + '</style><style>' + CSS + '</style></head><body>'
             '<canvas id="game"></canvas><div id="bx-game-bar" data-position="bottom-left"></div>' + stats +
             '<div class="bx-navigation-dialog-overlay" id="overlay" data-is-playing="true"></div><div class="bx-navigation-dialog" id="nav"></div>'
@@ -243,8 +243,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('--out', default=str(ROOT / 'output/playwright/ui-shots'))
     parser.add_argument('--only', help='Comma-separated screenshot names')
+    parser.add_argument('--lang', default='pt-BR', help='UI language via <html lang> (src/i18n.js), e.g. en-US or es-MX')
     args = parser.parse_args()
-    write_page()
+    write_page(args.lang)
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     only = set(args.only.split(',')) if args.only else None

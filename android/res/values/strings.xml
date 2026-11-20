@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">xCloud Enhanced</string>
+    <string name="late_injection">WebView without document-start: late injection (update Android System WebView)</string>
+    <string name="settings_copied">Settings copied</string>
+    <string name="measurement_saved">Measurement saved to %1$s</string>
 </resources>

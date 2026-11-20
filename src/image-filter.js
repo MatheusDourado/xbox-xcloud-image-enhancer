@@ -1,6 +1,7 @@
 // Better xCloud adapter for the shared restoration engine: rendering, frame timing, stream telemetry
 // and the window.BxImageFilter API read by the panel (panel.js) and the in-game HUD (hud.js).
 (() => {
+ const t=globalThis.BxI18n?.t||((s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]??m));
  // v9 has measured defaults; a new key keeps v8.x saved values from overriding them.
  const key='BxImageFilter.v9';let saved;try{saved=JSON.parse(localStorage.getItem(key));}catch{}
  // Spec 3 changed the defaults (sharpness 2, no Compression/Detail, Debanding 60%). A user still on the
@@ -177,27 +178,27 @@
  }
  const MAX_BITRATE=15360000;
  function updateWarnings(){
-  const w=[],pref=api.nativePref,net=status.net,dec=v=>v.toFixed(1).replace('.',',');
-  if(pref('video.player.type')!==undefined&&pref('video.player.type')!=='webgl2')w.push({level:'error',key:'renderer',text:'Renderizador não é WebGL2: o tratamento está desligado.'});
-  const bitrate=pref('stream.video.maxBitrate');if(bitrate>0&&bitrate<MAX_BITRATE)w.push({level:'warn',key:'bitrate',text:`Bitrate máximo limitado a ${dec(bitrate/1024000)} Mb/s no Better xCloud: use Ilimitado.`});
-  const resolution=pref('stream.video.resolution');if(resolution&&!/^1080p/.test(resolution)&&resolution!=='auto')w.push({level:'warn',key:'resolution',text:'Resolução alvo abaixo de 1080p.'});
-  if(net?.height&&net.height<1000)w.push({level:'warn',key:'stream',text:`O servidor está enviando ${net.height}p.`});
-  if(net?.decoder==='software')w.push({level:'warn',key:'decoder',text:'Decodificação por software (CPU).'});
-  if(net?.lossPct>1)w.push({level:net.lossPct>2?'error':'warn',key:'loss',text:`Perda de pacotes de ${dec(net.lossPct)}%.`});
+  const w=[],pref=api.nativePref,net=status.net,dec=v=>v.toFixed(1).replace('.',globalThis.BxI18n?.decimal??',');
+  if(pref('video.player.type')!==undefined&&pref('video.player.type')!=='webgl2')w.push({level:'error',key:'renderer',text:t('Renderizador não é WebGL2: o tratamento está desligado.')});
+  const bitrate=pref('stream.video.maxBitrate');if(bitrate>0&&bitrate<MAX_BITRATE)w.push({level:'warn',key:'bitrate',text:t('Bitrate máximo limitado a {0} Mb/s no Better xCloud: use Ilimitado.',dec(bitrate/1024000))});
+  const resolution=pref('stream.video.resolution');if(resolution&&!/^1080p/.test(resolution)&&resolution!=='auto')w.push({level:'warn',key:'resolution',text:t('Resolução alvo abaixo de 1080p.')});
+  if(net?.height&&net.height<1000)w.push({level:'warn',key:'stream',text:t('O servidor está enviando {0}p.',net.height)});
+  if(net?.decoder==='software')w.push({level:'warn',key:'decoder',text:t('Decodificação por software (CPU).')});
+  if(net?.lossPct>1)w.push({level:net.lossPct>2?'error':'warn',key:'loss',text:t('Perda de pacotes de {0}%.',dec(net.lossPct))});
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
-  if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:`Tela em ${status.display}p: saída maior só aumenta custo. Use Auto.`});
-  if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:'GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.'});
-  if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:'Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).'});
+  if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:t('Tela em {0}p: saída maior só aumenta custo. Use Auto.',status.display)});
+  if(status.gpuTrend&&settings.mode==='filtered'&&status.measurement==='cadence'&&status.mode==='filtered')w.push({level:'info',key:'gpu-trend',text:t('GPU perto do limite (estimativa): se o ritmo cair, reduza a Resolução de saída.')});
+  if(status.neural==='no-float'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-float',text:t('Reconstrução neural pedida, mas não está rodando: esta GPU não renderiza em ponto flutuante (EXT_color_buffer_float).')});
   // Audit C02: a cut stays visible even when a later reduction replaced status.adaptation.
   const cut=status.effective?.cuts;
   if(cut&&settings.mode==='filtered'&&status.mode!=='waiting'){
-   if(cut.antialias)w.push({level:'warn',key:'aa-cut',text:'Antialiasing pedido, mas desligado pela redução automática de GPU.'});
-   if(cut.temporal)w.push({level:'warn',key:'temporal-cut',text:'Estabilidade em movimento pedida, mas desligada pela redução automática de GPU.'});}
-  if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:'Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.'});
+   if(cut.antialias)w.push({level:'warn',key:'aa-cut',text:t('Antialiasing pedido, mas desligado pela redução automática de GPU.')});
+   if(cut.temporal)w.push({level:'warn',key:'temporal-cut',text:t('Estabilidade em movimento pedida, mas desligada pela redução automática de GPU.')});}
+  if(status.neural==='cut'&&status.mode!=='waiting')w.push({level:'warn',key:'neural-cut',text:t('Reconstrução neural pedida, mas não está rodando: desligada pela redução automática de GPU.')});
   if(status.mode==='error'&&status.error)w.push({level:'error',key:'engine',text:status.error});
   // The site reports a capped decoding time to the server; status.net.decodeMs stays the real one.
   const ps=typeof BxPlayStream==='undefined'?null:BxPlayStream.info();status.stream=ps;
-  if(ps?.capActive){const real=net?.decodeMs??ps.realDecodeMs;w.push({level:'info',key:'prevent-drops',text:`Impedir queda de resolução ativo: o site informa ao servidor ${ps.capMs} ms de decodificação`+(Number.isFinite(real)?` (real: ${dec(real)} ms).`:'.')});}
+  if(ps?.capActive){const real=net?.decodeMs??ps.realDecodeMs;w.push({level:'info',key:'prevent-drops',text:Number.isFinite(real)?t('Impedir queda de resolução ativo: o site informa ao servidor {0} ms de decodificação (real: {1} ms).',ps.capMs,dec(real)):t('Impedir queda de resolução ativo: o site informa ao servidor {0} ms de decodificação.',ps.capMs)});}
   status.warnings=w;
  }
  function tick(){smoothingTick();pollTelemetry();}
@@ -303,10 +304,10 @@
   player.bxGpu=null;try{g.engine?.destroy();}catch{}g.canvas.remove();
   if(status.renderer.state!=='fallback'){status.renderer.state='webgl2';status.renderer.reason='';}}
  function gpuFailed(player,reason){player.bxGpuFailed=true;console.warn('[Bx Restoration] WebGPU → WebGL2:',reason);player.bxDiagnostics?.event('renderer-failed',{reason});stopGpu(player);
-  Object.assign(status.renderer,{state:'fallback',active:'webgl2',reason:'WebGPU falhou, usando WebGL2: '+reason});}
+  Object.assign(status.renderer,{state:'fallback',active:'webgl2',reason:t('WebGPU falhou, usando WebGL2: {0}',reason)});}
  function startGpu(player){
   const g=player.bxGpu={state:'starting',canvas:document.createElement('canvas'),engine:null,css:null,classes:null};
-  Object.assign(status.renderer,{state:'starting',reason:'Preparando o WebGPU (compilação dos shaders)'});
+  Object.assign(status.renderer,{state:'starting',reason:t('Preparando o WebGPU (compilação dos shaders)')});
   g.canvas.dataset.bxRenderer='webgpu';g.canvas.setAttribute('aria-hidden','true');player.$canvas.insertAdjacentElement('beforebegin',g.canvas);syncCanvas(player,g);
   BxWebGPU.create(g.canvas,{powerPreference:powerPreference(),diagnostics:player.bxDiagnostics,settings:nativeSettings({...settings})}).then(engine=>{
    if(player.bxGpu!==g||player.isStopped){engine.destroy();return;}
@@ -320,10 +321,10 @@
   if(player.bxRendererEpoch!==rendererEpoch){player.bxRendererEpoch=rendererEpoch;player.bxGpuFailed=false;if(status.renderer.state==='fallback')Object.assign(status.renderer,{state:'webgl2',reason:''});}
   if(settings.renderer==='auto')probeAdapter();
   if(!wantsWebGPU()){stopGpu(player);setRenderer(player,player.bxEngine);return;}
-  if(!player.bxGpu&&!player.bxGpuFailed){if(globalThis.BxWebGPU?.supported())startGpu(player);else{player.bxGpuFailed=true;Object.assign(status.renderer,{state:'fallback',reason:'WebGPU indisponível neste navegador: usando WebGL2'});}}
+  if(!player.bxGpu&&!player.bxGpuFailed){if(globalThis.BxWebGPU?.supported())startGpu(player);else{player.bxGpuFailed=true;Object.assign(status.renderer,{state:'fallback',reason:t('WebGPU indisponível neste navegador: usando WebGL2')});}}
   const g=player.bxGpu,ready=g?.state==='ready'&&!g.engine.failed,ok=ready&&g.engine.supports(renderSettings,w,h,w,h);
   setRenderer(player,ok?g.engine:player.bxEngine);
-  if(ready)status.renderer.reason=ok?'':'Temporal e Reconstrução neural só rodam no WebGL2: usando WebGL2';
+  if(ready)status.renderer.reason=ok?'':t('Temporal e Reconstrução neural só rodam no WebGL2: usando WebGL2');
  }
  const proto=WebGL2Player.prototype,setup=proto.setupShaders,frame=proto.updateFrame,destroy=proto.destroy;
  function fallback(player){const gl=player.gl;if(gl&&!gl.isContextLost()){gl.bindVertexArray(null);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,player.bxOriginalTexture);gl.useProgram(player.program);gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,player.$canvas.width,player.$canvas.height);player.updateCanvas();frame.call(player);}}
@@ -341,7 +342,7 @@
   this.bxLastFrame=null;this.bxLastSettings='';this.bxTimes=[];startTiming(this);
   if(!this.bxListeners){
    const reset=()=>{this.bxEngine?.resetHistory();this.bxGpu?.engine?.resetHistory();this.bxLastFrame=null;this.bxReferenceFps=null;this.bxTimes=[];this.bxCadenceMark=performance.now();};
-   const lost=e=>{e.preventDefault();reset();status.mode='error';status.error='Contexto GPU perdido; aguardando restauração';};
+   const lost=e=>{e.preventDefault();reset();status.mode='error';status.error=t('Contexto GPU perdido; aguardando restauração');};
    const restored=()=>{stopPacer(this);stopGpu(this);this.bxEngine?.destroy();this.bxEngine=this.bxRender=null;this.setupShaders().catch(e=>{status.error=String(e.message);});};
    this.bxListeners={reset,lost,restored};
    for(const name of ['seeking','pause','emptied'])this.$video.addEventListener(name,reset);
@@ -415,7 +416,7 @@
  function fail(player,error){
   // A WebGPU failure only hands the frames back to WebGL2.
   if(player.bxRender&&player.bxRender!==player.bxEngine){gpuFailed(player,String(error?.message||error));return;}
-  status.mode='error';status.error=String(error.message||error);stopDirect(player,'Erro no tratamento');stopPacer(player);stopGpu(player);player.bxEngine.destroy();player.bxEngine=player.bxRender=null;activeEngine=null;fallback(player);}
+  status.mode='error';status.error=String(error.message||error);stopDirect(player,t('Erro no tratamento'));stopPacer(player);stopGpu(player);player.bxEngine.destroy();player.bxEngine=player.bxRender=null;activeEngine=null;fallback(player);}
  // Direct capture (Fluidez only): the <video> element shows at most one frame per display refresh, so
  // frames arriving together are skipped before the treatment sees them. Reading the WebRTC track with
  // MediaStreamTrackProcessor delivers every decoded frame; each VideoFrame is processed into a paced
@@ -425,25 +426,26 @@
   if(!source||source.readyState!=='live'||!api.directSupported())return false;
   let track=null,reader;
   try{track=source.clone();reader=new MediaStreamTrackProcessor({track}).readable.getReader();}
-  catch(error){track?.stop();status.capture={active:false,frames:0,reason:'Indisponível: '+(error.message||error)};return false;}
+  catch(error){track?.stop();status.capture={active:false,frames:0,reason:t('Indisponível: {0}',error.message||error)};return false;}
   const d=player.bxDirect={track,reader,frames:0,rendered:0,started:performance.now(),lastAt:null,videoMark:null,nextAt:null};
   status.capture={active:true,frames:0,reason:''};player.bxDiagnostics?.event('capture',{active:true});
-  (async()=>{let reason='Fluxo de vídeo encerrado';
+  (async()=>{let reason=t('Fluxo de vídeo encerrado'),ended=true;
    try{for(;;){const {value,done}=await reader.read();if(done)break;
      try{if(player.bxDirect!==d)break;d.frames++;d.lastAt=performance.now();d.videoMark=null;renderDirect(player,value);}finally{value.close();}}}
-   catch(error){reason=String(error?.message||error);}
-   finally{if(player.bxDirect===d)stopDirect(player,reason);}})();
+   catch(error){reason=String(error?.message||error);ended=false;}
+   finally{if(player.bxDirect===d)stopDirect(player,reason,ended);}})();
   return true;
  }
- function stopDirect(player,reason){
+ // ended: the track finished normally (the panel styles it apart without reading the translated reason).
+ function stopDirect(player,reason,ended=false){
   const d=player.bxDirect;if(!d)return;player.bxDirect=null;
   try{d.reader.cancel().catch(()=>{});}catch{}d.track.stop();
-  status.capture={active:false,frames:d.rendered,reason};clearOrigin(player);player.bxDiagnostics?.event('capture',{active:false,reason});
+  status.capture={active:false,frames:d.rendered,reason,ended};clearOrigin(player);player.bxDiagnostics?.event('capture',{active:false,reason});
   // The video path has another time base and clock: no temporal history across the switch (audit C13).
   player.bxEngine?.resetHistory();player.bxGpu?.engine?.resetHistory();
  }
  function renderDirect(player,frame){
-  const d=player.bxDirect,t=player.bxTiming;
+  const d=player.bxDirect,tm=player.bxTiming;
   if(!d||!player.bxEngine||player.isStopped||!player.gl||player.gl.isContextLost())return;
   const w=frame.displayWidth,h=frame.displayHeight;if(!w||!h)return;
   // Every decoded frame: capture time (VideoFrame timestamp) and arrival, before the FPS limit.
@@ -451,9 +453,9 @@
   // to this script, which adds decoding and main-thread delays (status.origin.arrivalNetwork false).
   const at=performance.now(),ms=frame.timestamp/1000;let meta=null;try{meta=frame.metadata?.();}catch{}
   const network=Number.isFinite(meta?.receiveTime),arrival=network?meta.receiveTime:at;
-  if(t){if(d.frames===1)clearOrigin(player);t.arrivalNetwork=network;keep(t.server,ms,at);keep(t.arrival,arrival,at);origin(player,t,ms,arrival);}
+  if(tm){if(d.frames===1)clearOrigin(player);tm.arrivalNetwork=network;keep(tm.server,ms,at);keep(tm.arrival,arrival,at);origin(player,tm,ms,arrival);}
   // Nothing is shown while the page is hidden (no rAF): close frames without processing them.
-  if(document.hidden||t?.pacer&&t.lastTick!=null&&performance.now()-t.lastTick>250)return;
+  if(document.hidden||tm?.pacer&&tm.lastTick!=null&&performance.now()-tm.lastTick>250)return;
   // Better xCloud's FPS limit, on capture time (frames may arrive bunched); same rule as shouldDraw.
   const fps=player.targetFps;
   if(fps<=0)return;
@@ -468,7 +470,7 @@
    if(check)player.gl.getError();
    if(!engine.render(frame,ow,oh,renderSettings,ms/1000,api.diagnostic,slot,true))return;
    // Some drivers may not take a decoder frame as a texture: check the first frames once and fall back.
-   if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,'A GPU não aceitou o quadro direto: usando o vídeo');player.bxDirectFailed=true;return;}
+   if(check&&player.gl.getError()!==player.gl.NO_ERROR){stopDirect(player,t('A GPU não aceitou o quadro direto: usando o vídeo'));player.bxDirectFailed=true;return;}
    d.rendered++;pacer.add({slot,arrival:performance.now(),rtp:ms,clock:'frame',receive:network&&player.bxDiagnostics?.active?arrival:null});
    publish(player,{w,h,ow,oh,shown,newFrame:true,timing});
    // Main-thread cost of this frame (measurement only; the late series needs the rVFC metadata, video path only).
@@ -481,10 +483,10 @@
   const want=settings.fluidity!=='off'&&settings.capture==='direct';
   if(player.bxCaptureEpoch!==captureEpoch){player.bxCaptureEpoch=captureEpoch;player.bxDirectFailed=false;}
   if(!want){if(player.bxDirect)stopDirect(player,'');return false;}
-  if(!player.bxDirect&&!player.bxDirectFailed&&!startDirect(player)){player.bxDirectFailed=true;if(!status.capture.reason)status.capture={active:false,frames:0,reason:'Captura direta indisponível neste navegador'};}
+  if(!player.bxDirect&&!player.bxDirectFailed&&!startDirect(player)){player.bxDirectFailed=true;if(!status.capture.reason)status.capture={active:false,frames:0,reason:t('Captura direta indisponível neste navegador')};}
   const d=player.bxDirect;if(!d)return false;
   // The video path keeps rendering until the first direct frame; with none within 2 s, it stays.
-  if(d.frames===0&&performance.now()-d.started>2000){stopDirect(player,'Nenhum quadro da captura direta: usando o vídeo');player.bxDirectFailed=true;return false;}
+  if(d.frames===0&&performance.now()-d.started>2000){stopDirect(player,t('Nenhum quadro da captura direta: usando o vídeo'));player.bxDirectFailed=true;return false;}
   // Watchdog (audit C13): after the first frames the reader may stop delivering while the track still reads live.
   // This runs from the video's own frame callback, so the <video> element is presenting frames: when it shows more
   // than 5 new ones over a second without any direct frame (page visible, not paused), the video path takes over.
@@ -493,7 +495,7 @@
    // Without the video's frame counter, 3 s without a direct frame.
    const count=player.$video?.getVideoPlaybackQuality?.().totalVideoFrames,known=Number.isFinite(count);
    if(known&&d.videoMark===null)d.videoMark=count;
-   if(known?count-d.videoMark>5:performance.now()-d.lastAt>3000){stopDirect(player,'A captura direta parou de entregar quadros: usando o vídeo');player.bxDirectFailed=true;return false;}
+   if(known?count-d.videoMark>5:performance.now()-d.lastAt>3000){stopDirect(player,t('A captura direta parou de entregar quadros: usando o vídeo'));player.bxDirectFailed=true;return false;}
   }
   return d.frames>0;
  }
