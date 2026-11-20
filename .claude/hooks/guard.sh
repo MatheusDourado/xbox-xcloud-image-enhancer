@@ -53,8 +53,10 @@ if re.search(git + r"\bpush\b", c):
     if branch == "main":
         block("push a partir da main. Crie um branch e abra PR.")
 
-writes = r"(>|\bsed\s+-\w*i|\bperl\s+-\w*i|\btee\b|\b(mv|cp|truncate)\b)"
+writes = r"(\bsed\s+-\w*i|\bperl\s+-\w*i|\btee\b|\b(mv|cp|truncate)\b)"
 for name, why in PROTECTED.items():
-    if re.search(r"(?<![\w.-])(\./)?" + re.escape(name) + r"(?![\w.-])", c) and re.search(writes, c):
+    ref = r"(?<![\w.-])(\./)?" + re.escape(name) + r"(?![\w.-])"
+    # Redirect only counts when the protected file is its target (2>&1 or > /dev/null elsewhere is fine).
+    if re.search(r">\s*" + ref, c) or (re.search(ref, c) and re.search(writes, c)):
         block(name + " é " + why + ".")
 '
