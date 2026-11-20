@@ -93,10 +93,11 @@ A API do painel e o formato da medição estão em [docs/api-imagefilter.md](doc
 ## Desenvolvimento
 
 ```sh
-python3 tools/build.py
-node --test tests/engine.test.cjs tests/filter.test.cjs tests/play.test.cjs tests/playback.test.cjs
-python3 tools/run-browser-tests.py
+tools/check.sh rapido     # build, testes Node, lint (~5 s)
+tools/check.sh completo   # + testes de navegador (Playwright)
 ```
+
+O build precisa de Python 3.10+ (no macOS: `uv run -p 3.12 --no-project tools/build.py`). Guia para agentes de IA e esteira de desenvolvimento: [AGENTS.md](AGENTS.md). Índice da documentação: [docs/README.md](docs/README.md).
 
 - `src/`: motor (`restoration-engine.js`), adaptador (`image-filter.js`), painel, HUD, host e prelude do play.xbox.com (`src/play/`), shaders e WebGPU.
 - `tools/build.py` gera `better-xcloud-image-filter.user.js`, `xcloud-image-filter-play.user.js` e `output/restoration.bundle.js`.
