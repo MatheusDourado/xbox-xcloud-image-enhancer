@@ -7,7 +7,7 @@ Output: output/nn/train.npz (uint8 patches, input and target luma).
 """
 import os, sys, random
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'eval'))
 import make_eval_set as ev
 

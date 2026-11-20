@@ -9,7 +9,7 @@ Usage: python3 tools/eval/make_eval_set.py <texture dir>
 Texture dir: Khronos glTF-Sample-Assets textures (Sponza, FlightHelmet, DamagedHelmet)
 and OpenCV sample photos; see docs/historico/analysis-v9.1.md.
 """
-import glob, os, subprocess, sys
+import os, subprocess, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
