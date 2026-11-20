@@ -51,6 +51,11 @@ Ferramentas: Node 22, `uv` (traz Python 3.12, `uvx ruff`), `npx` (Biome). LSP pa
 - Bloqueio é para parar e repensar, não para contornar. Se a ação for mesmo necessária, peça ao usuário.
 - Testes dos hooks: `bash .claude/hooks/test-hooks.sh`.
 
+## Vários agentes no mesmo worktree
+
+- Pode haver outros agentes trabalhando agora no mesmo worktree e branch (ex.: pesquisa em `docs/pesquisa/`). Arquivo que você não criou nem editou não é seu: não apague, não mova, não commite.
+- Commite só os seus arquivos, pelo nome (`git add <arquivo>`); nunca `git add -A`, `git add .` ou `git commit -a`. Para guardar trabalho, use commit WIP, não `git stash` (a pilha é compartilhada).
+
 ## Convenções
 
 - Docs, painel e commits em português; comentários de código em inglês.

@@ -46,7 +46,7 @@ git = r"\bgit\b[^;&|]*"
 rules = [
     (git + r"\bpush\b[^;&|]*(\s--force(-with-lease)?\b|\s-\w*f\b|\s\+\S)", "push forçado reescreve o remoto. Faça um commit novo."),
     (git + r"\bpush\b[^;&|]*[\s:+]main(?![\w./-])", "push direto para main. Abra um PR (a esteira exige CI verde antes do merge)."),
-    (git + r"\breset\b[^;&|]*--hard", "git reset --hard descarta trabalho. Use git stash push -m <tag> ou um commit WIP."),
+    (git + r"\breset\b[^;&|]*--hard", "git reset --hard descarta trabalho. Guarde o trabalho num commit WIP (o stash é compartilhado entre agentes)."),
     (git + r"\bclean\b[^;&|]*\s-\w*f", "git clean -f apaga arquivos não versionados sem volta."),
     (git + r"\b(checkout|restore)\b[^;&|]*\s(--\s+)?\.(\s|$)", "descartar todas as mudanças do worktree. Restaure arquivo por arquivo, sabendo o que perde."),
     (r"\brm\b(?=[^;&|]*\s(-\w*r\w*|--recursive)\b)(?=[^;&|]*\s(-\w*f\w*|--force)\b)", "rm -rf. Apague arquivos versionados com git rm; temporários um a um."),
