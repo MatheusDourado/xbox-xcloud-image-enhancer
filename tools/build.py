@@ -1,5 +1,6 @@
 from pathlib import Path
-import json,re,hashlib
+import json,re,hashlib,sys
+if sys.version_info < (3, 10): sys.exit('tools/build.py precisa de Python 3.10+ (use: uv run -p 3.12 --no-project tools/build.py)')
 source=Path('script.js').read_text(encoding='utf-8')
 assert '// @version      6.7.12' in source
 upstream=source
