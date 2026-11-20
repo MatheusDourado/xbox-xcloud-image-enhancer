@@ -4,7 +4,7 @@ Tratamento de imagem na GPU e stream em 1080p para o Xbox Cloud Gaming. Funciona
 
 Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 
-**Versão atual: v10.2.1.** Veja [notas da v10.2.1](docs/release-v10.2.1.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
+**Versão atual: v10.2.2.** Veja [notas da v10.2.2](docs/release-v10.2.2.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
 
 ## O que faz
 
@@ -25,7 +25,7 @@ Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 
 ### Android
 
-1. Baixe `xcloud-imagefilter-10.2.1.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
+1. Baixe `xcloud-imagefilter-10.2.2.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
 2. Abra **xCloud Enhanced** (ícone de nuvem com controle). É um app WebView que abre o xCloud com os dois scripts já carregados.
 
 Detalhes em [android/README.md](android/README.md).
@@ -117,7 +117,8 @@ Prioridades em [docs/historico/proxima-build.md](docs/historico/proxima-build.md
 
 | Versão | Destaques |
 | --- | --- |
-| [v10.2.1](docs/release-v10.2.1.md) | A Fluidez deixa de descartar quadros que chegam colados; uso de GPU só quando há medição real |
+| [v10.2.2](docs/release-v10.2.2.md) | Botão Xbox volta a abrir o guia (sair do jogo) no app com play.xbox.com; cores da barra de atraso no painel |
+| [v10.2.1](docs/historico/release-v10.2.1.md) | A Fluidez deixa de descartar quadros que chegam colados; uso de GPU só quando há medição real |
 | [v10.2.0](docs/historico/release-v10.2.0.md) | Frame time e uso de GPU no HUD, aviso de tela a 120 Hz, voto de 60 Hz no app, pedido de 1440p experimental |
 | [v10.1.3](docs/historico/release-v10.1.3.md) | Textos em português, inglês e espanhol, pela região da conta |
 | [v10.1.2](docs/historico/release-v10.1.2.md) | Correções da auditoria da v10.1.1 |

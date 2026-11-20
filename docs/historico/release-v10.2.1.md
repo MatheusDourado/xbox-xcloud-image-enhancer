@@ -1,6 +1,6 @@
 # v10.2.1 — Fluidez sem descarte de quadros colados e GPU sem número falso
 
-Userscripts `6.7.12-imagefilter.10.2.1` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.1-play` (play.xbox.com), app Android **10.2.1** (`versionCode` 100201). Inclui tudo da [v10.2.0](historico/release-v10.2.0.md). Nenhum filtro de imagem mudou.
+Userscripts `6.7.12-imagefilter.10.2.1` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.1-play` (play.xbox.com), app Android **10.2.1** (`versionCode` 100201). Inclui tudo da [v10.2.0](release-v10.2.0.md). Nenhum filtro de imagem mudou.
 
 Correções a partir do teste da v10.2.0 no Poco F7 (Gears of War 4, 60 FPS, tela a 60 Hz). Como a v10.2.0, esta versão saiu sem medição no aparelho: o efeito foi reproduzido e corrigido num teste com o padrão de quadros da sessão, não no celular.
 
