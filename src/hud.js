@@ -272,7 +272,8 @@
    look = look || alerts.length > 0;
   } else {
    put(f.word, t(w.word) + (neuralOff ? ' · ' + t('SEM NEURAL') : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
-   put(f.gpuMs, x.gpuShow === null ? '—' : (fence ? '≈' : '') + fmt(x.gpuShow, 1), x.gpuShow === null ? 'none' : G('gpu', x.gGpuShow));
+   // Measured GPU time of the treatment (GPU timer); without one there is nothing reliable to show.
+   put(f.gpuMs, x.gpuMs === null ? '—' : fmt(x.gpuMs, 1), x.gpuMs === null ? 'none' : G('gpu', x.gGpu));
    put(f.mean, on && p ? fmt(p.meanMs, 1) : '—', devG);
    put(f.dev, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.p95, on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', x.gP95) : 'none');

@@ -167,9 +167,23 @@ test('pacer turns irregular arrival into a steady display cadence',()=>{
  assert.ok(balanced.p.extraDelayMs<15&&max.p.extraDelayMs<25);
  assert.equal(balanced.p.cadenceMs,1000/30);
 });
+test('pacer at 60 Hz spreads frames captured too close together instead of dropping one (uneven server cadence)',()=>{
+ // Field export (Poco F7, Gears 4, 60 Hz panel): the server captures pairs ~8 ms apart followed by a ~25 ms gap.
+ // Showing the newest of two due frames dropped 8.9% of them and left a 33 ms hole right after.
+ const a=api(),vsync=1000/60,frames=[];let rtp=0;for(let i=0;i<600;i++){rtp+=(i%4===1?8.3:i%4===2?25:1000/60)*1.002;frames.push({rtp,arrival:rtp+30});}
+ for(const mode of ['balanced','max']){
+  const p=a.createPacer(mode),shown=[];let i=0;
+  for(let t=0;t<11000;t+=vsync){while(i<frames.length&&frames[i].arrival<=t){p.add({slot:'s',arrival:frames[i].arrival,rtp:frames[i].rtp});i++;}if(p.tick(t))shown.push(t);}
+  const stats=a.frameStats(shown.slice(60));
+  assert.ok(p.dropped<=2,mode+' dropped '+p.dropped);// The stream runs 0.2% slower than the display: one repeated frame over the run is the stream's own.
+  assert.ok(stats.hitches<=2,mode+' '+JSON.stringify(stats));assert.ok(p.extraDelayMs<40,mode+' delay '+p.extraDelayMs);}
+ // Three due at once (a stall): only the newest two matter, one shown now and one kept for the next refresh.
+ const p=a.createPacer('balanced');for(let k=0;k<3;k++)p.add({slot:'s'+k,arrival:k,rtp:null});
+ assert.equal(p.tick(1e6).slot,'s1');assert.equal(p.dropped,1);assert.equal(p.tick(1e6+vsync).slot,'s2');
+});
 test('pacer drops the oldest frames when the queue overflows and RTP clock unwraps 32-bit time',()=>{
  const a=api(),p=a.createPacer('balanced');for(let i=0;i<6;i++)p.add({slot:'s'+i,arrival:i,rtp:null});assert.equal(p.queued,3);assert.equal(p.dropped,3);
- const f=p.tick(1e6);assert.equal(f.slot,'s5');assert.equal(p.queued,0);
+ const f=p.tick(1e6);assert.equal(f.slot,'s4');assert.equal(p.queued,1);assert.equal(p.dropped,4);
  const clock=a.createRtpClock();assert.equal(clock(0xFFFFFF00),0);assert.ok(Math.abs(clock(0x00000200)-(0x300/90))<1e-9);assert.equal(clock(NaN),null);
  assert.equal(a.defaults.fluidity,'off');assert.equal(a.normalize({fluidity:'max'}).fluidity,'max');assert.equal(a.normalize({fluidity:'x'}).fluidity,'off');
 });
@@ -238,7 +252,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,4);assert.equal(r.version,'10.2.0');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,4);assert.equal(r.version,'10.2.1');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -259,7 +273,7 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v10\.2\.0-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v10\.2\.1-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
 // Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez
