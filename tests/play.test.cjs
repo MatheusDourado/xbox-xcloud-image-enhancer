@@ -152,8 +152,9 @@ test('real panel refresh rate from the app bridge: status.panelHz and a warning 
  const p=play({});p.context.STATES={currentStream:{peerConnection:p.pc}};p.decode.grow=60;p.decode.fps=60;
  const warn=()=>p.api.status.warnings.find(w=>w.key==='panel-hz');
  await p.tick();await p.tick();assert.equal(p.api.status.panelHz,null,'no app bridge');assert.equal(warn(),undefined);
- let hz=120.0005,asked=0;p.window.BxAndroid={getDisplayHz:()=>hz,getRefreshRate:()=>asked};
- await p.tick();assert.equal(p.api.status.panelHz,120);assert.match(warn().text,/120 Hz/);assert.match(warn().text,/Taxa da tela/);
+ let hz=120.0005,asked=0,busy=-1;p.window.BxAndroid={getDisplayHz:()=>hz,getRefreshRate:()=>asked,getGpuBusy:()=>busy};
+ await p.tick();assert.equal(p.api.status.panelHz,120);assert.equal(p.api.status.gpuBusy,null,'the system refused the reading');
+ busy=87;await p.tick();assert.equal(p.api.status.gpuBusy,87);assert.match(warn().text,/120 Hz/);assert.match(warn().text,/Taxa da tela/);
  assert.equal(JSON.parse(p.api.configText()).status.panelHz,120);
  // The app asked for 60 Hz and the system kept 120: say so.
  asked=60;await p.tick();assert.match(warn().text,/apesar do pedido de 60 Hz/);

@@ -129,6 +129,14 @@ public class MainActivity extends Activity {
         @JavascriptInterface public double getDisplayHz() {
             try { return getWindowManager().getDefaultDisplay().getRefreshRate(); } catch (Exception error) { return 0; }
         }
+        /** Whole-GPU load in percent (Adreno kgsl sysfs), or -1 when the system does not let the app read it. */
+        @JavascriptInterface public int getGpuBusy() {
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader("/sys/class/kgsl/kgsl-3d0/gpu_busy_percentage"))) {
+                return Integer.parseInt(reader.readLine().replaceAll("[^0-9]", ""));
+            } catch (Exception error) {
+                return -1;
+            }
+        }
         @JavascriptInterface public String getAppInfo() { return BuildConfigInfo.VERSION; }
         @JavascriptInterface public void setRefreshRate(final int hz) {
             prefs.edit().putInt("refreshRate", Math.max(0, hz)).apply();

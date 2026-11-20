@@ -30,6 +30,8 @@
   stream:null,
   // Real refresh rate of the panel right now (Android app bridge, Display.getRefreshRate); null in a browser.
   panelHz:null,
+  // Whole-GPU load in percent from the Android app (Adreno sysfs), null when the system does not let the app read it.
+  gpuBusy:null,
   // Audit C02: what the last frame really ran (BxRestoration.planEffective: strengths after the compression adaptation
   // and the GPU budget, the AA path, requested values and the budget's cuts) and every reduction of the current
   // budget in order ({step, reason, revision, source}); status.adaptation is only the last reason.
@@ -154,7 +156,7 @@
     qp:q?.qp,bitsPerPixel:q?.bitsPerPixel,level:status.adaptive?.level,gpuMs:status.gpuP95??status.gpuEstimate?.p95,waitMs:status.fluidity?.extraMs,
     decoderDropped:q?.framesDropped,freezes:q?.freezes,capture:activePlayer?.bxDirect?.rendered>0?'direct':'video',
     // Source size, physical video height on screen and the refresh rate asked of the app (audit F10).
-    width:q?.width,height:q?.height,display:status.display,refreshHz:androidCall('getRefreshRate'),panelHz:status.panelHz});
+    width:q?.width,height:q?.height,display:status.display,refreshHz:androidCall('getRefreshRate'),panelHz:status.panelHz,gpuBusy:status.gpuBusy});
   }catch{status.net=null;}finally{telemetryBusy=false;updateWarnings();}
  }
  // The quantizer level moves the treatment only after a sustained change: an exponential mean of
@@ -189,6 +191,7 @@
   // The panel at 90 Hz or more with a ~60 FPS stream: measured on the Poco F7 as the largest local pacing problem
   // (docs/medicoes/poco-nfs-2026-11-09: decoding 9 -> 25 ms, frame time deviation 2.5 -> 7 ms at 120 Hz).
   const hz=Number(androidCall('getDisplayHz')),asked=Number(androidCall('getRefreshRate'));status.panelHz=hz>0?Math.round(hz):null;
+  const busy=androidCall('getGpuBusy');status.gpuBusy=typeof busy==='number'&&busy>=0?Math.min(100,Math.round(busy)):null;
   if(status.panelHz>=90&&net?.fpsReceived>45)w.push({level:'warn',key:'panel-hz',text:asked>0&&asked<90
    ?t('O sistema manteve a tela a {0} Hz apesar do pedido de {1} Hz: mude a taxa nas configurações do Android.',status.panelHz,asked)
    :t('Tela a {0} Hz com jogo a 60 FPS: o ritmo fica irregular. Use 60 Hz em Taxa da tela.',status.panelHz)});

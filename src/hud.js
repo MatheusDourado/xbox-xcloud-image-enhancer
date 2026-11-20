@@ -78,14 +78,15 @@
 .bxif-h-val{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .bxif-h-bar{flex:none;display:flex;gap:1px;width:calc(72px*var(--s));height:calc(5px*var(--s));margin-left:auto;border-radius:1px;overflow:hidden;background:rgba(255,255,255,.08)}
 .bxif-h-bar>i{flex:0 1 0;min-width:0}
-.bxif-h-bar>i:nth-child(1){background:#d7dbe2}.bxif-h-bar>i:nth-child(2){background:#a9afba}.bxif-h-bar>i:nth-child(3){background:#7c8391}.bxif-h-bar>i:nth-child(4){background:#565c68}
-.bxif-h-bar>i:nth-child(5){background:repeating-linear-gradient(45deg,#a9afba 0 2px,transparent 2px 4px)}
 .bxif-h-leg{display:block;height:calc(13px*var(--s));line-height:calc(13px*var(--s));padding-left:calc(62px*var(--s));font-size:calc(10px*var(--s));overflow:hidden}
 .bxif-h-warn{display:flex;align-items:center;gap:calc(5px*var(--s));height:calc(17px*var(--s));min-width:0}
 .bxif-h-warn>.bxif-h-val{font-weight:500;font-size:calc(10.5px*var(--s))}
 @media (prefers-reduced-motion:reduce){.bxif-hud,.bxif-hud *{transition:none!important;animation:none!important}}
 `;
  const STEP = 500, WATCH = 1000, CHIPS = 2;
+ // Latency bar segments and their legend letters (network, buffer, decoding, treatment, wait): hues apart from the
+ // grade colours (yellow/red), so a segment never reads as a warning.
+ const SEG = ['#5aa9ff', '#b48cff', '#ff9f5a', '#5fd38d', '#e879c6'];
  const RANK = v => v === 'bad' ? 3 : v === 'ok' ? 2 : v === 'good' || v === 'info' ? 1 : 0;
  const num = v => typeof v === 'number' && Number.isFinite(v);
  // HUD scale (--s) from the same media queries as the CSS.
@@ -114,15 +115,15 @@
  function buildCard() {
   const d = dot(), fps = field('bxif-h-fps'), tag = field('bxif-h-tag', ''), badge = field('bxif-h-badge', ''), cv = E('canvas', 'bxif-h-spark');
   off(tag.e, true); off(badge.e, true);
-  const rit = minCh(field(), 9), trav = minCh(field(), 2), lat = minCh(field(), 3);
+  const rit = minCh(field(), 9), trav = minCh(field(), 2), lat = minCh(field(), 3), gpu = minCh(field(), 4);
   const chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')], l3 = E('div', 'bxif-h-l3', chips[0].e, chips[1].e);
   off(l3, true);
-  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab('MS'), rit.e, lab(t('TRAV')), trav.e, lab('LAT'), lat.e), l3);
-  return {kind: 'card', dot: d, fps, tag, badge, cv, rit, trav, lat, chips, chipEls: chips.map(c => c.e), l3, spark: {count: 60, w: 56, h: 12}};
+  el.append(E('div', 'bxif-h-l1', d.e, fps.e, lab('FPS'), tag.e, cv, badge.e), E('div', 'bxif-h-l2', lab('MS'), rit.e, lab(t('TRAV')), trav.e, lab('LAT'), lat.e, lab('GPU'), gpu.e), l3);
+  return {kind: 'card', dot: d, fps, tag, badge, cv, gpu, rit, trav, lat, chips, chipEls: chips.map(c => c.e), l3, spark: {count: 60, w: 56, h: 12}};
  }
  function buildLateral(w, full) {
   const d = dot(), fps = field('bxif-h-fps'), tag = field('bxif-h-tag', ''), badge = field('bxif-h-badge', ''), cv = E('canvas', 'bxif-h-spark');
-  const rit = field(), ritDev = field('bxif-h-s'), trav = field(), lat = field(), chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')];
+  const rit = field(), ritDev = field('bxif-h-s'), trav = field(), lat = field(), gpu = field(), chips = [field('bxif-h-chip', ''), field('bxif-h-chip', '')];
   const line = (...kids) => E('div', null, ...kids), cap = text => { const e = line(lab(text)); e.className = 'bxif-h-cap'; return e; };
   const chipRows = chips.map(c => line(c.e)), badgeRow = line(badge.e), tagRow = line(tag.e);
   for (const e of [...chipRows, badgeRow, tagRow]) off(e, true);
@@ -137,16 +138,18 @@
    rows.push(line(sub('p95 '), extra.p95.e), cap(t('TRAV')), line(trav.e), ...extra.descRows, ...extra.waitRows, cap('LAT'), line(lat.e),
     cap('MB/S'), line(extra.br.e), cap('QP'), line(extra.qp.e), cap(t('PERDA')), line(extra.loss.e));
   } else rows.push(cap(t('TRAV')), line(trav.e), cap('LAT'), line(lat.e));
+  rows.push(cap('GPU'), line(gpu.e));
   el.append(E('div', 'bxif-h-col', line(d.e, fps.e), line(lab('FPS')), cv, ...rows, ...chipRows, badgeRow, tagRow));
-  return {kind: 'lateral', dot: d, fps, tag, badge, cv, rit, ritDev, trav, lat, chips, chipEls: chipRows, badgeEl: badgeRow, tagEl: tagRow, extra, spark: {count: 60, w: sw / s, h: full ? 16 : 12}};
+  return {kind: 'lateral', dot: d, fps, tag, badge, cv, gpu, rit, ritDev, trav, lat, chips, chipEls: chipRows, badgeEl: badgeRow, tagEl: tagRow, extra, spark: {count: 60, w: sw / s, h: full ? 16 : 12}};
  }
  function buildFull() {
   const d = dot(), word = field('bxif-h-word', ''), fps = field('bxif-h-big'), cv = E('canvas', 'bxif-h-spark');
   const mean = field(), dev = field(), p95 = field(), hit = field(), missParts = [sub(' · ' + t('pul') + ' '), null], miss = field(), descParts = [sub(' · ' + t('desc') + ' '), null, sub('/min')], desc = field();
   missParts[1] = miss.e; descParts[1] = desc.e;
   const wait = field(), capSep = sub(' · '), cap = field();
-  const total = field(), bar = E('span', 'bxif-h-bar', E('i'), E('i'), E('i'), E('i'), E('i'));
-  const leg = ['R', 'B', 'D', 'T', t('E')].map((k, i) => ({k: sub((i ? ' · ' : '') + k + ' '), v: field()}));
+  const total = field(), bar = E('span', 'bxif-h-bar', ...SEG.map(c => { const e = E('i'); e.style.background = c; return e; }));
+  const leg = ['R', 'B', 'D', 'T', t('E')].map((k, i) => { const key = sub((i ? ' · ' : '') + k + ' '); key.style.color = SEG[i]; return {k: key, v: field()}; });
+  const gpu = field(), gpuMs = field();
   const vin = field(), vout = field(), codec = field('bxif-h-s', ''), dec = field();
   const br = field(), qp = field(), loss = field();
   const wbadge = field('bxif-h-badge', ''), wtext = field('bxif-h-val', '');
@@ -158,11 +161,11 @@
   if (s === 1) { off(legEl, true); off(videoRow, true); }
   for (const x of leg) legEl.append(x.k, x.v.e);
   el.append(E('div', 'bxif-h-head', d.e, word.e, fps.e, lab('FPS')), cv,
-   E('div', 'bxif-h-grp', row('Ritmo', mean.e, sub(' ms '), dev.e, sub(' · p95 '), p95.e), row('Quadros', sub(t('trav') + ' '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e)),
+   E('div', 'bxif-h-grp', row('Ritmo', mean.e, sub(' ms '), dev.e, sub(' · p95 '), p95.e), row('Quadros', sub(t('trav') + ' '), hit.e, ...missParts, ...descParts), row('Fluidez', wait.e, capSep, cap.e), row('GPU', gpu.e, sub(' · '), gpuMs.e, sub(' ms'))),
    E('div', 'bxif-h-grp', E('div', 'bxif-h-row', lab(t('Atraso est.')), total.e, bar), legEl),
    E('div', 'bxif-h-grp', videoRow, row('Rede', br.e, sub(' Mb/s · QP '), qp.e, sub(' · ' + t('perda') + ' '), loss.e)),
    warn);
-  return {kind: 'full', dot: d, word, fps, cv, mean, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,
+  return {kind: 'full', dot: d, word, fps, cv, gpu, gpuMs, mean, dev, p95, hit, miss, missParts, desc, descParts, wait, capSep, cap, total, bar, leg, vin, vout, codec, dec, br, qp, loss, warn, wbadge, wtext,
    spark: {count: 240, w: 220, h: 24}};
  }
 
@@ -230,7 +233,10 @@
   put(f.fps, fmtInt(x.fpsAny), fpsG);
   drawSparkline(f.cv, status.intervals, {count: f.spark.count, T: x.T, dim: !on, scale: s, ok: '#ffd666', bad: '#ff7b86'});
   const rate = drops.push(x.fl ? x.fl.dropped : null);
-  let look = RANK(overall) > 1 || x.warnCount > 0 || neuralOff || [devG, hitG, totalG, fpsG, missG].some(v => RANK(v) > 1);
+  const gpuG = G('gpu-pct', x.gGpuPct);
+  let look = RANK(overall) > 1 || x.warnCount > 0 || neuralOff || [devG, hitG, totalG, fpsG, missG, gpuG].some(v => RANK(v) > 1);
+  // GPU load: the whole GPU, or "≈" the treatment's share of the frame time when the system hides it.
+  put(f.gpu, x.gpuPct === null ? '—' : (x.gpuPctEst ? '≈' : '') + x.gpuPct + '%', x.gpuPct === null ? 'none' : gpuG);
   if (f.kind !== 'full') {
    // Frame time on screen: mean interval and its deviation (16,7 ±0,5 is a steady 60 FPS).
    const dev = on && p ? '±' + fmt(p.deviationMs, 1) : '';
@@ -266,6 +272,7 @@
    look = look || alerts.length > 0;
   } else {
    put(f.word, t(w.word) + (neuralOff ? ' · ' + t('SEM NEURAL') : ''), neuralOff && w.grade === 'good' ? 'ok' : w.grade === 'good' ? null : w.grade);
+   put(f.gpuMs, x.gpuShow === null ? '—' : (fence ? '≈' : '') + fmt(x.gpuShow, 1), x.gpuShow === null ? 'none' : G('gpu', x.gGpuShow));
    put(f.mean, on && p ? fmt(p.meanMs, 1) : '—', devG);
    put(f.dev, on && p ? '±' + fmt(p.deviationMs, 1) : '—', devG);
    put(f.p95, on && p ? fmtMs(p.p95Ms) : '—', on && p ? G('p95', x.gP95) : 'none');

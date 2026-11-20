@@ -194,6 +194,10 @@
   s.L = settings.gpuBudget || 10; s.gGpu = grade('gpu', s.gpu, {L: s.L});
   s.gpuEst = on && status.measurement !== 'gpu' && num(status.gpuEstimate?.p95) ? status.gpuEstimate.p95 : null; s.gGpuEst = grade('gpu-est', s.gpuEst, {T});
   s.gpuShow = s.gpu !== null ? s.gpu : s.gpuEst; s.gGpuShow = s.gpu !== null ? s.gGpu : s.gGpuEst;
+  // GPU load in percent: the whole GPU when the app can read it; otherwise the treatment's GPU time against the frame
+  // time (gpuPctEst true: the treatment only, and the fence estimate reads high on WebGL2).
+  s.gpuPctEst = !num(status.gpuBusy); s.gpuPct = !s.gpuPctEst ? status.gpuBusy : on && s.gpuShow !== null && T > 0 ? Math.round(s.gpuShow * 100 / T) : null;
+  s.gGpuPct = s.gpuPct === null ? 'none' : s.gpuPct >= 90 ? 'bad' : s.gpuPct >= 75 ? 'ok' : 'good';
   s.gBitrate = grade('bitrate', n?.bitrateMbps, {height: n?.height});
   s.qp = num(status.adaptive?.qpMean) ? status.adaptive.qpMean : n && num(n.qp) ? n.qp : null; s.gQp = grade('qp', s.qp);
   // Bitrate estimate when the browser reports no QP (Android WebView): shown as "≈", never as a QP reading.
