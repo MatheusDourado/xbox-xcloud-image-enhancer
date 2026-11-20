@@ -9,3 +9,7 @@ output/eval/
 output/nn/
 output/spec4-entrada-*.bin
 android/dist/
+docs/medicoes/**/*.log
+docs/medicoes/**/*-rec.json
+docs/medicoes/**/*-measurement.json
+docs/medicoes/**/screens/

@@ -4,6 +4,7 @@ APK 10.1.0 (`6.7.12-imagefilter.10.1.0`, sha 7840a7cb), WebView 156.0.8078.47, A
 Coleta: Perfetto enxuto (`scripts/lean.pbtx`: frametimeline, gpu_work_period, cpu_frequency), medição do app (schema 3),
 gravador na página (`scripts/rec.js`: status 1 s, rVFC por quadro, LoAF) e limites de clock/temperatura (`caps4.log`).
 Os `.pftrace` ficam em `traces/` (fora do git, 123 MB).
+Gravações (`*-rec.json`), medições (`*-measurement.json`), logs (`*.log`) e prints (`screens/`) saíram do checkout em 2026-11-20; recupere com `git show 87d27e3:docs/medicoes/poco-nfs-2026-11-09/<arquivo>`.
 
 Config do usuário em todas, salvo indicação: Tratada, neural 1, 1440 + SGSR, Fluidez Equilibrada + Captura direta, Aliviar GPU = Nunca, renderizador pedido WebGPU.
 
