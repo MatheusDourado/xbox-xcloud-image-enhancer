@@ -4,7 +4,7 @@ Requires: python3 tools/eval/make_eval_set.py <textures>, a static server at the
 root (python3 -m http.server 8765) and Playwright with Chromium.
 Usage: python3 tools/eval/run_eval.py [search|report] [--bundle path]
 """
-import json, sys, os
+import os
 from playwright.sync_api import sync_playwright
 
 SCENES = ['textures', 'sponza', 'sky']

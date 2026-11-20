@@ -61,7 +61,7 @@ Com o segundo critério em aberto, o **Auto fica em WebGL2**. O WebGPU fica disp
 
 ### Tarefa 1: detecção
 
-Conferi a sonda da Spec 1 (`docs/spec1-estudo.md`, seção WebGPU) contra a bancada desta spec. Hoje:
+Conferi a sonda da Spec 1 (`docs/historico/spec1-estudo.md`, seção WebGPU) contra a bancada desta spec. Hoje:
 
 | Item | Poco F7 (WebView 156, app) | Vostro 3400 (Chrome 157) |
 | --- | --- | --- |

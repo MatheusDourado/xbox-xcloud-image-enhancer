@@ -1,6 +1,6 @@
 # Conclusões — sessão de depuração no Poco F7 (2026-11-09, 20:05–23:17)
 
-NFS Hot Pursuit Remastered (30 FPS) e Gears of War 4 (60 FPS), play.xbox.com e www.xbox.com, APK 10.1.0 e 10.1.1-test. Os números de cada corrida estão no [README.md](README.md); a lista de trabalho está em [../../proxima-build.md](../../proxima-build.md).
+NFS Hot Pursuit Remastered (30 FPS) e Gears of War 4 (60 FPS), play.xbox.com e www.xbox.com, APK 10.1.0 e 10.1.1-test. Os números de cada corrida estão no [README.md](README.md); a lista de trabalho está em [../../proxima-build.md](../../historico/proxima-build.md).
 
 ## 1. Conclusão principal
 

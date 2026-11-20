@@ -479,6 +479,10 @@
   "en": "Shows at the server's pace and fixes network and decoding jitter. Adds a few ms of wait.",
   "es": "Muestra al ritmo del servidor y corrige la oscilación de la red y la decodificación. Añade pocos ms de espera."
  },
+ "Experimental: declara TV (Tizen) com tela 2560×1440 e pede 1440p ao servidor, que decide o que envia. Confira a resolução recebida no HUD.": {
+  "en": "Experimental: declares a TV (Tizen) with a 2560×1440 display and asks the server for 1440p; the server decides what it sends. Check the received resolution on the HUD.",
+  "es": "Experimental: declara una TV (Tizen) con pantalla 2560×1440 y pide 1440p al servidor, que decide qué envía. Comprueba la resolución recibida en el HUD."
+ },
  "FPS, ritmo, travadas e latência num canto pequeno.": {
   "en": "FPS, pacing, stutters and latency in a small corner.",
   "es": "FPS, ritmo, tirones y latencia en una esquina pequeña."
@@ -758,6 +762,10 @@
  "O sistema decide a taxa": {
   "en": "The system decides the rate",
   "es": "El sistema decide la tasa"
+ },
+ "O sistema manteve a tela a {0} Hz apesar do pedido de {1} Hz: mude a taxa nas configurações do Android.": {
+  "en": "The system kept the display at {0} Hz despite the {1} Hz request: change the rate in the Android settings.",
+  "es": "El sistema mantuvo la pantalla a {0} Hz pese a la petición de {1} Hz: cambia la tasa en los ajustes de Android."
  },
  "O site informa ao servidor o tempo de decodificação do aparelho; com ~21 ms (Poco F7) o servidor derruba o 1080p para 720p em ~15 s. Ligado, o site informa no máximo 8 ms; a telemetria do painel continua mostrando o tempo real. Se o vídeo atrasar ou travar, desligue. Vale no próximo jogo.": {
   "en": "The site reports the device's decoding time to the server; at ~21 ms (Poco F7) the server drops 1080p to 720p in ~15 s. When on, the site reports at most 8 ms; the panel telemetry still shows the real time. If the video lags or freezes, turn it off. Applies next game.",
@@ -1170,6 +1178,10 @@
  "Taxa da tela": {
   "en": "Screen refresh rate",
   "es": "Tasa de pantalla"
+ },
+ "Tela a {0} Hz com jogo a 60 FPS: o ritmo fica irregular. Use 60 Hz em Taxa da tela.": {
+  "en": "Display at {0} Hz with a 60 FPS game: pacing gets uneven. Use 60 Hz in Screen refresh rate.",
+  "es": "Pantalla a {0} Hz con juego a 60 FPS: el ritmo se vuelve irregular. Usa 60 Hz en Tasa de pantalla."
  },
  "Tela em {0} Hz não é múltiplo de {1} FPS: use 60 ou 120 Hz.": {
   "en": "Screen at {0} Hz is not a multiple of {1} FPS: use 60 or 120 Hz.",

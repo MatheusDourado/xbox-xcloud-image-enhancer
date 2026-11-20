@@ -1,0 +1,6 @@
+# Bug-only rules (pyflakes + syntax errors). Style stays free on purpose: see docs/superpowers/specs/2026-11-20-harness-organizacao-design.md (E1).
+target-version = "py312"
+exclude = ["output"]
+
+[lint]
+select = ["F", "E9"]

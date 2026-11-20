@@ -3,7 +3,7 @@
   const t=globalThis.BxI18n?.t||((s,...a)=>s.replace(/\{(\d)\}/g,(m,i)=>a[i]??m));
   // target()/targetPair() use a local t: the message is built out here.
   const incompleteFbo=()=>new Error(t('Framebuffer incompleto'));
-  // v9 defaults come from tools/eval (docs/analysis-v9.md): same sharpness as the clean
+  // v9 defaults come from tools/eval (docs/historico/analysis-v9.md): same sharpness as the clean
   // render with the highest fidelity on xCloud-like H.264 streams.
   const defaults = Object.freeze({mode:'filtered',fluidity:'off',capture:'video',adaptive:true,hud:'off',hudPosition:'top-left',smoothing:0,neural:0,cleanup:0,deband:.6,chroma:.75,detail:0,temporal:0,upscale:true,output:'auto',antialias:0,gpuBudget:6,sharpness:2,scaler:'easu',processing:'cas',sharpening:'usm',spatialMode:'selective',lumaSharpen:true,noiseFloor:4,processingMode:'performance',contrast:1,saturation:1,shadows:0,desynchronized:false,renderer:'auto',streamResolution:'1080p',preventDrops:true});
   function normalize(value={}) {
@@ -17,7 +17,7 @@
     if(['auto','webgl2','webgpu'].includes(value.renderer))result.renderer=value.renderer;
     // play.xbox.com only (src/play/prelude.js): the resolution asked of the server and the decode-time cap. Read
     // when a stream starts. Default 1080p with the cap: the new site asks 720p, and the server drops 1080p without it.
-    if(['auto','1080p','1080p-hq'].includes(value.streamResolution))result.streamResolution=value.streamResolution;
+    if(['auto','1080p','1080p-hq','1440p'].includes(value.streamResolution))result.streamResolution=value.streamResolution;
     if(typeof value.preventDrops==='boolean')result.preventDrops=value.preventDrops;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
     if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;
@@ -49,7 +49,7 @@
     return height>sourceHeight*1.04?String(height):'native';
   }
   // SGSR 1 (Spec 3 item 5) parameters from the Nitidez slider. Measured on compressed video
-  // (docs/spec2-estudo.md, Ganho visual): edge threshold 20/255 and strength 1.0 at the default
+  // (docs/historico/spec2-estudo.md, Ganho visual): edge threshold 20/255 and strength 1.0 at the default
   // sharpness 2. The slope matches the edge energy of USM: SGSR 1.0/1.5 give 1.08/1.31 against USM
   // 2/3 at 1.04/1.26, so strength = 0.2 + 0.4 x sharpness (3 -> 1.4, 4.5 -> 2.0, the upstream value).
   // Sharpness 0 skips the edge step (threshold above any vote): plain bilinear scaling, no sharpening.
@@ -97,7 +97,7 @@
     this.cadenceOver=current<reference*ratio?this.cadenceOver+1:0;
     if(this.cadenceOver>=3){this.degrade('cadence');this.cadenceOver=0;}
   },fenceTrend(p50,reference){
-    // Early warning only (docs/spec2-estudo.md 10.4, an inference): the fence p50 above 1.5 frame
+    // Early warning only (docs/historico/spec2-estudo.md 10.4, an inference): the fence p50 above 1.5 frame
     // intervals for 3 windows in a row. It never reduces the treatment: the fence includes queued work,
     // so it is an upper bound, and the GPU occupancy, not milliseconds, is what the study validated.
     if(!Number.isFinite(p50)||!Number.isFinite(reference)||reference<=0){this.fenceOver=0;return false;}
@@ -216,7 +216,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:4,version:'10.1.3',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:4,version:'10.2.0',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT,frames:FRAME_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||frameCut||segments.length>=256,eventsTruncated:eventsCut,
         // Schema 4 (audit C09): frames = [id, segment, renderedMs, presentedMs, state]; passes[] lists the sequences
         // as scheduled (a deferred last pass is marked @present); presentation says how many of them ran.
@@ -377,8 +377,8 @@
   function compressionLevel(qp){if(!Number.isFinite(qp))return null;const t=Math.min(1,Math.max(0,(qp-20)/16));return Math.round(t*t*(3-2*t)*10)/10;}
   function compressionScales(level){if(level===null||!Number.isFinite(level))return {cleanup:1,deband:1,detail:1};
     return {cleanup:.6+.8*level,deband:.6+.8*level,detail:1.2-.4*level};}
-  // One-tap starting points. natural = Spec 3 defaults (docs/spec3-implementacao.md); v9 = the previous defaults (docs/analysis-v9.md); console = sharpness
-  // 2 for less texture flicker (docs/analysis-v9.1.md); the others trade fidelity for a purpose.
+  // One-tap starting points. natural = Spec 3 defaults (docs/historico/spec3-implementacao.md); v9 = the previous defaults (docs/historico/analysis-v9.md); console = sharpness
+  // 2 for less texture flicker (docs/historico/analysis-v9.1.md); the others trade fidelity for a purpose.
   const presets=Object.freeze({
     natural:{label:'Natural',description:'Padrão da Spec 3: nitidez 2, degradês 60%, sem Compressão nem Detalhe (menos GPU, índice visual maior).',values:{sharpness:2,cleanup:0,deband:.6,chroma:.75,detail:0,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
     v9:{label:'Padrão v9',description:'Padrão anterior (v9): nitidez 3, Compressão 50%, Degradês 30%, Detalhe 20%. Mais GPU.',values:{sharpness:3,cleanup:.5,deband:.3,chroma:.75,detail:.2,sharpening:'usm',lumaSharpen:true,neural:0,temporal:0,antialias:0,output:'auto'}},
@@ -391,12 +391,12 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.1.3-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.2.0-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   const vertex='#version 300 es\nlayout(location=0) in vec2 position;void main(){gl_Position=vec4(position,0,1);}';
-  // Spatial pass variants (Spec 3, docs/spec2-estudo.md 10.2). The precision profile comes from the GPU:
+  // Spatial pass variants (Spec 3, docs/historico/spec2-estudo.md 10.2). The precision profile comes from the GPU:
   // mediump color math where mediump really is half precision (Adreno/Mali report 10 bits, Poco F7
   // spatial 2.9 -> 2.3 ms), highp elsewhere (Iris Xe and SwiftShader gain nothing and keep the
   // generic shader's exact output). Strengths stay uniforms: the compression adaptation moves them.

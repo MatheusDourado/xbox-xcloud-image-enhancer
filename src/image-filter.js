@@ -28,6 +28,10 @@
   // play.xbox.com (BxPlayStream.info): the stream settings, what the last session asked of the server and whether the
   // site's decoding time is being capped (capActive); null on the Better xCloud build.
   stream:null,
+  // Real refresh rate of the panel right now (Android app bridge, Display.getRefreshRate); null in a browser.
+  panelHz:null,
+  // Whole-GPU load in percent from the Android app (Adreno sysfs), null when the system does not let the app read it.
+  gpuBusy:null,
   // Audit C02: what the last frame really ran (BxRestoration.planEffective: strengths after the compression adaptation
   // and the GPU budget, the AA path, requested values and the budget's cuts) and every reduction of the current
   // budget in order ({step, reason, revision, source}); status.adaptation is only the last reason.
@@ -86,7 +90,7 @@
   async exportMeasurement(){const engine=activeEngine,player=activePlayer;if(!engine)return null;player?.bxEngine?.poll();player?.bxGpu?.engine?.poll();engine.diagnostics.stop();
    const report=engine.diagnostics.report();report.final=await BxRestoration.captureVideoStats(player?.$video,peer());report.net=status.net;
    report.status={capture:status.capture,fluidity:status.fluidity??null,adaptive:status.adaptive,smoothing:status.smoothing??null,pacing:status.pacing??null,origin:status.origin??null,gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,neural:status.neural,
-    adaptation:status.adaptation,cuts:status.cuts,effective:status.effective,display:status.display??null,resolution:status.resolution,renderer:{...status.renderer},stream:status.stream,warnings:status.warnings.map(w=>w.text)};
+    adaptation:status.adaptation,cuts:status.cuts,effective:status.effective,display:status.display??null,panelHz:status.panelHz,resolution:status.resolution,renderer:{...status.renderer},stream:status.stream,warnings:status.warnings.map(w=>w.text)};
    const saved=report.segments.length>0;if(saved)BxRestoration.downloadReport(report);
    report.saved=saved;return report;},
   // Clipboard: the Android app's bridge first (its WebView may deny navigator.clipboard).
@@ -95,7 +99,7 @@
   configText(){const native=nativePrefs();
    const o=status.origin,round=v=>typeof v==='number'?Math.round(v*10)/10:v;
    return JSON.stringify({build:globalThis.BxBuild?.version,app:window.BxAndroid?.getAppInfo?.()??null,screen:`${screen.width}×${screen.height} @${window.devicePixelRatio}`,
-    status:{resolution:status.resolution,stream:status.stream,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,cuts:status.cuts.map(c=>c.reason),effective:status.effective,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
+    status:{resolution:status.resolution,stream:status.stream,panelHz:status.panelHz,fps:round(status.fps),gpuP95:status.gpuP95,gpuEstimate:status.gpuEstimate,measurement:status.measurement,adaptation:status.adaptation,cuts:status.cuts.map(c=>c.reason),effective:status.effective,neural:status.neural,smoothing:status.smoothing,fluidity:status.fluidity,capture:status.capture,adaptive:status.adaptive},
     pacing:status.pacing&&{meanMs:round(status.pacing.meanMs),deviationMs:round(status.pacing.deviationMs),p95Ms:round(status.pacing.p95Ms),hitches:status.pacing.hitches},
     origin:o&&{server:o.server&&[round(o.server.meanMs),round(o.server.deviationMs)],arrival:o.arrival&&[round(o.arrival.meanMs),round(o.arrival.deviationMs)],missed:o.missed,presented:o.presented},
     net:status.net&&Object.fromEntries(Object.entries(status.net).map(([k,v])=>[k,k==='bitsPerPixel'&&typeof v==='number'?Math.round(v*1000)/1000:round(v)])),warnings:status.warnings.map(w=>w.text),
@@ -152,7 +156,7 @@
     qp:q?.qp,bitsPerPixel:q?.bitsPerPixel,level:status.adaptive?.level,gpuMs:status.gpuP95??status.gpuEstimate?.p95,waitMs:status.fluidity?.extraMs,
     decoderDropped:q?.framesDropped,freezes:q?.freezes,capture:activePlayer?.bxDirect?.rendered>0?'direct':'video',
     // Source size, physical video height on screen and the refresh rate asked of the app (audit F10).
-    width:q?.width,height:q?.height,display:status.display,refreshHz:androidCall('getRefreshRate')});
+    width:q?.width,height:q?.height,display:status.display,refreshHz:androidCall('getRefreshRate'),panelHz:status.panelHz,gpuBusy:status.gpuBusy});
   }catch{status.net=null;}finally{telemetryBusy=false;updateWarnings();}
  }
  // The quantizer level moves the treatment only after a sustained change: an exponential mean of
@@ -184,6 +188,13 @@
   const resolution=pref('stream.video.resolution');if(resolution&&!/^1080p/.test(resolution)&&resolution!=='auto')w.push({level:'warn',key:'resolution',text:t('Resolução alvo abaixo de 1080p.')});
   if(net?.height&&net.height<1000)w.push({level:'warn',key:'stream',text:t('O servidor está enviando {0}p.',net.height)});
   if(net?.decoder==='software')w.push({level:'warn',key:'decoder',text:t('Decodificação por software (CPU).')});
+  // The panel at 90 Hz or more with a ~60 FPS stream: measured on the Poco F7 as the largest local pacing problem
+  // (docs/medicoes/poco-nfs-2026-11-09: decoding 9 -> 25 ms, frame time deviation 2.5 -> 7 ms at 120 Hz).
+  const hz=Number(androidCall('getDisplayHz')),asked=Number(androidCall('getRefreshRate'));status.panelHz=hz>0?Math.round(hz):null;
+  const busy=androidCall('getGpuBusy');status.gpuBusy=typeof busy==='number'&&busy>=0?Math.min(100,Math.round(busy)):null;
+  if(status.panelHz>=90&&net?.fpsReceived>45)w.push({level:'warn',key:'panel-hz',text:asked>0&&asked<90
+   ?t('O sistema manteve a tela a {0} Hz apesar do pedido de {1} Hz: mude a taxa nas configurações do Android.',status.panelHz,asked)
+   :t('Tela a {0} Hz com jogo a 60 FPS: o ritmo fica irregular. Use 60 Hz em Taxa da tela.',status.panelHz)});
   if(net?.lossPct>1)w.push({level:net.lossPct>2?'error':'warn',key:'loss',text:t('Perda de pacotes de {0}%.',dec(net.lossPct))});
   // Explicit 2K/4K above the display (e.g. 1080p HDMI to a 4K TV) is scaled back down by the browser.
   if(settings.mode==='filtered'&&['1440','2160'].includes(settings.output)&&status.display&&Number(settings.output)>status.display*1.1)w.push({level:'info',key:'output',text:t('Tela em {0}p: saída maior só aumenta custo. Use Auto.',status.display)});

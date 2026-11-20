@@ -32,7 +32,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //
-// Changes here (docs/spec2-estudo.md, Spec 3 item 5): WebGL2 has no textureGather, so the 12 luma
+// Changes here (docs/historico/spec2-estudo.md, Spec 3 item 5): WebGL2 has no textureGather, so the 12 luma
 // samples are texelFetch reads of Rec.709 luma (upstream gathers the green channel); edge threshold
 // and sharpness are uniforms (measured 20/255 and 1.0 for compressed video: the original 8/255 and 2.0
 // enhance codec artifacts); a zero-sum guard; and the output finishing of the sharpening pass it

@@ -4,7 +4,7 @@ Tratamento de imagem na GPU e stream em 1080p para o Xbox Cloud Gaming. Funciona
 
 Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 
-**Versão atual: v10.1.3.** Veja [notas da v10.1.3](docs/release-v10.1.3.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
+**Versão atual: v10.2.0.** Veja [notas da v10.2.0](docs/release-v10.2.0.md) e baixe em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest).
 
 ## O que faz
 
@@ -25,7 +25,7 @@ Projeto **não oficial**, sem vínculo com a Microsoft nem com o Better xCloud.
 
 ### Android
 
-1. Baixe `xcloud-imagefilter-10.1.3.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
+1. Baixe `xcloud-imagefilter-10.2.0.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) e instale. O APK não vem da Play Store, então o Android vai pedir para permitir a instalação.
 2. Abra **xCloud Enhanced** (ícone de nuvem com controle). É um app WebView que abre o xCloud com os dois scripts já carregados.
 
 Detalhes em [android/README.md](android/README.md).
@@ -85,7 +85,7 @@ A API do painel e o formato da medição estão em [docs/api-imagefilter.md](doc
 
 ## Desempenho e limites
 
-- O painel mostra a GPU no p95. No WebGL2 do Android não há cronômetro de GPU: o valor vem de *fence*, que é um limite superior. No Poco ele superestima ~1,8× o tempo real. Para medir de verdade, use o Perfetto (`gpu_work_period`); veja [docs/proxima-sessao-testes-poco.md](docs/proxima-sessao-testes-poco.md).
+- O painel mostra a GPU no p95. No WebGL2 do Android não há cronômetro de GPU: o valor vem de *fence*, que é um limite superior. No Poco ele superestima ~1,8× o tempo real. Para medir de verdade, use o Perfetto (`gpu_work_period`); veja [docs/historico/proxima-sessao-testes-poco.md](docs/historico/proxima-sessao-testes-poco.md).
 - Acima do limite de "Aliviar GPU", o app desliga etapas nesta ordem: temporal, saída ampliada, AA, rede neural, degradês, compressão, detalhe e cor. As preferências salvas não mudam, e o painel mostra o que está efetivo.
 - O tratamento não controla o bitrate do servidor nem recupera detalhes que a compressão descartou.
 - O 1080p e o anti-queda dependem do comportamento atual do site (`/v5/sessions/cloud/play`, `x-ms-device-info`, `WebRtcStreamV1`) e podem parar de funcionar se a Microsoft mudar o site.
@@ -93,10 +93,11 @@ A API do painel e o formato da medição estão em [docs/api-imagefilter.md](doc
 ## Desenvolvimento
 
 ```sh
-python3 tools/build.py
-node --test tests/engine.test.cjs tests/filter.test.cjs tests/play.test.cjs tests/playback.test.cjs
-python3 tools/run-browser-tests.py
+tools/check.sh rapido     # build, testes Node, lint (~5 s)
+tools/check.sh completo   # + testes de navegador (Playwright)
 ```
+
+O build precisa de Python 3.10+ (no macOS: `uv run -p 3.12 --no-project tools/build.py`). Guia para agentes de IA e esteira de desenvolvimento: [AGENTS.md](AGENTS.md). Índice da documentação: [docs/README.md](docs/README.md).
 
 - `src/`: motor (`restoration-engine.js`), adaptador (`image-filter.js`), painel, HUD, host e prelude do play.xbox.com (`src/play/`), shaders e WebGPU.
 - `tools/build.py` gera `better-xcloud-image-filter.user.js`, `xcloud-image-filter-play.user.js` e `output/restoration.bundle.js`.
@@ -106,7 +107,7 @@ python3 tools/run-browser-tests.py
 
 ## Próxima versão
 
-Prioridades em [docs/proxima-build.md](docs/proxima-build.md):
+Prioridades em [docs/historico/proxima-build.md](docs/historico/proxima-build.md):
 1. travar a tela em 60 Hz de verdade;
 2. parar a composição sem quadro novo;
 3. avisos de servidor distante e de limitação térmica;
@@ -116,18 +117,19 @@ Prioridades em [docs/proxima-build.md](docs/proxima-build.md):
 
 | Versão | Destaques |
 | --- | --- |
-| [v10.1.3](docs/release-v10.1.3.md) | Textos em português, inglês e espanhol, pela região da conta |
-| [v10.1.2](docs/release-v10.1.2.md) | Correções da auditoria da v10.1.1 |
-| [v10.1.1](docs/release-v10.1.1.md) | 1080p e anti-queda no play.xbox.com; nome, ícone e widget xCloud Enhanced; HUD estável; primeiros testes ao vivo no Poco |
-| [v10.1.0](docs/release-v10.1.0.md) | Correções da auditoria do play.xbox.com, avisos da rede neural, medição schema 3 |
-| [v10.0.0](docs/release-v10.0.0.md) | Renderizador WebGPU opcional (Specs 1–4) |
-| [v9.8.0](docs/release-v9.8.0.md) | Menos GPU no Poco: padrões novos, `mediump`, SGSR |
-| [v9.7.1](docs/release-v9.7.1.md) · [v9.7](docs/release-v9.7.md) | Adaptação sem QP, captura direta, perfis, painel e HUD novos |
-| [v9.6.1](docs/release-v9.6.1.md) · [v9.6](docs/release-v9.6.md) | Fluidez (ritmo constante na exibição) |
-| [v9.5.1](docs/release-v9.5.1.md) · [v9.4](docs/release-v9.4.md) · [v9.3](docs/release-v9.3.md) · [v9.2](docs/release-v9.2.md) | Suavidade, latência por etapa, testes de codec, decodificação por hardware |
-| [v9.1](docs/analysis-v9.1.md) · [v9](docs/analysis-v9.md) | Reconstrução neural; padrões por medição objetiva |
-| [v8.6](docs/validation-v8.6.md) · [v8.5](docs/validation-v8.5.md) · [v8](docs/validation-v8.md) | Nitidez no painel, Cor nas bordas, Detalhe, RCAS, limpeza seletiva |
-| [v3–v7](docs/validation-v3.md) | Motor WebGL2 em duas passagens, degradês, temporal e FSR 1 |
+| [v10.2.0](docs/release-v10.2.0.md) | Frame time e uso de GPU no HUD, aviso de tela a 120 Hz, voto de 60 Hz no app, pedido de 1440p experimental |
+| [v10.1.3](docs/historico/release-v10.1.3.md) | Textos em português, inglês e espanhol, pela região da conta |
+| [v10.1.2](docs/historico/release-v10.1.2.md) | Correções da auditoria da v10.1.1 |
+| [v10.1.1](docs/historico/release-v10.1.1.md) | 1080p e anti-queda no play.xbox.com; nome, ícone e widget xCloud Enhanced; HUD estável; primeiros testes ao vivo no Poco |
+| [v10.1.0](docs/historico/release-v10.1.0.md) | Correções da auditoria do play.xbox.com, avisos da rede neural, medição schema 3 |
+| [v10.0.0](docs/historico/release-v10.0.0.md) | Renderizador WebGPU opcional (Specs 1–4) |
+| [v9.8.0](docs/historico/release-v9.8.0.md) | Menos GPU no Poco: padrões novos, `mediump`, SGSR |
+| [v9.7.1](docs/historico/release-v9.7.1.md) · [v9.7](docs/historico/release-v9.7.md) | Adaptação sem QP, captura direta, perfis, painel e HUD novos |
+| [v9.6.1](docs/historico/release-v9.6.1.md) · [v9.6](docs/historico/release-v9.6.md) | Fluidez (ritmo constante na exibição) |
+| [v9.5.1](docs/historico/release-v9.5.1.md) · [v9.4](docs/historico/release-v9.4.md) · [v9.3](docs/historico/release-v9.3.md) · [v9.2](docs/historico/release-v9.2.md) | Suavidade, latência por etapa, testes de codec, decodificação por hardware |
+| [v9.1](docs/historico/analysis-v9.1.md) · [v9](docs/historico/analysis-v9.md) | Reconstrução neural; padrões por medição objetiva |
+| [v8.6](docs/historico/validation-v8.6.md) · [v8.5](docs/historico/validation-v8.5.md) · [v8](docs/historico/validation-v8.md) | Nitidez no painel, Cor nas bordas, Detalhe, RCAS, limpeza seletiva |
+| [v3–v7](docs/historico/validation-v3.md) | Motor WebGL2 em duas passagens, degradês, temporal e FSR 1 |
 
 ## Fontes e licenças
 

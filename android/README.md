@@ -1,10 +1,10 @@
-# xCloud Enhanced para Android — v10.1.3
+# xCloud Enhanced para Android — v10.2.0
 
-App Android próprio (WebView) que abre o xCloud e injeta o userscript desta versão (Better xCloud 6.7.12 + tratamento de imagem **v10.1.3**). **Não é o app oficial do Better xCloud**: o app oficial é de código fechado (o repositório `redphx/better-xcloud-android` só tem o README), então não dá para modificá-lo.
+App Android próprio (WebView) que abre o xCloud e injeta o userscript desta versão (Better xCloud 6.7.12 + tratamento de imagem **v10.2.0**). **Não é o app oficial do Better xCloud**: o app oficial é de código fechado (o repositório `redphx/better-xcloud-android` só tem o README), então não dá para modificá-lo.
 
 ## Instalar
 
-1. Baixe `xcloud-imagefilter-10.1.3.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) (gerado pela CI a partir do commit da versão).
+1. Baixe `xcloud-imagefilter-10.2.0.apk` em [Releases](https://github.com/MatheusDourado/xbox-xcloud-image-enhancer/releases/latest) (gerado pela CI a partir do commit da versão).
 2. No celular, permita instalar apps da fonte usada (navegador ou gerenciador de arquivos) e instale.
 3. Abra **xCloud Enhanced** (ícone de nuvem com controle), faça login na conta Microsoft e entre num jogo.
 4. No menu do Better xCloud → **Vídeo**, mantenha o renderizador **WebGL2**. O painel **Tratamento de imagem** fica logo abaixo de Renderizador. Em **05 Indicadores e ferramentas**, ligue os indicadores no jogo: no celular eles ficam na faixa preta ao lado do vídeo.
@@ -19,7 +19,7 @@ Pode ser instalado junto com o app oficial: o pacote é outro (`com.imagefilter.
 - **Stream em 1080p**: o xCloud escolhe a resolução pelo sistema informado e manda 720p para Android. Na primeira execução, o app ajusta a **Resolução alvo** do Better xCloud para **1080p (HQ)**, que se apresenta ao servidor como TV. Se você mudar essa opção, a sua escolha é mantida. Vale a partir da próxima sessão de jogo.
 - **Marcado como jogo** (Android Game Mode / HyperOS Game Turbo): adicione o app ao Game Turbo para manter CPU e GPU em desempenho. O downscaling e a troca de FPS pelo sistema ficam desligados.
 - O painel mostra se a decodificação é por hardware (MediaCodec) e o DT por quadro. No Android, ~5–15 ms é normal mesmo com hardware.
-- **Taxa da tela**: no painel, *Taxa da tela (app)* fixa 60/90/120 Hz (ou deixa o sistema decidir). A escolha fica salva no app.
+- **Taxa da tela**: no painel, *Taxa da tela (app)* fixa 60/90/120 Hz (ou deixa o sistema decidir). A escolha fica salva no app. No Android 15+ o app também registra o voto de taxa de quadros do próprio WebView e desliga o aumento de taxa por toque. O sistema pode ignorar o pedido (o HyperOS já ignorou): o painel e o HUD avisam quando a tela segue a 90/120 Hz com o jogo a 60 FPS.
 - **Suavidade**: alvo de buffer solicitado ao navegador, independente do renderizador; o painel informa suporte e o atraso medido. Não é uma garantia de latência máxima.
 - Botão B do controle não fecha o jogo (Android converte B não tratado em "voltar").
 - **Exportar medição** salva o JSON em `Downloads/xCloud ImageFilter`; **Copiar configuração** usa a área de transferência do sistema.
@@ -42,4 +42,4 @@ android/build.sh
 
 O script gera o userscript (`tools/build.py`), baixa o `android.jar` da API 34 se faltar, compila, gera o dex e assina com `android/debug.keystore`. Essa chave é **de teste** (senha `android`) e é fixa para que novas versões instalem por cima; não é segredo nem serve para loja.
 
-Validação da v10.1.0: mesmo certificado de teste das versões 9.x e 10.0.0, `minSdk 28`, `targetSdk 34`; `versionCode` 100100. Testes Node e Chrome/WebGL/WebGPU (SwiftShader) passaram; veja [as notas](../docs/release-v10.1.0.md). A v9.7 rodou num Poco F7 (Android 16) com o xCloud real: captura direta, exportação da medição e rede confirmadas. As correções da v10.0.0 e da v10.1.0 vêm da medição e da auditoria desse aparelho, mas **esta build ainda não rodou no Poco**.
+Validação da v10.1.0: mesmo certificado de teste das versões 9.x e 10.0.0, `minSdk 28`, `targetSdk 34`; `versionCode` 100100. Testes Node e Chrome/WebGL/WebGPU (SwiftShader) passaram; veja [as notas](../docs/historico/release-v10.1.0.md). A v9.7 rodou num Poco F7 (Android 16) com o xCloud real: captura direta, exportação da medição e rede confirmadas. As correções da v10.0.0 e da v10.1.0 vêm da medição e da auditoria desse aparelho, mas **esta build ainda não rodou no Poco**.

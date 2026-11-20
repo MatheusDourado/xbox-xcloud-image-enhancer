@@ -9,10 +9,11 @@ function play(settings={}){
  const sent=[],timers=[],decode={total:2.1,frames:100,time:1000,grow:0,msPerFrame:21};
  const advance=()=>{decode.time+=1000;decode.frames+=decode.grow;decode.total+=decode.grow*decode.msPerFrame/1000;};
  class RTCPeerConnection {addEventListener(){}getStats(){advance();return Promise.resolve(new Map([
-  ['v',{id:'v',type:'inbound-rtp',kind:'video',timestamp:decode.time,framesDecoded:decode.frames,framesReceived:decode.frames,totalDecodeTime:decode.total}],
+  ['v',{id:'v',type:'inbound-rtp',kind:'video',timestamp:decode.time,framesDecoded:decode.frames,framesReceived:decode.frames,totalDecodeTime:decode.total,framesPerSecond:decode.fps}],
   ['a',{id:'a',type:'inbound-rtp',kind:'audio',timestamp:decode.time}]]));}}
  class RTCRtpReceiver {getStats(){return Promise.resolve(new Map([['v',{type:'inbound-rtp',mediaType:'video',framesDecoded:decode.frames,totalDecodeTime:decode.total}]]));}}
- const window={fetch(input,init){sent.push({input,init});return Promise.resolve('response');},RTCPeerConnection,RTCRtpReceiver,
+ class RTCDataChannel {constructor(label){this.label=label;this.readyState='open';this.out=[];}send(data){this.out.push(data);}}
+ const window={fetch(input,init){sent.push({input,init});return Promise.resolve('response');},RTCPeerConnection,RTCRtpReceiver,RTCDataChannel,
   setInterval(fn){timers.push(fn);return timers.length;},clearInterval(){},setTimeout:()=>0,clearTimeout(){},addEventListener(){}};
  const context={window,Headers,Request,console,localStorage:{getItem:()=>null,setItem(){}},document:{},performance,screen:{width:1080,height:2400},WebGL2Player:class {}};
  vm.createContext(context);
@@ -32,7 +33,7 @@ test('stream settings: default 1080p with the decode cap, only valid values are 
  const ctx={globalThis:{},performance};vm.runInNewContext(fs.readFileSync('src/restoration-engine.js','utf8'),ctx);
  const a=ctx.globalThis.BxRestoration;
  assert.equal(a.defaults.streamResolution,'1080p');assert.equal(a.defaults.preventDrops,true);
- for(const v of ['auto','1080p','1080p-hq'])assert.equal(a.normalize({streamResolution:v}).streamResolution,v);
+ for(const v of ['auto','1080p','1080p-hq','1440p'])assert.equal(a.normalize({streamResolution:v}).streamResolution,v);
  assert.equal(a.normalize({streamResolution:'720p'}).streamResolution,'1080p');assert.equal(a.normalize({streamResolution:1080}).streamResolution,'1080p');
  assert.equal(a.normalize({preventDrops:false}).preventDrops,false);assert.equal(a.normalize({preventDrops:'false'}).preventDrops,true);
 });
@@ -112,6 +113,54 @@ test('adapter telemetry and warnings: real decodeMs while the site sees the cap,
  // Stream settings are live keys and survive Restaurar.
  p.api.update({streamResolution:'auto',preventDrops:false});p.api.reset();
  assert.equal(p.api.settings.streamResolution,'auto');assert.equal(p.api.settings.preventDrops,false);
+});
+
+test('1440p (experimental): tizen and a 2560×1440 display in the play request, and the data channels ask for it',async()=>{
+ const p=play({streamResolution:'1440p'});
+ await p.window.fetch(PLAY_URL,{method:'POST',body:playBody,headers:{'x-ms-device-info':deviceInfo}});
+ const init=p.sent[0].init;assert.equal(JSON.parse(init.body).settings.osName,'tizen');
+ assert.deepEqual({...JSON.parse(init.headers.get('x-ms-device-info')).dev.displayInfo.dimensions},{widthInPixels:2560,heightInPixels:1440});
+ const control=new p.window.RTCDataChannel('control'),message=new p.window.RTCDataChannel('message'),input=new p.window.RTCDataChannel('input');
+ const dims=JSON.stringify({type:'Message',target:'/streaming/characteristics/dimensionschanged',id:'1',cv:'',
+  content:JSON.stringify({horizontal:150,vertical:70,preferredWidth:807,preferredHeight:394,safeAreaLeft:0,safeAreaTop:0,safeAreaRight:807,safeAreaBottom:394,supportsCustomResolution:false})});
+ const auth=JSON.stringify({message:'authorizationRequest',accessKey:'k'}),other=JSON.stringify({type:'Message',target:'/streaming/characteristics/orientationchanged',content:'{"orientation":0}'});
+ control.send(auth);message.send(other);const bytes=new Uint8Array([1,2]);input.send(bytes);
+ assert.deepEqual(control.out,[auth]);assert.deepEqual(message.out,[other]);assert.equal(input.out[0],bytes,'binary and other messages untouched');
+ message.send(dims);
+ const sentDims=JSON.parse(message.out[1]),c=JSON.parse(sentDims.content);assert.equal(sentDims.id,'1');
+ assert.deepEqual(c,{horizontal:150,vertical:70,preferredWidth:2560,preferredHeight:1440,safeAreaLeft:0,safeAreaTop:0,safeAreaRight:2560,safeAreaBottom:1440,supportsCustomResolution:true});
+ // The site sent no resolution request: ours follows the dimensions, once per control channel.
+ assert.deepEqual(JSON.parse(control.out[1]),{message:'userRequestedResolutionUpdate',resolutionAlias:'1440'});
+ message.send(dims);assert.equal(control.out.length,2);
+ // The site's own request leaves with the 1440 alias.
+ control.send(JSON.stringify({message:'userRequestedResolutionUpdate',resolutionAlias:'1080'}));
+ assert.deepEqual(JSON.parse(control.out[2]),{message:'userRequestedResolutionUpdate',resolutionAlias:'1440'});
+ assert.deepEqual({...p.stream.info().qhd},{dimensions:2,alias:'site'});
+ // Dimensions before the control channel has sent anything: the request waits for it.
+ const control2=new p.window.RTCDataChannel('control');message.send(dims);assert.equal(control2.out.length,0);
+ control2.send(auth);assert.equal(control2.out.length,2);assert.equal(JSON.parse(control2.out[1]).resolutionAlias,'1440');
+});
+test('without 1440p the data channels are left alone',()=>{
+ const p=play({streamResolution:'1080p-hq'});
+ const control=new p.window.RTCDataChannel('control'),message=new p.window.RTCDataChannel('message');
+ const dims=JSON.stringify({type:'Message',target:'/streaming/characteristics/dimensionschanged',content:'{"preferredWidth":807,"preferredHeight":394}'});
+ const ask=JSON.stringify({message:'userRequestedResolutionUpdate',resolutionAlias:'1080'});
+ message.send(dims);control.send(ask);assert.deepEqual(message.out,[dims]);assert.deepEqual(control.out,[ask]);
+});
+
+test('real panel refresh rate from the app bridge: status.panelHz and a warning at 120 Hz with a 60 FPS stream',async()=>{
+ const p=play({});p.context.STATES={currentStream:{peerConnection:p.pc}};p.decode.grow=60;p.decode.fps=60;
+ const warn=()=>p.api.status.warnings.find(w=>w.key==='panel-hz');
+ await p.tick();await p.tick();assert.equal(p.api.status.panelHz,null,'no app bridge');assert.equal(warn(),undefined);
+ let hz=120.0005,asked=0,busy=-1;p.window.BxAndroid={getDisplayHz:()=>hz,getRefreshRate:()=>asked,getGpuBusy:()=>busy};
+ await p.tick();assert.equal(p.api.status.panelHz,120);assert.equal(p.api.status.gpuBusy,null,'the system refused the reading');
+ busy=87;await p.tick();assert.equal(p.api.status.gpuBusy,87);assert.match(warn().text,/120 Hz/);assert.match(warn().text,/Taxa da tela/);
+ assert.equal(JSON.parse(p.api.configText()).status.panelHz,120);
+ // The app asked for 60 Hz and the system kept 120: say so.
+ asked=60;await p.tick();assert.match(warn().text,/apesar do pedido de 60 Hz/);
+ hz=60;await p.tick();assert.equal(p.api.status.panelHz,60);assert.equal(warn(),undefined);
+ // A 30 FPS game on a 120 Hz panel is a whole multiple with room to spare: no warning.
+ hz=120;p.decode.fps=30;await p.tick();assert.equal(warn(),undefined);
 });
 
 // play.xbox.com host (src/play/host.js) on a minimal fake DOM: the floating widget and the panel dialog.
