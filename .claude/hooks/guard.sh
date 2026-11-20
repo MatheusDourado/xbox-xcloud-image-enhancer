@@ -31,19 +31,25 @@ if tool != "Bash":
     sys.exit(0)
 
 c = raw = inp.get("command", "")
-# Quoted text and heredoc bodies are data (commit messages, prompts), not commands,
-# unless handed to a shell (bash -c / sh -c / eval), where the quotes hold the command.
-if not re.search(r"\b(ba|z)?sh\s+-\w*c\b|\beval\b", c):
-    c = re.sub(r"<<-?\s*([\x27\"]?)(\w+)\1.*?^\2$", "", c, flags=re.S | re.M)
-    c = re.sub(r"\"(\\.|[^\"\\])*\"|\x27[^\x27]*\x27", "\"\"", c)
+sh = r"(?<![\w.-])(ba|z|da)?sh(?![\w.-])"  # bash, /bin/sh; not check.sh
+# Heredoc bodies and commit message arguments are data, not commands, unless the text goes to a
+# shell (bash <<EOF, bash [opts] -c, | bash, eval), where it is the command itself.
+def heredoc(m):
+    opener_line = c[:m.start()].rsplit("\n", 1)[-1]
+    return m.group(0) if re.search(sh, opener_line) else ""
+c = re.sub(r"<<-?\s*([\x27\"]?)(\w+)\1.*?^\2$", heredoc, c, flags=re.S | re.M)
+if not re.search(sh + r"[^;&|]*\s-\w*c\b|\|\s*(sudo\s+)?" + sh + r"|" + sh + r"\s*<<|\beval\b", c):
+    c = re.sub(r"(\s(-\w*m|--message|-F|--file)(=|\s+))(\"(\\.|[^\"\\])*\"|\x27[^\x27]*\x27|\S+)", r"\1", c)
+# Quotes do not hide flags or refs: git push "--force" is git push --force.
+c = c.replace("\"", " ").replace("\x27", " ")
 git = r"\bgit\b[^;&|]*"
 rules = [
     (git + r"\bpush\b[^;&|]*(\s--force(-with-lease)?\b|\s-\w*f\b|\s\+\S)", "push forçado reescreve o remoto. Faça um commit novo."),
-    (git + r"\bpush\b[^;&|]*[\s:]main\b", "push direto para main. Abra um PR (a esteira exige CI verde antes do merge)."),
+    (git + r"\bpush\b[^;&|]*[\s:+]main(?![\w./-])", "push direto para main. Abra um PR (a esteira exige CI verde antes do merge)."),
     (git + r"\breset\b[^;&|]*--hard", "git reset --hard descarta trabalho. Use git stash push -m <tag> ou um commit WIP."),
     (git + r"\bclean\b[^;&|]*\s-\w*f", "git clean -f apaga arquivos não versionados sem volta."),
     (git + r"\b(checkout|restore)\b[^;&|]*\s(--\s+)?\.(\s|$)", "descartar todas as mudanças do worktree. Restaure arquivo por arquivo, sabendo o que perde."),
-    (r"\brm\s+(-\w*r\w*f|-\w*f\w*r|-r\s+-f|-f\s+-r)", "rm -rf. Apague arquivos versionados com git rm; temporários um a um."),
+    (r"\brm\b(?=[^;&|]*\s(-\w*r\w*|--recursive)\b)(?=[^;&|]*\s(-\w*f\w*|--force)\b)", "rm -rf. Apague arquivos versionados com git rm; temporários um a um."),
 ]
 for pat, msg in rules:
     if re.search(pat, c, re.I if "rm" in pat else 0):

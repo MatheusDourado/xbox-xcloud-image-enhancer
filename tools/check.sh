@@ -5,7 +5,7 @@
 #   completo rapido + Playwright browser suites (minutes)
 # In CI (CI=true) the build must not change the committed generated files.
 set -euo pipefail
-cd "$(git rev-parse --show-toplevel)"
+cd "$(dirname "$0")/.."
 level="${1:-rapido}"
 case "$level" in rapido|completo) ;; *) echo "uso: tools/check.sh [rapido|completo]" >&2; exit 64 ;; esac
 

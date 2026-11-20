@@ -19,13 +19,24 @@ for c in 'git push --force origin x' 'git push -f' 'git push origin +main' 'git 
          'git push origin HEAD:main' 'git reset --hard HEAD~1' 'git clean -fdx' 'rm -rf src' 'rm -fr /tmp/x' \
          'bash -c "git push -f"' 'cd x && git reset --hard' 'git -C . push --force-with-lease origin x' \
          'echo x > better-xcloud-image-filter.user.js' 'echo x >> ./script.js' 'echo x > "script.js"' "sed -i '' s/a/b/ script.js" 'git checkout -- .' 'git restore .' \
-         'git commit -m "x" && git push -f' "sh -c 'git reset --hard'" 'eval "rm -rf build"'; do
+         'git commit -m "x" && git push -f' "sh -c 'git reset --hard'" 'eval "rm -rf build"' \
+         'git push "--force" origin x' 'git push origin "main"' 'bash -x -c "git push -f"' 'bash --login -c "git push -f"' \
+         'echo "git push -f" | bash' "bash <<EOF
+git push -f
+EOF" 'rm --recursive --force src' '/bin/bash -c "git push -f"' 'rm -r -f src' 'rm --force -r src'; do
   expect 2 guard.sh "$(bash_json "$c")" "bloqueia: $c"
 done
 for c in 'git push origin MatheusDourado/x' 'git push -u origin feat/y' 'git status' 'rm -f output/tmp.txt' \
          'git reset --soft HEAD~1' 'git diff -- script.js' 'cat script.js | head' 'tools/check.sh rapido' 'git checkout -b nova' \
          'grep -c x script.js 2>&1 | tail -1' 'node --check xcloud-image-filter-play.user.js > /dev/null' \
-         'git commit -m "fix: guarda bloqueia git push --force e rm -rf"' \
+         'git commit -m "fix: guarda bloqueia git push --force e rm -rf"' 'git push -u origin main-hotfix' \
+         'git commit --message="docs: git reset --hard"' 'rm -r build' \
+         "git commit -F - <<'EOF'
+fix: detecta bash <<EOF, | bash e rm --recursive --force
+EOF" \
+         "tools/check.sh rapido | tail -1; git commit -F - <<'EOF'
+fix: rm --recursive --force
+EOF" \
          "git commit -F - <<'EOF'
 docs: explicar git reset --hard
 EOF"; do
@@ -44,5 +55,8 @@ if [ -z "$(git -C "$root" status --porcelain -- src tools tests player script.js
 else
   echo "skip stop: há mudança de código no worktree"
 fi
+
+# The Stop hook calls tools/check.sh; it must work from any directory, even outside the repo.
+if (cd / && "$root/tools/check.sh" rapido >/dev/null 2>&1); then echo "ok   check.sh fora do repo"; else echo "FAIL check.sh fora do repo"; fail=1; fi
 
 exit $fail

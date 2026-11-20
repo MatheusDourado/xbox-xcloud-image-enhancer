@@ -13,3 +13,5 @@ docs/medicoes/**/*.log
 docs/medicoes/**/*-rec.json
 docs/medicoes/**/*-measurement.json
 docs/medicoes/**/screens/
+docs/medicoes/**/traces/
+docs/medicoes/**/*.pftrace
