@@ -14,11 +14,7 @@
       "Edit(/better-xcloud-image-filter.user.js)",
       "Edit(/xcloud-image-filter-play.user.js)",
       "Edit(/output/restoration.bundle.js)",
-      "Edit(/script.js)",
-      "Write(/better-xcloud-image-filter.user.js)",
-      "Write(/xcloud-image-filter-play.user.js)",
-      "Write(/output/restoration.bundle.js)",
-      "Write(/script.js)"
+      "Edit(/script.js)"
     ],
     "ask": [
       "Bash(git push origin v*)",
@@ -35,7 +31,9 @@
           {
             "type": "command",
             "command": "bash",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.sh"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/guard.sh"
+            ],
             "timeout": 10,
             "onFailure": "block"
           }
@@ -48,7 +46,9 @@
           {
             "type": "command",
             "command": "bash",
-            "args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-check.sh"],
+            "args": [
+              "${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-check.sh"
+            ],
             "timeout": 180
           }
         ]

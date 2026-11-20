@@ -18,12 +18,17 @@ expect() { # expect <code> <hook> <json> <label>
 for c in 'git push --force origin x' 'git push -f' 'git push origin +main' 'git push origin main' \
          'git push origin HEAD:main' 'git reset --hard HEAD~1' 'git clean -fdx' 'rm -rf src' 'rm -fr /tmp/x' \
          'bash -c "git push -f"' 'cd x && git reset --hard' 'git -C . push --force-with-lease origin x' \
-         'echo x > better-xcloud-image-filter.user.js' 'echo x >> ./script.js' "sed -i '' s/a/b/ script.js" 'git checkout -- .' 'git restore .'; do
+         'echo x > better-xcloud-image-filter.user.js' 'echo x >> ./script.js' 'echo x > "script.js"' "sed -i '' s/a/b/ script.js" 'git checkout -- .' 'git restore .' \
+         'git commit -m "x" && git push -f' "sh -c 'git reset --hard'" 'eval "rm -rf build"'; do
   expect 2 guard.sh "$(bash_json "$c")" "bloqueia: $c"
 done
 for c in 'git push origin MatheusDourado/x' 'git push -u origin feat/y' 'git status' 'rm -f output/tmp.txt' \
          'git reset --soft HEAD~1' 'git diff -- script.js' 'cat script.js | head' 'tools/check.sh rapido' 'git checkout -b nova' \
-         'grep -c x script.js 2>&1 | tail -1' 'node --check xcloud-image-filter-play.user.js > /dev/null'; do
+         'grep -c x script.js 2>&1 | tail -1' 'node --check xcloud-image-filter-play.user.js > /dev/null' \
+         'git commit -m "fix: guarda bloqueia git push --force e rm -rf"' \
+         "git commit -F - <<'EOF'
+docs: explicar git reset --hard
+EOF"; do
   expect 0 guard.sh "$(bash_json "$c")" "deixa: $c"
 done
 for f in better-xcloud-image-filter.user.js xcloud-image-filter-play.user.js output/restoration.bundle.js script.js; do

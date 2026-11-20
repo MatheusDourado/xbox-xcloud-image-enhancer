@@ -30,7 +30,12 @@ if tool in ("Edit", "Write", "MultiEdit", "NotebookEdit"):
 if tool != "Bash":
     sys.exit(0)
 
-c = inp.get("command", "")
+c = raw = inp.get("command", "")
+# Quoted text and heredoc bodies are data (commit messages, prompts), not commands,
+# unless handed to a shell (bash -c / sh -c / eval), where the quotes hold the command.
+if not re.search(r"\b(ba|z)?sh\s+-\w*c\b|\beval\b", c):
+    c = re.sub(r"<<-?\s*([\x27\"]?)(\w+)\1.*?^\2$", "", c, flags=re.S | re.M)
+    c = re.sub(r"\"(\\.|[^\"\\])*\"|\x27[^\x27]*\x27", "\"\"", c)
 git = r"\bgit\b[^;&|]*"
 rules = [
     (git + r"\bpush\b[^;&|]*(\s--force(-with-lease)?\b|\s-\w*f\b|\s\+\S)", "push forçado reescreve o remoto. Faça um commit novo."),
@@ -57,6 +62,6 @@ writes = r"(\bsed\s+-\w*i|\bperl\s+-\w*i|\btee\b|\b(mv|cp|truncate)\b)"
 for name, why in PROTECTED.items():
     ref = r"(?<![\w.-])(\./)?" + re.escape(name) + r"(?![\w.-])"
     # Redirect only counts when the protected file is its target (2>&1 or > /dev/null elsewhere is fine).
-    if re.search(r">\s*" + ref, c) or (re.search(ref, c) and re.search(writes, c)):
+    if re.search(r">\s*[\"\x27]?" + ref, raw) or (re.search(ref, raw) and re.search(writes, raw)):
         block(name + " é " + why + ".")
 '
