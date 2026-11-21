@@ -5,7 +5,7 @@
 // every action a <button>; nothing uses <select>, <svg> or the bx-focusable class.
 (() => {
  const api = window.BxImageFilter, settings = api.settings, status = api.status, doc = document;
- const VERSION = 'v10.2.2';
+ const VERSION = 'v10.2.3';
  const num = v => typeof v === 'number' && Number.isFinite(v);
  const t = globalThis.BxI18n?.t || ((s, ...a) => s.replace(/\{(\d)\}/g, (m, i) => a[i] ?? m));
 
@@ -718,7 +718,7 @@
  }
 
  /* =============================== Panel content =============================== */
- const FLU = {off: 'Desligada', balanced: 'Equilibrada', max: 'Máxima'};
+ const FLU = {off: 'Desligada', balanced: 'Equilibrada', max: 'Máxima', auto: 'Auto'};
  const CORNER = {'top-left': 'Superior esquerdo', 'top-right': 'Superior direito', 'bottom-left': 'Inferior esquerdo', 'bottom-right': 'Inferior direito'};
  const SMOOTH_STATE = {waiting: 'aguardando vídeo', unsupported: 'não suportado', requested: 'aceito', partial: 'parcial', error: 'falhou'};
  const WARN_HINT = {bitrate: 'Better xCloud › Stream: Bitrate máximo → Ilimitado.', resolution: 'Better xCloud › Stream: escolha 1080p.', loss: 'Prefira Wi-Fi 5 GHz ou cabo.',
@@ -765,10 +765,11 @@
   els.verdictBtn.tabIndex = -1; setA(els.verdictBtn, 'data-off', true);
   els.verdict = h('div', {class: 'bxif-verdict', 'data-bxif-out': 'verdict', 'data-g': 'none'}, h('i', {class: 'bxif-dot'}), els.verdictTx, els.verdictBtn);
   els.verdict.addEventListener('focusout', e => { if (!(e.relatedTarget && els.verdict.contains(e.relatedTarget))) verdict.dirty = true; });
-  const flu = choice({key: 'fluidity', label: t('Fluidez'), opts: [['off', t('Desligada')], ['balanced', t('Equilibrada')], ['max', t('Máxima')]], hint: v => t(({
+  const flu = choice({key: 'fluidity', label: t('Fluidez'), opts: [['off', t('Desligada')], ['balanced', t('Equilibrada')], ['max', t('Máxima')], ['auto', 'Auto']], hint: v => t(({
    off: 'Exibe cada quadro assim que chega: menor latência; o ritmo segue a rede.',
    balanced: 'Exibe no ritmo do servidor e corrige a oscilação da rede e da decodificação. Acrescenta poucos ms de espera.',
-   max: 'Ritmo fixo de 30/60 FPS; corrige também jogo/servidor irregular. Um pouco mais de espera.'})[v] || '')});
+   max: 'Ritmo fixo de 30/60 FPS; corrige também jogo/servidor irregular. Um pouco mais de espera.',
+   auto: 'Usa a Equilibrada e passa sozinha para a Máxima quando o jogo/servidor fica irregular; volta quando estabiliza.'})[v] || '')});
   els.capture = choice({key: 'capture', label: t('Captura de quadros'), opts: [['video', t('Vídeo')], ['direct', t('Direta')]], hint: v => t(v === 'direct'
    ? 'Recebe cada quadro direto do decodificador: evita quadros pulados.' : 'Lê os quadros do elemento de vídeo (mais compatível).')});
   els.captureOut = out('capture'); els.capture.row.append(els.captureOut);
@@ -1082,7 +1083,7 @@
  function updateSummaries(s) {
   const [s1, s2, s3, s4, s5] = sections;
   const fl = settingValue('fluidity'), p = s.p;
-  const fParts = [[t(FLU[fl] || ''), null]];
+  const fParts = [[t(FLU[fl] || '') + (fl === 'auto' && s.fl ? ' (' + t(FLU[s.fl.mode] || '') + ')' : ''), null]];
   if (s.on && p) { fParts.push([' · ±' + fmt(p.deviationMs, 1) + ' ms', null]); if (p.hitches > 0) fParts.push([' · ' + t('{0} trav.', p.hitches), null]); }
   setParts(s1.sum, fParts); setA(s1.sum, 'data-g', s.on && p ? worst(G('dev', s.gDev), G('hit', s.gHit)) : null);
   const preset = api.presets[api.preset()];
@@ -1248,6 +1249,7 @@
    const to = refreshRates().includes(120) ? 120 : 60;
    return {text: t('Tela em {0} Hz não é múltiplo de {1} FPS: use 60 ou 120 Hz.', R, N), g: 'ok', a: act(t('Usar {0} Hz', to), () => { try { window.BxAndroid.setRefreshRate(to); } catch {} })};
   }
+  if (S === 'bad' && fl === 'auto') return {text: t('O jogo/servidor está irregular. A Fluidez Auto passa para a Máxima.'), g: 'ok'};
   if (S === 'bad') return {text: t('O jogo/servidor está irregular. A Fluidez Máxima uniformiza (com mais espera).'), g: 'ok', a: fl !== 'max' ? act(t('Usar Máxima'), e => commit('fluidity', 'max', e)) : null};
   if (arBad && dBad && fl === 'off') return {text: t('A rede está oscilando. A Fluidez Equilibrada corrige.'), g: 'ok', a: turnOn};
   if (arBad && fl !== 'off' && settings.smoothing === 0 && s.p.hitches >= 1) return {text: t('Chegada irregular mesmo com a Fluidez: mais buffer ajuda.'), g: 'ok', a: act(t('Suavidade 33 ms'), e => commit('smoothing', 33, e))};

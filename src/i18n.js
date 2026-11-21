@@ -1,4 +1,4 @@
-// UI language (v10.2.2). The pt-BR texts in the code are the keys; src/i18n.json holds their translations
+// UI language (v10.2.3). The pt-BR texts in the code are the keys; src/i18n.json holds their translations
 // (embedded by tools/build.py as globalThis.BxI18nStrings). Language, in order: the www.xbox.com/<locale>/ path
 // (the logged-in account's market), <html lang> (play.xbox.com URLs carry no locale), then the browser or
 // Android language. Languages without a column in i18n.json fall back to English; a missing entry shows pt-BR.

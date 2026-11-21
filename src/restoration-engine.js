@@ -20,7 +20,7 @@
     if(['auto','1080p','1080p-hq','1440p'].includes(value.streamResolution))result.streamResolution=value.streamResolution;
     if(typeof value.preventDrops==='boolean')result.preventDrops=value.preventDrops;
     if([0,17,33,50].includes(value.smoothing))result.smoothing=value.smoothing;
-    if(['off','balanced','max'].includes(value.fluidity))result.fluidity=value.fluidity;
+    if(['off','balanced','max','auto'].includes(value.fluidity))result.fluidity=value.fluidity;
     if(['video','direct'].includes(value.capture))result.capture=value.capture;
     if(['off','compact','full'].includes(value.hud))result.hud=value.hud;
     if(['top-left','top-right','bottom-left','bottom-right'].includes(value.hudPosition))result.hudPosition=value.hudPosition;
@@ -216,7 +216,7 @@
         for(const [k,v] of Object.entries(entry))row[k]=typeof v==='number'?(Number.isFinite(v)?(k==='bitsPerPixel'?Math.round(v*1e4)/1e4:round(v)):null):v??null;timeline.push(row);},
       annotate(meta){if(recording)Object.assign(metadata,meta);},
       disjoint(){if(recording)disjoints++;},
-      report(){return {schema:4,version:'10.2.2',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
+      report(){return {schema:4,version:'10.2.3',build:globalThis.BxBuild??null,started,ended,stopReason,recording,metadata,disjoints,
         sampleLimit:{gpu:GPU_LIMIT,intervals:RAW_LIMIT,timeline:TIMELINE_LIMIT,events:EVENT_LIMIT,frames:FRAME_LIMIT},truncated:gpuCount>=GPU_LIMIT||raw.frame>=RAW_LIMIT||raw.cost>=RAW_LIMIT||timelineCut||eventsCut||frameCut||segments.length>=256,eventsTruncated:eventsCut,
         // Schema 4 (audit C09): frames = [id, segment, renderedMs, presentedMs, state]; passes[] lists the sequences
         // as scheduled (a deferred last pass is marked @present); presentation says how many of them ran.
@@ -300,6 +300,17 @@
   // balanced: the clock is the server capture time (RTP), keeping the game's own cadence; max: an
   // ideal 30/60 FPS grid that follows the capture clock's drift but not its jitter, also evening out
   // an irregular game/server cadence. Without RTP times, both use the grid on arrival times.
+  // Fluidez Auto: Equilibrada while the server cadence is steady, Máxima while it is irregular. Same limits as the panel's
+  // server grade: deviation of the server interval above 18% of its mean for 2 s switches to Máxima; at or below 8% for
+  // 10 s switches back. The server clock does not depend on the pacer, so the switch cannot feed itself.
+  function createAutoFluidity({up=2000,down=10000}={}){let mode='balanced',since=null;
+    return {get mode(){return mode;},update(deviationMs,meanMs,now){
+      if(!Number.isFinite(deviationMs)||!(meanMs>0)){since=null;return mode;}
+      const leave=mode==='balanced'?deviationMs>.18*meanMs:deviationMs<=.08*meanMs;
+      if(!leave){since=null;return mode;}
+      since??=now;
+      if(now-since>=(mode==='balanced'?up:down)){mode=mode==='balanced'?'max':'balanced';since=null;}
+      return mode;}};}
   function createPacer(mode='balanced',{minDelay=3,lead=4,maxQueue=2}={}){
     const queue=[],deltas=[],transits=[];let lastP=null,lastRef=null,clock=null,grid=null,offset=null,cadence=null,dropped=0,extra=null;
     // Cadence: median of recent intervals, so missing source frames (a 2x interval) do not stretch it,
@@ -395,7 +406,7 @@
   // Indented JSON with each samplesMs array on one line (one number per line would multiply the size).
   function reportText(report){return JSON.stringify(report,(k,v)=>k==='samplesMs'&&Array.isArray(v)?'@@'+JSON.stringify(v)+'@@':v,2).replace(/"@@(\[[^"]*\])@@"/g,'$1');}
   // The Android app's WebView cannot download blobs: its bridge saves the file to Downloads instead.
-  function downloadReport(report){const name='bx-v10.2.2-diagnostics-'+Date.now()+'.json';
+  function downloadReport(report){const name='bx-v10.2.3-diagnostics-'+Date.now()+'.json';
     const text=reportText(report);
     if(typeof globalThis.BxAndroid?.saveFile==='function'){const where=globalThis.BxAndroid.saveFile(name,'application/json',text);if(where)return where;}
     const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -712,5 +723,5 @@
       gl.deleteTexture(this.input);gl.deleteBuffer(this.buffer);gl.deleteVertexArray(this.vao);this.targets={};this.programs={};this.queries=[];
     }
   }
-  globalThis.BxRestoration={readStats,autoRenderer,AUTO_WEBGPU,framePlan,planEffective,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
+  globalThis.BxRestoration={readStats,createAutoFluidity,autoRenderer,AUTO_WEBGPU,framePlan,planEffective,rendererSupports,segmentConfig,sgsrParams,sgsrSource,spatialPrecision,spatialProfile,spatialKey,spatialSource,liveCadence,cadenceMargin,streamSummary,qpFromBitsPerPixel,compressionLevel,compressionScales,presets,presetOf,createPacer,createRtpClock,frameStats,applySmoothing,h264Profile,decoderSummary,createDiagnostics,captureVideoStats,downloadReport,Engine,defaults,normalize,historyValid,createBudget,outputSize,resolveOutput};
 })();

@@ -739,6 +739,10 @@
   "en": "The cut lasts until the image changes: Re-enable measures again (the GPU may not keep up), or Ease GPU = Never. Without it, antialiasing runs in the spatial pass.",
   "es": "El corte vale hasta cambiar la imagen: Reactivar mide de nuevo (la GPU puede no dar abasto), o Aliviar GPU = Nunca. Sin ella, el antialiasing corre en la pasada espacial."
  },
+ "O jogo/servidor está irregular. A Fluidez Auto passa para a Máxima.": {
+  "en": "The game/server is irregular. Smoothness Auto switches to Maximum.",
+  "es": "El juego/servidor es irregular. La Fluidez Auto pasa a Máxima."
+ },
  "O jogo/servidor está irregular. A Fluidez Máxima uniformiza (com mais espera).": {
   "en": "The game/server is uneven. Maximum Smoothness evens it out (with more wait).",
   "es": "El juego/servidor es irregular. La Fluidez Máxima lo uniformiza (con más espera)."
@@ -1238,6 +1242,10 @@
  "Travadas": {
   "en": "Stutters",
   "es": "Tirones"
+ },
+ "Usa a Equilibrada e passa sozinha para a Máxima quando o jogo/servidor fica irregular; volta quando estabiliza.": {
+  "en": "Uses Balanced and switches to Maximum by itself when the game/server becomes irregular; switches back once it is steady.",
+  "es": "Usa Equilibrada y pasa sola a Máxima cuando el juego/servidor se vuelve irregular; vuelve cuando se estabiliza."
  },
  "Usar Auto": {
   "en": "Use Auto",
