@@ -252,7 +252,7 @@ test('measurement keeps display, arrival, server and wait intervals per segment,
  d.dropped(2);d.dropped(0);d.timeline({fpsReceived:30,rttMs:20.456,qp:null,capture:'direct',bad:NaN,missing:undefined});d.annotate({refreshMeasuredHz:120});
  d.frame({mode:'cas'},100);d.interval('display',16);d.stop();d.interval('display',99);d.annotate({late:true});d.timeline({late:1});
  const r=d.report(),[a,b]=r.segments;
- assert.equal(r.schema,4);assert.equal(r.version,'10.2.2');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
+ assert.equal(r.schema,4);assert.equal(r.version,'10.2.3');assert.equal(r.metadata.a,1);assert.equal(r.metadata.refreshMeasuredHz,120);assert.equal(r.metadata.late,undefined);
  assert.equal(a.display.count,6);assert.equal(a.display.p50,33);assert.equal(a.display.hitches,1);assert.equal(a.display.maxMs,66);assert.equal(a.display.samplesMs.length,6);
  assert.equal(a.arrival.count,1);assert.deepEqual([...a.server.samplesMs],[33.33]);assert.equal(a.wait.p95,5);assert.equal(a.pacerDropped,2);assert.equal(a.gpu.count,0);
  assert.equal(b.display.count,1);assert.equal(b.pacerDropped,0);assert.equal(b.arrival.count,0);assert.equal(b.arrival.p95,null);
@@ -273,7 +273,7 @@ test('measurement summaries cover long sessions and the export keeps sample arra
  let saved=null;context.globalThis.BxAndroid={saveFile:(name,mime,text)=>{saved={name,mime,text};return 'Downloads/xCloud ImageFilter/'+name;}};
  const small=a.createDiagnostics();small.start();small.frame({},0);for(const v of [16.7,16.6,33.3])small.interval('display',v);
  assert.equal(a.downloadReport(small.report()),'Downloads/xCloud ImageFilter/'+saved.name);
- assert.match(saved.name,/^bx-v10\.2\.2-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
+ assert.match(saved.name,/^bx-v10\.2\.3-diagnostics-\d+\.json$/);assert.match(saved.text,/"samplesMs": \[16\.7,16\.6,33\.3\]/);assert.match(saved.text,/"samplesMs": \[\]/);
  const back=JSON.parse(saved.text);assert.equal(back.segments[0].display.count,3);assert.equal(back.truncated,false);assert.equal(back.sampleLimit.intervals,300000);
 });
 // Review of v10.1.0: the cpu/late/pipeline series have their own raw pool, so a 60 FPS video session with Fluidez
@@ -515,4 +515,16 @@ test('frame tickets: presented, discarded and repeated frames counted in their o
  assert.deepEqual(JSON.parse(JSON.stringify(r.frames.columns)),['id','segment','renderedMs','presentedMs','state']);
  assert.deepEqual(JSON.parse(JSON.stringify(r.frames.rows.map(row=>[row[0],row[1],row[4]]))),[[1,0,'p'],[2,0,'d'],[3,1,'d'],[4,1,'p']]);
  assert.equal(r.frames.truncated,false);
+});
+
+test('Fluidez Auto: Máxima after 2 s of irregular server cadence, back to Equilibrada after 10 s steady',()=>{
+ const a=api();assert.equal(a.normalize({fluidity:'auto'}).fluidity,'auto');
+ const f=a.createAutoFluidity(),T=1000/60,at=(dev,t)=>f.update(dev,T,t);
+ assert.equal(at(1,0),'balanced');
+ // A short spike does not switch; the timer restarts when the cadence recovers.
+ at(5,100);at(5,1500);assert.equal(at(1,1600),'balanced');assert.equal(at(5,1700),'balanced');
+ assert.equal(at(5,3600),'balanced');assert.equal(at(5,3700),'max','irregular for 2 s');
+ assert.equal(at(2,4000),'max','between the limits: stays');at(1,5000);assert.equal(at(1,14000),'max');
+ assert.equal(at(1,15000),'balanced','steady for 10 s');
+ assert.equal(at(null,16000),'balanced');assert.equal(at(5,16100),'balanced');assert.equal(at(NaN,17000),'balanced');assert.equal(at(5,18200),'balanced','no reading restarts the timer');
 });

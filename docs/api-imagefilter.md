@@ -14,7 +14,7 @@ Objeto vivo, normalizado por `BxRestoration.normalize` (`src/restoration-engine.
 | `cleanup`, `deband`, `chroma`, `detail`, `temporal`, `antialias`, `neural` | 0–1 | Compressão, Degradês, Cor nas bordas, Detalhe, Estabilidade em movimento, Antialiasing, Reconstrução neural |
 | `adaptive` | booleano | Adaptar limpeza/degradês/detalhe à compressão (QP; sem QP no navegador, estimada pela taxa de bits) |
 | `output` | `auto`, `native`, `1440`, `2160` | Resolução de saída |
-| `fluidity` | `off`, `balanced`, `max` | Fluidez (ritmo de exibição) |
+| `fluidity` | `off`, `balanced`, `max`, `auto` | Fluidez (ritmo de exibição). `auto` usa `balanced` e passa para `max` enquanto o ritmo do servidor oscila (`status.fluidity.mode` diz qual está valendo) |
 | `capture` | `video`, `direct` | Origem dos quadros com Fluidez ligada: elemento de vídeo ou direto do decodificador |
 | `smoothing` | 0, 17, 33, 50 | Suavidade (alvo do buffer WebRTC, ms) |
 | `gpuBudget` | 0, 3, 6, 10 | Adaptar acima de N ms (0 = manter tudo) |

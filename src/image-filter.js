@@ -262,7 +262,7 @@
  function stopPacer(player){const t=player.bxTiming;if(!t?.pacer)return;if(t.raf!==null)cancelAnimationFrame(t.raf);t.raf=null;t.pacer=null;t.shown=null;player.bxRender?.releasePaced();}
  function stopTiming(player){const t=player.bxTiming;if(!t)return;stopPacer(player);if(t.metaId!==null)player.$video?.cancelVideoFrameCallback?.(t.metaId);player.bxTiming=null;}
  function ensurePacer(player,mode){
-  const t=player.bxTiming;if(t.pacer?.mode===mode)return t.pacer;
+  const t=player.bxTiming;if(mode==='auto')mode=(t.auto??=BxRestoration.createAutoFluidity()).mode;if(t.pacer?.mode===mode)return t.pacer;
   stopPacer(player);t.pacer=BxRestoration.createPacer(mode);t.pacerDropped=0;player.bxDiagnostics?.event('fluidity',{mode});
   const tick=()=>{
    if(!t.pacer||player.isStopped){t.raf=null;return;}
@@ -406,7 +406,8 @@
   status.fps=player.bxTimes.length>1?(player.bxTimes.length-1)*1000/(player.bxTimes.at(-1)-player.bxTimes[0]):null;status.pacing=statsOf(timing.display)||BxRestoration.frameStats(player.bxTimes);
   // With direct capture every decoded frame reaches the treatment: the video element's skips do not apply.
   status.origin={server:statsOf(timing.server),arrival:statsOf(timing.arrival),arrivalNetwork:direct?!!timing.arrivalNetwork:true,presented:direct?null:timing.presentedLog.reduce((a,e)=>a+e[1],0),missed:direct?null:timing.presentedLog.reduce((a,e)=>a+e[1]-1,0)};
-  status.fluidity=timing.pacer?{mode:timing.pacer.mode,extraMs:timing.pacer.extraDelayMs,dropped:timing.pacer.dropped}:null;
+  if(settings.fluidity==='auto')(timing.auto??=BxRestoration.createAutoFluidity()).update(status.origin.server?.deviationMs,status.origin.server?.meanMs,now);
+  status.fluidity=timing.pacer?{mode:timing.pacer.mode,auto:settings.fluidity==='auto',extraMs:timing.pacer.extraDelayMs,dropped:timing.pacer.dropped}:null;
   if(direct)status.capture={active:true,frames:player.bxDirect.rendered,reason:''};
   if(newFrame&&now-(player.bxCadenceMark||0)>2000){
    if(settings.mode!=='filtered')player.bxReferenceFps=status.fps;

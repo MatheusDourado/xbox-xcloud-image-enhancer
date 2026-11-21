@@ -1,6 +1,6 @@
 # v10.2.2 — Botão Xbox volta a abrir o guia no app e cores da barra de atraso no painel
 
-Userscripts `6.7.12-imagefilter.10.2.2` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.2-play` (play.xbox.com), app Android **10.2.2** (`versionCode` 100202). Inclui tudo da [v10.2.1](historico/release-v10.2.1.md). Nenhum filtro de imagem mudou.
+Userscripts `6.7.12-imagefilter.10.2.2` (www.xbox.com, sobre o Better xCloud 6.7.12) e `10.2.2-play` (play.xbox.com), app Android **10.2.2** (`versionCode` 100202). Inclui tudo da [v10.2.1](release-v10.2.1.md). Nenhum filtro de imagem mudou.
 
 ## O que mudou
 
